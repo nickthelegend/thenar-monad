@@ -61,5 +61,21 @@ for (const p of full) {
   else console.log(`  --   ${p} is not a nav entry — reached through the brand mark`);
 }
 
+
+/* Below 860px the primary nav is display:none. That is fine only if something
+ * else opens it: without a control, every page but the home page was reachable
+ * on a phone only by scrolling to the footer. */
+for (const p of full) {
+  const src = readFileSync(join(web, p), "utf8");
+  const hasBtn = /<button[^>]*class="navtoggle"/.test(src);
+  const controls = (src.match(/aria-controls="([^"]+)"/) || [])[1];
+  const navId = (src.match(/<nav class="topnav" id="([^"]+)"/) || [])[1];
+  ok(hasBtn, `${p} has a menu control for narrow screens`);
+  ok(!!controls && controls === navId,
+     `${p} points its menu control at the nav it opens`, `${controls} -> ${navId}`);
+  ok(/aria-expanded="false"/.test(src), `${p} starts with the menu closed`);
+  ok(src.includes("./nav.js"), `${p} loads the script that opens it`);
+}
+
 console.log(fails === 0 ? "\nnavigation: consistent across every page\n" : `\n${fails} check(s) failed\n`);
 process.exit(fails ? 1 : 0);
