@@ -14,8 +14,8 @@ export const MONAD = {
   name: "Monad Testnet",
   rpc: "https://testnet-rpc.monad.xyz",
   explorer: "https://testnet.monadscan.com",
-  log: "0x12f6b43fed667785D40E9A280a4137AfD186B0c5",
-  market: "0xdF6fC73b5bEeDf1166ff7DF2BC5A5Bfe47770F62",
+  log: "0x10325941C86397a4355b4801dC28EDf6c41F3c6f",
+  market: "0x0f87309F410BDBB13B3E0d5c206e7aAC1397fBFa",
 };
 
 /* Selectors are taken from `cast sig`, not eyeballed — a wrong one returns

@@ -14,9 +14,31 @@ licence terms in the same transaction.
 | --- | --- |
 | **Site** | https://thenar.io |
 | **Network** | Monad Testnet — chain `10143` |
-| **`GraspLog`** | [`0x12f6b43fed667785D40E9A280a4137AfD186B0c5`](https://testnet.monadscan.com/address/0x12f6b43fed667785D40E9A280a4137AfD186B0c5) — verified |
-| **`GraspMarket`** | [`0xdF6fC73b5bEeDf1166ff7DF2BC5A5Bfe47770F62`](https://testnet.monadscan.com/address/0xdF6fC73b5bEeDf1166ff7DF2BC5A5Bfe47770F62) — verified |
-| **Verify a capture** | `/verify` — reads the contract directly, nothing through our servers |
+| **`GraspLog`** | [`0x10325941C86397a4355b4801dC28EDf6c41F3c6f`](https://testnet.monadscan.com/address/0x10325941C86397a4355b4801dC28EDf6c41F3c6f) — verified |
+| **`GraspMarket`** | [`0x0f87309F410BDBB13B3E0d5c206e7aAC1397fBFa`](https://testnet.monadscan.com/address/0x0f87309F410BDBB13B3E0d5c206e7aAC1397fBFa) — verified |
+| **Verify a capture** | [thenar.io/verify](https://thenar.io/verify) — reads the contract directly, nothing through our servers |
+
+Every check below passed against the live deployment:
+
+```
+ok  anchored 5 clips
+ok  the chain confirms a clip is in the anchored log — leaf 3, 3-word proof
+ok  a substituted clip is refused by the same proof
+ok  the chain confirms consent was never withdrawn
+ok  extended the log to 8 clips
+ok  the chain confirms the log was only appended to — 4-word proof
+ok  anchored the withdrawal
+ok  the chain reports the block the withdrawal became knowable — block 57860473
+ok  a withdrawn clip can no longer prove consent is live
+ok  published licence terms #0
+ok  bought a licence — payment and terms in one transaction
+ok  the receipt names the corpus the log actually anchored
+ok  a corpus the log never anchored cannot be sold
+```
+
+`/verify` carries a **Load a real capture** button that fills the form from
+`sample-proof.json`, which the end-to-end run wrote. The contract answers *in the
+log*; alter one byte of the preimage and it stops matching.
 
 ---
 

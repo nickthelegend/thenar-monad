@@ -4,7 +4,7 @@ import { keccak256, toHex } from "viem";
 import { encodeClip, hashLeaf, commitConsent } from "../packages/protocol/src/leaf.ts";
 import * as mlog from "../packages/protocol/src/log.ts";
 
-const RPC="https://testnet-rpc.monad.xyz", LOG="0x12f6b43fed667785D40E9A280a4137AfD186B0c5";
+const RPC="https://testnet-rpc.monad.xyz", LOG="0x10325941C86397a4355b4801dC28EDf6c41F3c6f";
 const SELECTOR="0xe51f9888";
 const pad=(n)=>BigInt(n).toString(16).padStart(64,"0");
 function encodeVerify(index, preimage, proof, leafIndex){
