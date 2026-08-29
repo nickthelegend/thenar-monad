@@ -13,7 +13,10 @@ import { taskId } from "../../../packages/protocol/src/taskspec.ts";
 let fails = 0;
 const ok = (c, m, x = "") => { if (!c) fails++; console.log(`${c ? "  ok  " : " FAIL "} ${m}${x ? ` — ${x}` : ""}`); };
 
-const spec = JSON.parse(readFileSync(new URL("../sample-task.json", import.meta.url), "utf8")).spec;
+/* A fixture rather than the published sample: the cross-implementation check
+   is about the sampler, not about any one deployment, and it has to run in a
+   repository that has nothing deployed yet. */
+const spec = JSON.parse(readFileSync(new URL("../../../packages/protocol/test/fixture-task.json", import.meta.url), "utf8"));
 const tid = taskId(spec);
 
 let same = true, hashSame = true;
@@ -44,13 +47,21 @@ ok(browserHash(browser(spec, tid, 9n)) === browserHash(browser(spec, tid, 9n)),
 ok(browserHash(browser(spec, tid, 9n)) !== browserHash(browser(spec, tid, 10n)),
    "a different seed gives a different world");
 
-// The sample episode the site publishes must rebuild to what it claims.
-const ep = JSON.parse(readFileSync(new URL("../sample-episode.json", import.meta.url), "utf8"));
-const rebuilt = browser(spec, ep.taskId, BigInt(ep.worldSeed));
-ok(rebuilt.objects.length > 0, "the published episode's world rebuilds in the browser",
-   `seed ${ep.worldSeed}, ${rebuilt.objects.length} objects`);
-ok(browserHash(rebuilt) === nodeHash(node(spec, ep.taskId, BigInt(ep.worldSeed))),
-   "and matches the exporter for that episode");
+// If this repository publishes a sample episode, its world must rebuild too.
+// Where nothing is deployed there is no sample, and that is not a failure.
+let epPath = null;
+try { epPath = readFileSync(new URL("../sample-episode.json", import.meta.url), "utf8"); } catch {}
+if (epPath) {
+  const ep = JSON.parse(epPath);
+  const pub = JSON.parse(readFileSync(new URL("../sample-task.json", import.meta.url), "utf8")).spec;
+  const rebuilt = browser(pub, ep.taskId, BigInt(ep.worldSeed));
+  ok(rebuilt.objects.length > 0, "the published episode's world rebuilds in the browser",
+     `seed ${ep.worldSeed}, ${rebuilt.objects.length} objects`);
+  ok(browserHash(rebuilt) === nodeHash(node(pub, ep.taskId, BigInt(ep.worldSeed))),
+     "and matches the exporter for that episode");
+} else {
+  console.log("  --   no published episode in this repository, so nothing to rebuild");
+}
 
 console.log(fails === 0 ? "\nscene sampler: browser and exporter agree\n" : `\n${fails} check(s) failed\n`);
 process.exit(fails ? 1 : 0);

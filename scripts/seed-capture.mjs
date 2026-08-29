@@ -2,12 +2,13 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { createPublicClient, http, parseAbi, keccak256, toHex } from "viem";
 import { LogStore } from "../services/log/src/store.ts";
-import { anchorHead, MONAD } from "../services/log/src/anchorer.ts";
+import { anchorHead } from "../services/log/src/anchorer.ts";
+import { CHAIN } from "../services/log/src/chain.ts";
 import { encodeClip, hashLeaf, commitConsent } from "../packages/protocol/src/leaf.ts";
 
 const c = Object.fromEntries(readFileSync(".env.contracts", "utf8").split("\n").filter(Boolean)
   .map((l) => { const i = l.indexOf("="); return [l.slice(0, i), l.slice(i + 1)]; }));
-const pub = createPublicClient({ chain: MONAD, transport: http() });
+const pub = createPublicClient({ chain: CHAIN, transport: http() });
 const vAbi = parseAbi(["function verifyLeaf(uint256 index, bytes preimage, bytes32[] proof, uint64 leafIndex) view returns (bool)"]);
 const h = (s) => keccak256(toHex(s));
 

@@ -15,7 +15,8 @@
     "test:samples": "tsx scripts/check-samples.mjs",
     "test:web": "node apps/web/test/grasp.test.mjs && node apps/web/test/imports.test.mjs && tsx apps/web/test/keccak.test.mjs && tsx apps/web/test/scene.test.mjs && tsx apps/web/test/corpus.test.mjs",
     "test:export": "tsx services/export/test/lerobot.test.ts",
-    "export": "tsx scripts/export-corpus.mjs"
+    "export": "tsx scripts/export-corpus.mjs",
+    "test:parity": "node scripts/check-parity.mjs . ../thenar-avax"
   },
   "pnpm": {
     "onlyBuiltDependencies": [

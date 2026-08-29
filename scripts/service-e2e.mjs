@@ -8,7 +8,8 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { createPublicClient, http, parseAbi, keccak256, toHex } from "viem";
 import { LogStore } from "../services/log/src/store.ts";
-import { anchorHead, auditAnchors, MONAD } from "../services/log/src/anchorer.ts";
+import { anchorHead, auditAnchors } from "../services/log/src/anchorer.ts";
+import { CHAIN } from "../services/log/src/chain.ts";
 import { taskId } from "../packages/protocol/src/taskspec.ts";
 import { sampleScene, sceneHash } from "../packages/protocol/src/sampler.ts";
 import { encodeEpisode, hashEpisodeLeaf, episodeFacts } from "../packages/protocol/src/episode.ts";
@@ -17,7 +18,7 @@ const LOG = process.env.GRASP_LOG;
 const VERIFIER = process.env.LEAF_VERIFIER;
 const DB = process.env.THENAR_LOG_DB ?? ".data/log.db";
 
-const pub = createPublicClient({ chain: MONAD, transport: http() });
+const pub = createPublicClient({ chain: CHAIN, transport: http() });
 const vAbi = parseAbi([
   "function verifyLeaf(uint256 index, bytes preimage, bytes32[] proof, uint64 leafIndex) view returns (bool)",
   "function episodeFacts(bytes preimage) view returns (bytes32 taskId, uint64 worldSeed, bool success, uint16 qualityScore)",

@@ -5,11 +5,11 @@
  */
 import { readFileSync } from "node:fs";
 import { createPublicClient, http, parseAbi } from "viem";
-import { MONAD } from "../services/log/src/anchorer.ts";
+import { CHAIN } from "../services/log/src/chain.ts";
 
 const c = Object.fromEntries(readFileSync(".env.contracts", "utf8").split("\n").filter(Boolean)
   .map((l) => { const i = l.indexOf("="); return [l.slice(0, i), l.slice(i + 1)]; }));
-const pub = createPublicClient({ chain: MONAD, transport: http() });
+const pub = createPublicClient({ chain: CHAIN, transport: http() });
 const abi = parseAbi([
   "function verifyLeaf(uint256 index, bytes preimage, bytes32[] proof, uint64 leafIndex) view returns (bool)",
   "function episodeFacts(bytes preimage) view returns (bytes32 taskId, uint64 worldSeed, bool success, uint16 qualityScore)",
