@@ -1,4 +1,5 @@
 import { mkdirSync, writeFileSync } from "node:fs";
+import { CHAIN } from "../../log/src/chain.ts";
 import { join } from "node:path";
 import type { Hex } from "viem";
 import type { LogStore, StoredLeaf } from "../../log/src/store.ts";
@@ -156,7 +157,7 @@ export function exportCorpus(opts: {
       timestamp: { dtype: "float32", shape: [1], names: null },
     },
     thenar: {
-      chain: "Monad Testnet (10143)",
+      chain: `${CHAIN.name} (${CHAIN.id})`,
       task_id: taskId,
       task_spec: spec,
       embodiment: emb ? { id: emb.id, name: emb.name, vendor: emb.vendor, dof: emb.dof, licence: emb.licence } : null,

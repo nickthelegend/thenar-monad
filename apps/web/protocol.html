@@ -4,11 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Protocol — THENAR</title>
-<meta name="description" content="How contact data is committed, licensed and settled on Avalanche, and what is deliberately kept off chain.">
+<meta name="description" content="How contact data is committed, licensed and settled on Monad, and what is deliberately kept off chain.">
 <link rel="canonical" href="https://thenar.io/protocol">
 <link rel="icon" href="./mark.svg" type="image/svg+xml">
 <meta property="og:title" content="Protocol — THENAR">
-<meta property="og:description" content="How contact data is committed, licensed and settled on Avalanche, and what is deliberately kept off chain.">
+<meta property="og:description" content="How contact data is committed, licensed and settled on Monad, and what is deliberately kept off chain.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://thenar.io/protocol">
 <meta property="og:site_name" content="THENAR">
@@ -44,13 +44,13 @@
 <!-- NAV:END -->
 <main id="main">
   <section class="fwrap">
-    <p class="feyebrow">GRASP on Avalanche</p>
-    <h2 class="fh2">Hashes on chain.<br>Everything else off it.</h2>
+    <p class="feyebrow">GRASP on Monad</p>
+    <h1 class="fh2">Hashes on chain.<br>Everything else off it.</h1>
     <p class="flede" style="margin-top:var(--s-300)">A buyer needs to verify a slice of capture data without trusting our internal records, and a contributor needs to withdraw without us being able to pretend they did not. That is the whole job. Here is the design, and here is the part it does not solve.</p>
     <div class="bento" style="margin-top:var(--s-600)">
       <article class="tile">
-        <h3>Why the C-Chain, and not our own L1</h3>
-        <p>Because the workload does not have the shape that justifies a chain of its own, and claiming it does is the first thing a reviewer kills. Batched into an hourly anchor, our entire provenance traffic is 24 transactions a day. A dedicated L1 would cost roughly 4,100 dollars a year against about 88, but the money is not the argument: it is that an L1 needs a part time operator we do not have. The decisive reason is settlement. USDC is native and deep on the C-Chain; on our own L1 it would be a bridged representation secured by five nodes we run ourselves, which is a company with no revenue underwriting buyer funds.</p>
+        <h3>Why an existing L1, and not our own</h3>
+        <p>Because the workload does not have the shape that justifies a chain of its own, and claiming it does is the first thing a reviewer kills. Batched into an hourly anchor, our entire provenance traffic is 24 transactions a day, and an L1 needs a part time operator we do not have. The decisive reason is settlement: a licence is paid in the asset the corpus declares, and on an established chain that is the chain’s own asset or a standard ERC-20 the buyer already holds, while on a chain we ran ourselves it would be a bridged representation secured by nodes we operate — a company with no revenue underwriting buyer funds. Monad runs the EVM, so the contracts are ordinary Solidity and a buyer verifies them with the tools they already have.</p>
         
       </article>
       <article class="tile">
@@ -75,7 +75,7 @@
       </article>
       <article class="tile">
         <h3>What it does not prove</h3>
-        <p>A ledger attests record integrity after submission, not authenticity at capture. Nothing written on chain shows a stream came off a real hand rather than a replay, and a device key can be extracted. Closing that needs a secure element and a remote attestation path, and the Band CAD does not have one. Avalanche shipped a P-256 precompile that would verify exactly those signatures cheaply when the hardware exists. It does not exist.</p>
+        <p>A ledger attests record integrity after submission, not authenticity at capture. Nothing written on chain shows a stream came off a real hand rather than a replay, and a device key can be extracted. Closing that needs a secure element in the device and a remote attestation path on chain, and the Band CAD has neither. Verifying those signatures on chain wants a P-256 precompile rather than a Solidity implementation of the curve. The hardware does not exist yet, so neither does the claim.</p>
         
       </article>
     </div>
@@ -91,7 +91,7 @@
       <ol>
         <li><b>1</b><span>Freeze the manifest schema. Canonical JSON, channel descriptors, golden test vectors, and a reserved grip force descriptor that is not used yet.</span></li>
         <li><b>2</b><span>Deterministic packer. Quest capture in, chunked channels and a signed manifest out. CI proves two machines produce byte identical roots.</span></li>
-        <li><b>3</b><span>Registry contracts on Fuji, source verified, non upgradeable. First real corpus root committed. External reviewers confirmed in writing this week, not in week 10.</span></li>
+        <li><b>3</b><span>Registry contracts on Monad testnet, source verified, non upgradeable. First real corpus root committed. External reviewers confirmed in writing this week, not in week 10.</span></li>
         <li><b>4</b><span>Verifier CLI on npm. Recomputes from the spec, reads the anchor over a public RPC, prints MATCH or names the exact broken leaf.</span></li>
         <li><b>5</b><span>Static explorer, published as JSON rather than a database, because it is a convenience and never the source of truth.</span></li>
         <li class="demo"><b>6</b><span>DEMO DAY. A stranger verifies a corpus on their own machine with no credentials. Then we flip one byte and the verifier localises it.</span></li>

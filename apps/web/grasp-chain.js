@@ -1,7 +1,7 @@
 /* grasp-chain.js — the settlement ledger, actually running.
  *
  * The previous version of this drew a plausible ledger and said so in the
- * corner. This one reads GraspLog on Monad Testnet over JSON-RPC and draws
+ * corner. This one reads GraspLog over JSON-RPC and draws
  * what is actually anchored: every batch, its root, how many clips it carries,
  * and the block it landed in.
  *
@@ -9,7 +9,7 @@
  * than falling back to invented blocks — a ledger that lies when the network
  * is down is worse than one that admits it.
  */
-export const MONAD = {
+export const CHAIN = {
   chainId: 10143,
   name: "Monad Testnet",
   rpc: "https://testnet-rpc.monad.xyz",
@@ -61,7 +61,7 @@ function str(hex, ptrWord, base = 0) {
 }
 
 async function rpc(method, params) {
-  const r = await fetch(MONAD.rpc, {
+  const r = await fetch(CHAIN.rpc, {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }),
@@ -78,12 +78,12 @@ const pad = (n) => n.toString(16).padStart(64, "0");
 
 /** Read the anchors the chain actually holds, newest last. */
 export async function readAnchors(limit = 12) {
-  const countHex = await call(MONAD.log, SEL.anchorCount);
+  const countHex = await call(CHAIN.log, SEL.anchorCount);
   const count = Number(BigInt(countHex));
   const first = Math.max(0, count - limit);
   const out = [];
   for (let i = first; i < count; i++) {
-    const raw = await call(MONAD.log, SEL.anchorAt + pad(i));
+    const raw = await call(CHAIN.log, SEL.anchorAt + pad(i));
     out.push({
       index: i,
       root: word(raw, 0),
@@ -115,11 +115,11 @@ function round(c, x, y, w, h, r) {
  *  `corpusAt` returns a flat tuple and keeps the arrays behind `capTable`, so
  *  the cap table is a second read rather than a pointer into the first. */
 export async function readCorpora() {
-  const n = Number(BigInt(await call(MONAD.market, SEL.corpusCount)));
+  const n = Number(BigInt(await call(CHAIN.market, SEL.corpusCount)));
   const out = [];
   for (let i = 0; i < n; i++) {
-    const raw = await call(MONAD.market, SEL.corpusAt + pad(i));
-    const cap = await call(MONAD.market, SEL.capTable + pad(i));
+    const raw = await call(CHAIN.market, SEL.corpusAt + pad(i));
+    const cap = await call(CHAIN.market, SEL.capTable + pad(i));
     out.push({
       index: i,
       taskId: uint(raw, 0),
@@ -139,10 +139,10 @@ export async function readCorpora() {
 
 /** Every published task in the registry. */
 export async function readTasks() {
-  const n = Number(BigInt(await call(MONAD.registry, SEL.taskCount)));
+  const n = Number(BigInt(await call(CHAIN.registry, SEL.taskCount)));
   const out = [];
   for (let i = 0; i < n; i++) {
-    const raw = await call(MONAD.registry, SEL.taskAt + pad(i));
+    const raw = await call(CHAIN.registry, SEL.taskAt + pad(i));
     const base = Number(uint(raw, 0)) / 32;
     out.push({
       index: i,
@@ -160,7 +160,7 @@ export async function readTasks() {
 
 /** How many licences have been sold, across all corpora. */
 export async function readReceiptCount() {
-  return Number(BigInt(await call(MONAD.market, SEL.receiptCount)));
+  return Number(BigInt(await call(CHAIN.market, SEL.receiptCount)));
 }
 
 export function mountChain(cv) {
@@ -186,7 +186,7 @@ export function mountChain(cv) {
       ctx.fillStyle = state.status === "error" ? PINK : DIM;
       ctx.fillText(
         state.status === "error"
-          ? "Could not reach Monad. Nothing is drawn rather than guessed."
+          ? `Could not reach ${CHAIN.name}. Nothing is drawn rather than guessed.`
           : "Reading the log…",
         2, h / 2,
       );

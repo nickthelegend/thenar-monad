@@ -66,9 +66,12 @@ function draw() {
   ctx.setLineDash([]);
 
   ctx.strokeStyle = "#4D17F5"; ctx.lineWidth = 1.5;
-  ctx.beginPath();
-  ctx.arc(m.X(st.goal[0]), m.Y(st.goal[1]), (spec.success.toleranceMm / 1000) * m.s, 0, 7);
-  ctx.stroke();
+  const gx = m.X(st.goal[0]), gy = m.Y(st.goal[1]);
+  const gr = Math.max(6, (spec.success.toleranceMm / 1000) * m.s);
+  ctx.beginPath(); ctx.arc(gx, gy, gr, 0, 7); ctx.stroke();
+  ctx.font = "600 9px ui-monospace, Menlo, monospace";
+  ctx.fillStyle = "#8A6BFF";
+  ctx.fillText(`datum ±${spec.success.toleranceMm}mm`, gx + gr + 4, gy + 3);
 
   if (st.samples.length > 1) {
     ctx.strokeStyle = "rgba(77,23,245,.6)"; ctx.lineWidth = 1.5;
@@ -95,11 +98,16 @@ function draw() {
   ctx.moveTo(m.X(ik.x) + jaw, m.Y(ik.y) - 7); ctx.lineTo(m.X(ik.x) + jaw, m.Y(ik.y) + 7);
   ctx.stroke();
 
-  ctx.fillStyle = st.held ? "#7CE0A5" : "#FA9DCD";
-  ctx.strokeStyle = "rgba(255,255,255,.55)"; ctx.lineWidth = 1;
-  ctx.beginPath();
-  ctx.roundRect(m.X(st.payload[0]) - 9, m.Y(st.payload[1]) - 7, 18, 14, 3);
+  // Amber, because the distractors are already pink: the one object that
+  // matters must not look like the ones that do not.
+  const px = m.X(st.payload[0]), py = m.Y(st.payload[1]);
+  ctx.fillStyle = st.held ? "#7CE0A5" : "#F2B01E";
+  ctx.strokeStyle = "rgba(0,0,0,.55)"; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.roundRect(px - 9, py - 7, 18, 14, 3);
   ctx.fill(); ctx.stroke();
+  ctx.font = "600 9px ui-monospace, Menlo, monospace";
+  ctx.fillStyle = st.held ? "#7CE0A5" : "#F2B01E";
+  ctx.fillText(st.held ? "held" : "payload", px + 13, py + 3);
   ctx.restore();
 }
 

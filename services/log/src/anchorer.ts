@@ -73,7 +73,7 @@ export async function anchorHead(store: LogStore, logAddress: Hex): Promise<Anch
   const root = store.root();
   const revRoot = revocationRoot(store);
 
-  // Monad reserves value + gas_limit x price, so an oversized limit locks up
+  // Some chains reserve value + gas_limit x price, so an oversized limit locks up
   // balance the transaction never spends.
   const txHash = await wallet.writeContract({
     address: logAddress, abi: LOG_ABI, functionName: "anchor",
