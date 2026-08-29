@@ -179,7 +179,7 @@ export function mountChain(cv) {
 
     ctx.font = "700 10px Manrope, system-ui, sans-serif";
     ctx.fillStyle = MUTE;
-    ctx.fillText("ANCHORED BATCHES, MONAD TESTNET", 2, 16);
+    ctx.fillText(`ANCHORED BATCHES, ${CHAIN.name.toUpperCase()}`, 2, 16);
 
     if (state.status !== "ready") {
       ctx.font = "600 12px Manrope, system-ui, sans-serif";

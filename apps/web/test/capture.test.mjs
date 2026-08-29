@@ -264,5 +264,35 @@ const at = (st) => [...st.goal];
      "and a replay of a holed trajectory reports it as not continuous");
 }
 
+
+{ /* Letting go over the datum is how the task is finished, not a fumble.
+   * The result panel told an operator who had just placed the object cleanly
+   * that they had "dropped 1x", which is the opposite of what happened. */
+  const scene = sampleScene(spec, tid, 31n);
+  const s0 = cap.initialState(spec, tid, scene);
+  const { st } = run(31, [
+    { to: [s0.payload[0], s0.payload[1]], secs: 1.5 },
+    { grip: true, to: [s0.payload[0], s0.payload[1]], secs: 0.3 },
+    { to: at(s0), secs: 3 },
+    { grip: true, to: at(s0), secs: 0.4 },     // release, on the datum
+  ]);
+  const r = cap.finishEpisode(st, spec, tid, { seed: 31n });
+  ok(st.places === 1 && st.drops === 0,
+     "releasing on the datum counts as a placement, not a drop",
+     `${st.places} placed, ${st.drops} dropped`);
+  ok(r.recorded && r.score.success, "and the run still scores as a success");
+
+  const away = cap.initialState(spec, tid, scene);
+  const mid = [(away.payload[0] + away.goal[0]) / 2, (away.payload[1] + away.goal[1]) / 2];
+  const { st: st2 } = run(31, [
+    { to: [away.payload[0], away.payload[1]], secs: 1.5 },
+    { grip: true, to: [away.payload[0], away.payload[1]], secs: 0.3 },
+    { to: mid, secs: 2 },
+    { grip: true, to: mid, secs: 0.4 },        // release, nowhere near it
+  ]);
+  ok(st2.drops === 1 && st2.places === 0,
+     "and letting go anywhere else is still a drop", `${st2.drops} dropped`);
+}
+
 console.log(fails === 0 ? "\ncapture: all checks passed\n" : `\n${fails} check(s) failed\n`);
 process.exit(fails ? 1 : 0);

@@ -236,7 +236,7 @@ async function publish() {
   const status = $("#b-status");
   const eth = window.ethereum;
   if (!eth) {
-    status.textContent = "No wallet in this browser. The spec is copyable, and `pnpm tsx scripts/publish-task.mjs` publishes it from the command line.";
+    status.textContent = "No wallet in this browser. The spec is copyable, and `pnpm tsx scripts/publish-task.ts` publishes it from the command line.";
     return;
   }
   try {

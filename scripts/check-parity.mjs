@@ -87,8 +87,8 @@ ok(differing.length === 0, "and is byte-identical",
  * would have: neither repository may name the other one's chain.
  */
 const CHAIN_WORDS = {
-  monad: [/\bMonad\b/, /testnet-rpc\.monad/, /\b10143\b/],
-  avalanche: [/\bAvalanche\b/, /\bC-Chain\b/, /\bFuji\b/, /\bAVAX\b/, /\b43113\b/],
+  monad: [/\bMonad\b/i, /testnet-rpc\.monad/i, /\b10143\b/],
+  avalanche: [/\bAvalanche\b/i, /\bC-Chain\b/i, /\bFuji\b/i, /\bAVAX\b/i, /\b43113\b/],
 };
 const chainOf = (root) => {
   const src = readFileSync(join(root, "services/log/src/chain.ts"), "utf8");

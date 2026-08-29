@@ -50,7 +50,7 @@ ok(facts[0] === ep.taskId && Number(facts[1]) === ep.worldSeed && facts[3] === e
    "recorded" is a word on a page rather than a property of the data. */
 {
   const rec = JSON.parse(readFileSync("apps/web/sample-recorded.json", "utf8"));
-  const bundle = JSON.parse(readFileSync("apps/web/samples/episode-c8571734.json", "utf8"));
+  const bundle = JSON.parse(readFileSync("apps/web/samples/episode-59135be7.json", "utf8"));
   const chainFacts = await pub.readContract({ address: c.LEAF_VERIFIER, abi,
     functionName: "episodeFacts", args: [rec.preimage] });
 

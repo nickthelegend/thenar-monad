@@ -59,7 +59,8 @@ export function initialState(spec, taskId, scene) {
     payload: [first.x, first.y, 0],
     goal: datumFor(taskId, scene.seed, spec),
     grip: GRIP_OPEN,
-    held: false, everHeld: false, drops: 0,
+    toleranceMm: spec.success.toleranceMm,
+    held: false, everHeld: false, drops: 0, places: 0,
     samples: [], t: 0, acc: 0,
   };
 }
@@ -73,7 +74,14 @@ export function tick(st, dt, tSeconds) {
   const ik = solve(st.tool[0], st.tool[1]);
   const near = Math.hypot(ik.x - st.payload[0], ik.y - st.payload[1]) < CAPTURE_R;
   if (!st.held && st.grip <= GRIP_CLOSED && near) { st.held = true; st.everHeld = true; }
-  else if (st.held && st.grip > GRIP_CLOSED) { st.held = false; st.drops++; }
+  else if (st.held && st.grip > GRIP_CLOSED) {
+    st.held = false;
+    // Opening the jaws over the datum is how the task is completed, so it is a
+    // placement. Only letting go somewhere else is a drop; calling both a drop
+    // told an operator who had just succeeded that they had fumbled it.
+    const dev = Math.hypot(st.payload[0] - st.goal[0], st.payload[1] - st.goal[1]) * 1000;
+    if (dev > st.toleranceMm) st.drops++; else st.places++;
+  }
   if (st.held) { st.payload[0] = ik.x; st.payload[1] = ik.y; }
 
   st.acc += dt;

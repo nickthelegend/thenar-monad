@@ -33,6 +33,9 @@ function reset() {
   running = false;
   $("#c-clock").textContent = "0.0 s";
   $("#c-start").textContent = "Begin";
+  // A new run must not leave the last one's score on screen looking current.
+  $("#c-result").innerHTML = `<p class="cmeta">No run yet.</p>`;
+  $("#c-episode").innerHTML = `<p class="cmeta">A completed run produces a leaf.</p>`;
   $("#c-grip").textContent = "Close jaws";
   $("#c-grip").disabled = true;
   $("#c-end").disabled = true;
@@ -172,7 +175,7 @@ function finish() {
     `<p class="verdictline ${r.accepted ? "yes" : "no"}">${
       !s.success ? "Out of tolerance" : r.overrun ? "Over the time limit"
       : r.accepted ? "Accepted" : "In tolerance, below the bar"}</p>` +
-    `<p class="cmeta">${s.deviationMm.toFixed(1)} mm from the datum · ${s.durationS.toFixed(1)} s · jerk ${s.meanJerk.toFixed(1)}${st.drops ? ` · dropped ${st.drops}×` : ""}</p>` +
+    `<p class="cmeta">${s.deviationMm.toFixed(1)} mm from the datum · ${s.durationS.toFixed(1)} s · jerk ${s.meanJerk.toFixed(1)}${st.drops ? ` · dropped ${st.drops}×` : ""}${st.places > 1 ? ` · placed ${st.places}×` : ""}</p>` +
     bar("placement", s.placement) + bar("smoothness", s.smoothness) + bar("efficiency", s.efficiency) +
     `<div class="scorebar" style="margin-top:10px"><span><b>score</b></span><i><b style="width:${(s.totalBps / 100).toFixed(1)}%;background:${r.accepted ? "#7CE0A5" : "#FA9DCD"}"></b></i><em>${(s.totalBps / 100).toFixed(2)}%</em></div>` +
     (r.accepted ? "" : `<p class="cmeta" style="margin-top:8px">This task accepts at ${(spec.acceptance.minScoreBps / 100).toFixed(0)}% within ${spec.acceptance.maxDurationS} s. Nothing is deducted for a run that misses it.</p>`);
