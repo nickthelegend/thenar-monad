@@ -184,9 +184,11 @@ $("#logaddr").href = `${MONAD.explorer}/address/${MONAD.log}`;
 $("#mktaddr").textContent = short(MONAD.market);
 $("#mktaddr").href = `${MONAD.explorer}/address/${MONAD.market}`;
 
+let anchorCount = null;
 (async () => {
   try {
     const { count, anchors } = await readAnchors(25);
+    anchorCount = count;
     const head = anchors[anchors.length - 1];
     $("#headline").textContent = count === 0
       ? "nothing anchored yet"
@@ -273,11 +275,19 @@ $("#vform").addEventListener("submit", async (e) => {
   out.textContent = "asking the contract…";
   try {
     const index = $("#vindex").value.trim();
+    if (index !== "" && anchorCount !== null && Number(index) >= anchorCount) {
+      throw new Error(`There is no anchor #${index}. The log has ${anchorCount}, numbered 0 to ${anchorCount - 1}.`);
+    }
     const pre = $("#vpre").value.trim();
     const leaf = $("#vleaf").value.trim();
     const proof = $("#vproof").value.split(",").map((s) => s.trim()).filter(Boolean);
 
-    const bytes = pre.replace(/^0x/, "").length / 2;
+    const body = pre.replace(/^0x/, "");
+    if (!/^[0-9a-fA-F]*$/.test(body)) {
+      throw new Error("That preimage is not hexadecimal. It should be 0x followed by hex digits.");
+    }
+    if (body.length % 2) throw new Error("That preimage has an odd number of hex digits, so it is not whole bytes.");
+    const bytes = body.length / 2;
     // A capture is 154 bytes and an episode 197. Anything else is neither, and
     // saying which is expected is more use than "invalid input".
     if (bytes !== 154 && bytes !== 197) {
@@ -296,7 +306,12 @@ $("#vform").addEventListener("submit", async (e) => {
         params: [{ to: MONAD.verifier, data }, "latest"] }),
     }).then((r) => r.json());
 
-    if (res.error) throw new Error(res.error.message);
+    if (res.error) {
+      const raw = res.error.message || "";
+      throw new Error(/revert/i.test(raw)
+        ? "The contract refused that. Check the anchor index, the leaf index and the sibling path belong together."
+        : raw);
+    }
     const yes = BigInt(res.result) === 1n;
     out.className = `verdict ${yes ? "yes" : "no"}`;
     out.textContent = yes
