@@ -50,7 +50,8 @@ function mapping() {
 function draw() {
   const cv = $("#c-stage");
   if (!cv.clientWidth) return;
-  drawScene(cv, { ...scene, objects: [] }, spec);
+  // Everything but the payload, which moves and so is drawn here.
+  drawScene(cv, { ...scene, objects: scene.objects.slice(1) }, spec, new Set([0]));
   const ctx = cv.getContext("2d");
   const m = mapping();
   const ik = cap.solve(st.tool[0], st.tool[1]);

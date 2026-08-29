@@ -93,7 +93,15 @@ export function sceneMapping(w, h, spec) {
     toWorld: (px, py) => [lo[0] + (px - ox) / s, lo[1] + (h - py - oy) / s] };
 }
 
-export function drawScene(cv, scene, spec) {
+/**
+ * Plan view of a sampled world.
+ *
+ * `hold` names object indices the caller draws itself — the capture page owns
+ * the payload, because it moves. They are still counted in the header: the
+ * world contains them whoever paints them, and a count that quietly dropped
+ * one would misdescribe the scene.
+ */
+export function drawScene(cv, scene, spec, hold = null) {
   const ctx = cv.getContext("2d");
   const dpr = Math.min(devicePixelRatio || 1, 2);
   const w = cv.clientWidth | 0, h = cv.clientHeight | 0;
@@ -146,7 +154,8 @@ export function drawScene(cv, scene, spec) {
 
   ctx.font = "600 10px Manrope, system-ui, sans-serif";
   ctx.fillStyle = "#6E6E6E";
-  ctx.fillText(`SEED ${scene.seed} · ${scene.objects.length} OBJECT${scene.objects.length === 1 ? "" : "S"}`, 8, 15);
+  const n = scene.objects.length + (hold ? hold.size : 0);
+  ctx.fillText(`SEED ${scene.seed} · ${n} OBJECT${n === 1 ? "" : "S"}`, 8, 15);
   const lbl = `${Math.round(scene.lightingTemperatureK)} K`;
   ctx.fillText(lbl, w - ctx.measureText(lbl).width - 8, 15);
 }
