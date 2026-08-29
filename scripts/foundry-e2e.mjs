@@ -14,9 +14,12 @@ import * as mlog from "../packages/protocol/src/log.ts";
 
 const env = Object.fromEntries(readFileSync(".env.deployer", "utf8").split("\n").filter(Boolean)
   .map((l) => { const i = l.indexOf("="); return [l.slice(0, i), l.slice(i + 1)]; }));
-const LOG = "0x10325941C86397a4355b4801dC28EDf6c41F3c6f";
-const REGISTRY = "0x70244c42300f427a721a86416331d2a8d6ce2a51";
-const MARKET = "0x754845ff489f16a4a216562f0029aea29c678bad";
+// Addresses come from the deployment record, never a constant that can drift.
+const contracts = Object.fromEntries(readFileSync(".env.contracts", "utf8").split("\n").filter(Boolean)
+  .map((l) => { const i = l.indexOf("="); return [l.slice(0, i), l.slice(i + 1)]; }));
+const LOG = contracts.GRASP_LOG;
+const REGISTRY = contracts.TASK_REGISTRY;
+const MARKET = contracts.FOUNDRY_MARKET;
 
 const chain = { id: 10143, name: "Monad Testnet", nativeCurrency: { name: "Monad", symbol: "MON", decimals: 18 },
   rpcUrls: { default: { http: ["https://testnet-rpc.monad.xyz"] } } };
@@ -116,12 +119,15 @@ check(scenes.size === leaves.length, "every episode ran in a distinct sampled wo
 const rebuilt = sceneHash(sampleScene(spec, specHash, 3n));
 check([...scenes].includes(rebuilt), "any episode's world rebuilds from its seed alone");
 
-const root = mlog.root(leaves);
-const before = Number(await pub.readContract({ address: LOG, abi: logAbi, functionName: "anchorCount" }));
-const head = await pub.readContract({ address: LOG, abi: logAbi, functionName: "anchorAt", args: [BigInt(before - 1)] });
-await send(LOG, logAbi, "anchor", [root, head.size + BigInt(leaves.length), h(`rev-${stamp}`)], GAS.anchor);
-const anchorIndex = before;
-check(true, `anchored ${leaves.length} episodes`, `anchor #${anchorIndex}`);
+// Append through the log service so root and size describe the same tree.
+const { LogStore } = await import("../services/log/src/store.ts");
+const { anchorHead } = await import("../services/log/src/anchorer.ts");
+const store = new LogStore(process.env.THENAR_LOG_DB ?? ".data/log.db");
+for (const leaf of leaves) store.append(leaf, { taskId: specHash });
+const anchored = await anchorHead(store, LOG);
+check(anchored !== null, `anchored ${leaves.length} episodes into the real log`,
+  anchored ? `anchor #${anchored.index}, size ${anchored.size}` : "nothing to anchor");
+const anchorIndex = anchored.index;
 
 // ---- 3. seal the corpus with a quality-weighted cap table ------------------
 const anchor = await pub.readContract({ address: LOG, abi: logAbi, functionName: "anchorAt", args: [BigInt(anchorIndex)] });
@@ -173,6 +179,7 @@ const receipt = await pub.readContract({ address: MARKET, abi: mktAbi, functionN
 check(receipt.corpusRoot === anchor.root, "the receipt names the corpus the log anchored");
 check(receipt.amount === PRICE, "the receipt records what was paid", `${formatEther(receipt.amount)} MON`);
 
+store.close();
 writeFileSync("apps/web/sample-task.json", JSON.stringify({
   network: "Monad Testnet (10143)",
   registry: REGISTRY, market: MARKET, log: LOG,

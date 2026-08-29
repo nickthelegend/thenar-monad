@@ -101,7 +101,7 @@
 <section class="wrap" style="padding-bottom:40px">
   <h2 style="font-size:22px;margin:0 0 6px">Prove one capture</h2>
   <p style="color:#9B9B9B;font-size:14px;margin:0 0 16px;max-width:62ch">
-    Paste the 154-byte preimage a capture was committed under, its position in the
+    Paste the preimage a record was committed under — 154 bytes for a capture, 197 for an episode — its position in the
     batch, and the sibling path. The contract does the checking; this page only
     shows you what it said.
   </p>
@@ -112,7 +112,7 @@
              style="background:#0E0E0E;border:1px solid #272727;border-radius:8px;padding:10px 12px;color:#fff">
     </label>
     <label style="display:grid;gap:6px">
-      <span style="font-size:12px;color:#6E6E6E;text-transform:uppercase;letter-spacing:.06em">Capture preimage (154 bytes, hex)</span>
+      <span style="font-size:12px;color:#6E6E6E;text-transform:uppercase;letter-spacing:.06em">Preimage (154 or 197 bytes, hex)</span>
       <textarea id="vpre" rows="3" placeholder="0x01…" class="mono"
                 style="background:#0E0E0E;border:1px solid #272727;border-radius:8px;padding:10px 12px;color:#fff"></textarea>
     </label>
@@ -131,6 +131,7 @@
     <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
       <button class="btn primary" type="submit">Ask the contract</button>
       <button class="btn" type="button" id="vsample">Load a real capture</button>
+      <button class="btn" type="button" id="vepisode">Load a real episode</button>
       <span id="vout" class="verdict wait">nothing checked yet</span>
     </div>
   </form>
@@ -210,7 +211,7 @@ $("#mktaddr").href = `${MONAD.explorer}/address/${MONAD.market}`;
 /* verifyClip(uint256,bytes,bytes32[],uint64) — encoded by hand so this page
    ships without a web3 bundle. Head: index, offset(bytes), offset(bytes32[]),
    leafIndex; then the two dynamic tails. */
-const SELECTOR = "0xe51f9888"; // cast sig verifyClip(uint256,bytes,bytes32[],uint64)
+const SELECTOR = "0x6253dafc"; // cast sig verifyLeaf(uint256,bytes,bytes32[],uint64)
 const pad = (n) => BigInt(n).toString(16).padStart(64, "0");
 
 function encodeVerify(index, preimage, proof, leafIndex) {
@@ -249,6 +250,22 @@ $("#vsample").addEventListener("click", async () => {
   }
 });
 
+$("#vepisode").addEventListener("click", async () => {
+  const out = $("#vout");
+  try {
+    const s = await fetch("./sample-episode.json").then((r) => r.json());
+    $("#vindex").value = s.anchorIndex;
+    $("#vpre").value = s.preimage;
+    $("#vleaf").value = s.leafIndex;
+    $("#vproof").value = s.proof.join(", ");
+    out.className = "verdict wait";
+    out.textContent = `loaded episode — task ${s.taskId.slice(0, 10)}…, world seed ${s.worldSeed}`;
+  } catch {
+    out.className = "verdict no";
+    out.textContent = "no episode sample published yet";
+  }
+});
+
 $("#vform").addEventListener("submit", async (e) => {
   e.preventDefault();
   const out = $("#vout");
@@ -261,20 +278,29 @@ $("#vform").addEventListener("submit", async (e) => {
     const proof = $("#vproof").value.split(",").map((s) => s.trim()).filter(Boolean);
 
     const bytes = pre.replace(/^0x/, "").length / 2;
-    if (bytes !== 154) throw new Error(`a capture preimage is 154 bytes; that is ${bytes}`);
+    // A capture is 154 bytes and an episode 197. Anything else is neither, and
+    // saying which is expected is more use than "invalid input".
+    if (bytes !== 154 && bytes !== 197) {
+      throw new Error(`a preimage is 154 bytes (capture) or 197 (episode); that is ${bytes}`);
+    }
+    const version = parseInt(pre.replace(/^0x/, "").slice(0, 2), 16);
+    if ((version === 1 && bytes !== 154) || (version === 2 && bytes !== 197)) {
+      throw new Error(`version ${version} does not match a ${bytes}-byte preimage`);
+    }
 
+    // LeafVerifier handles both versions; the log itself only knows captures.
     const data = encodeVerify(index || 0, pre, proof, leaf || 0);
     const res = await fetch(MONAD.rpc, {
       method: "POST", headers: { "content-type": "application/json" },
       body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "eth_call",
-        params: [{ to: MONAD.log, data }, "latest"] }),
+        params: [{ to: MONAD.verifier, data }, "latest"] }),
     }).then((r) => r.json());
 
     if (res.error) throw new Error(res.error.message);
     const yes = BigInt(res.result) === 1n;
     out.className = `verdict ${yes ? "yes" : "no"}`;
     out.textContent = yes
-      ? "in the log — the contract confirms this capture"
+      ? `in the log — the contract confirms this ${bytes === 197 ? "episode" : "capture"}`
       : "not in the log under that proof";
   } catch (err) {
     out.className = "verdict no";

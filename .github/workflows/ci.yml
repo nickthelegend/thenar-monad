@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: stable
+
+      - name: Install forge-std
+        working-directory: packages/contracts
+        run: forge install foundry-rs/forge-std --no-git
+
+      - name: Contracts
+        working-directory: packages/contracts
+        run: forge test -vv
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      # node:sqlite is built in, so the log store needs no native build step.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Protocol libraries
+        run: pnpm test:protocol
+
+      - name: Log store
+        run: pnpm test:log
+
+      # The published samples are checked against the live deployment, so a
+      # broken sample cannot sit on the site unnoticed. Network-dependent, so
+      # it does not fail the build when Monad is unreachable.
+      - name: Published samples verify on chain
+        run: pnpm test:samples
+        continue-on-error: true

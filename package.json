@@ -3,13 +3,24 @@
   "private": true,
   "packageManager": "pnpm@10.29.2",
   "scripts": {
-    "test:protocol": "tsx packages/protocol/test/run.ts",
+    "test:protocol": "tsx packages/protocol/test/run.ts && tsx packages/protocol/test/foundry.ts && tsx packages/protocol/test/episode.ts && tsx packages/protocol/test/selectors.ts",
+    "test:contracts": "cd packages/contracts && forge test",
+    "test:log": "tsx services/log/test/log.test.ts",
+    "test": "pnpm test:contracts && pnpm test:protocol && pnpm test:log",
     "vectors": "tsx packages/protocol/test/vectors.ts",
-    "test:contracts": "cd packages/contracts && forge test -vv",
-    "deploy:monad": "cd packages/contracts && forge script script/Deploy.s.sol:Deploy --rpc-url monad_testnet --broadcast --slow"
+    "log": "tsx services/log/src/cli.ts",
+    "deploy:monad": "cd packages/contracts && forge script script/Deploy.s.sol:Deploy --rpc-url monad_testnet --broadcast --slow",
+    "deploy:foundry": "cd packages/contracts && forge script script/DeployFoundry.s.sol:DeployFoundry --rpc-url monad_testnet --broadcast --slow",
+    "deploy:verifier": "cd packages/contracts && forge script script/DeployVerifier.s.sol:DeployVerifier --rpc-url monad_testnet --broadcast --slow",
+    "test:samples": "tsx scripts/check-samples.mjs"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "better-sqlite3"
+    ]
   },
   "devDependencies": {
-    "@types/node": "^26.4.0",
+    "@types/node": "^22.10.2",
     "tsx": "^4.19.2",
     "typescript": "^5.9.3",
     "viem": "^2.55.19"

@@ -4,3 +4,4 @@ export * from "./sampler";
 export * from "./embodiments";
 export * as log from "./log";
 export * as sparse from "./sparse";
+export * from "./episode";
