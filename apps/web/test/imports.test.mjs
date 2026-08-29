@@ -48,5 +48,37 @@ for (const f of files.filter((x) => x.endsWith(".html"))) {
   }
 }
 
+
+/* A module that exists but does not export the name being imported fails in
+ * exactly the same way — the whole importing module dies. thenar-avax shipped
+ * a corpus page that imported readCorpora from a grasp-chain.js which, being
+ * per-chain and therefore exempt from byte-parity, had drifted and never
+ * exported it. Checking the file exists was not enough. */
+const exportsOf = (src) => {
+  const names = new Set();
+  for (const m of src.matchAll(/export\s+(?:async\s+)?function\s+([A-Za-z0-9_$]+)/g)) names.add(m[1]);
+  for (const m of src.matchAll(/export\s+(?:const|let|var|class)\s+([A-Za-z0-9_$]+)/g)) names.add(m[1]);
+  for (const m of src.matchAll(/export\s*\{([^}]*)\}/g)) {
+    for (const part of m[1].split(",")) {
+      const name = part.split(/\s+as\s+/).pop().trim();
+      if (name) names.add(name);
+    }
+  }
+  return names;
+};
+
+for (const f of files) {
+  const src = readFileSync(join(web, f), "utf8");
+  for (const m of src.matchAll(/import\s*\{([^}]+)\}\s*from\s+"\.\/([a-zA-Z0-9._-]+\.js)"/g)) {
+    const wanted = m[1].split(",").map((x) => x.split(/\s+as\s+/)[0].trim()).filter(Boolean);
+    const target = join(web, m[2]);
+    if (!existsSync(target)) continue;            // already reported above
+    const have = exportsOf(readFileSync(target, "utf8"));
+    const missing = wanted.filter((w) => !have.has(w));
+    ok(missing.length === 0, `${f} imports ${wanted.join(", ")} from ${m[2]}`,
+       missing.length ? `missing: ${missing.join(", ")}` : "");
+  }
+}
+
 console.log(fails === 0 ? "\nweb imports: all resolve\n" : `\n${fails} broken reference(s)\n`);
 process.exit(fails ? 1 : 0);

@@ -71,7 +71,23 @@ async function rpc(method, params) {
   return j.result;
 }
 
-const call = (to, data) => rpc("eth_call", [{ to, data }, "latest"]);
+const ZERO_ADDR = "0x0000000000000000000000000000000000000000";
+
+/**
+ * Calling a contract that is not there returns "0x", and decoding that gives
+ * "Cannot convert 0x to a BigInt" — an internal complaint shown to somebody who
+ * only needed to be told the deployment does not exist yet. Say that instead.
+ */
+const call = async (to, data) => {
+  if (!to || to.toLowerCase() === ZERO_ADDR) {
+    throw new Error(`nothing is deployed on ${CHAIN.name} yet`);
+  }
+  const out = await rpc("eth_call", [{ to, data }, "latest"]);
+  if (!out || out === "0x") {
+    throw new Error(`${CHAIN.name} returned no data for ${to.slice(0, 10)}… — is it deployed?`);
+  }
+  return out;
+};
 const word = (hex, i) => "0x" + hex.slice(2 + i * 64, 2 + (i + 1) * 64);
 const num = (hex, i) => BigInt(word(hex, i));
 const pad = (n) => n.toString(16).padStart(64, "0");
