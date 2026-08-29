@@ -1,0 +1,162 @@
+{
+  "codebase_version": "v3.0",
+  "robot_type": "franka_panda",
+  "total_episodes": 27,
+  "total_frames": 16200,
+  "total_tasks": 1,
+  "fps": 20,
+  "data_path": "data/episode_{episode_index:06d}.jsonl",
+  "data_format": "jsonl",
+  "video_path": null,
+  "features": {
+    "observation.state": {
+      "dtype": "float32",
+      "shape": [
+        7
+      ],
+      "names": null
+    },
+    "action": {
+      "dtype": "float32",
+      "shape": [
+        7
+      ],
+      "names": null
+    },
+    "timestamp": {
+      "dtype": "float32",
+      "shape": [
+        1
+      ],
+      "names": null
+    }
+  },
+  "thenar": {
+    "chain": "Monad Testnet (10143)",
+    "task_id": "0xd408b39c1a9ba05556b68239415ffbb6f7f5ee8c08d7573f844f4691b25206b2",
+    "task_spec": {
+      "version": 1,
+      "embodiment": "franka_panda",
+      "actionSpace": "ee_pose_gripper",
+      "instruction": "Place the mug upright on the shelf (1787997651885)",
+      "world": {
+        "base": "kitchen_counter_v2",
+        "objects": [
+          {
+            "category": "mug",
+            "instances": [
+              "mug_a",
+              "mug_b",
+              "mug_c"
+            ],
+            "x": [
+              0.28,
+              0.42
+            ],
+            "y": [
+              -0.15,
+              0.15
+            ],
+            "yaw": [
+              0,
+              6.283
+            ]
+          },
+          {
+            "category": "distractor",
+            "instances": [
+              "box",
+              "can"
+            ],
+            "x": [
+              0.1,
+              0.5
+            ],
+            "y": [
+              -0.3,
+              0.3
+            ],
+            "count": [
+              0,
+              3
+            ]
+          }
+        ],
+        "lightingIntensity": [
+          0.6,
+          1.4
+        ]
+      },
+      "success": {
+        "predicate": "upright_on(mug, shelf) && settled(2.0)",
+        "toleranceMm": 25,
+        "settleS": 2
+      },
+      "acceptance": {
+        "minScoreBps": 5500,
+        "maxDurationS": 120,
+        "targetEpisodes": 500
+      }
+    },
+    "embodiment": {
+      "id": "franka_panda",
+      "name": "Panda",
+      "vendor": "Franka Emika",
+      "dof": 7,
+      "licence": "Apache-2.0"
+    },
+    "anchors": [
+      {
+        "index": 0,
+        "root": "0x55ea529189700a63156363e66e1e9d271ed1d602959374e11167720491840981",
+        "size": 30
+      },
+      {
+        "index": 1,
+        "root": "0x5f4d061c9c50dd73417f8604c5f7b20350204ab499574cf5f700c9c321d068d3",
+        "size": 31
+      },
+      {
+        "index": 2,
+        "root": "0xf2ec7285a73b2889eb03393184ca864d3ce1607580b85b3553b364f14ac1aac0",
+        "size": 40
+      },
+      {
+        "index": 3,
+        "root": "0x3eeef95b021c38384e42946e7a538ef216b9ee40453e4f6646c13596d882968f",
+        "size": 47
+      },
+      {
+        "index": 4,
+        "root": "0x3e82583d1e65b1755443b8939a40122e650352a04efcf354841d94329812e558",
+        "size": 52
+      },
+      {
+        "index": 5,
+        "root": "0xd14f6a1e138704adf27c054a65324ec299a765c7535f54148076e21803302ba2",
+        "size": 59
+      },
+      {
+        "index": 6,
+        "root": "0x98f267545bf1ce3dabed384f5b2685846f2b241cf2e26d5a99f674b98d79d37f",
+        "size": 64
+      },
+      {
+        "index": 7,
+        "root": "0x1dacd9d5f6a6c56850ce567f90cce69f8d93b679292d86f5ce030fb954c6aa86",
+        "size": 71
+      },
+      {
+        "index": 8,
+        "root": "0xdaf34f53d50e98e90debbf3d5f474bc933ad2b8ca1d97452c86f52b7315da9df",
+        "size": 76
+      },
+      {
+        "index": 9,
+        "root": "0x44b11a5b53214bb7cac8e5c6c775fd1e2b8d76976a2277a82c9a07e704254450",
+        "size": 77
+      }
+    ],
+    "note": "Simulated capture. Observation and action columns are null because no trajectory recorder exists yet; the provenance, task and world seed are real and checkable on chain. Do not present this as real-hardware demonstration data."
+  }
+}

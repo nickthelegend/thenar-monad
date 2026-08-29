@@ -41,7 +41,8 @@ function walk(root, dir, out = []) {
   if (!existsSync(full)) return out;
   for (const e of readdirSync(full)) {
     const rel = join(dir, e);
-    if (/node_modules|\.git|^out$|^cache$|^lib$|^broadcast$|\.glb$|\.png$/.test(e)) continue;
+    // An exported corpus belongs to the deployment that produced it.
+    if (/node_modules|\.git|^out$|^cache$|^lib$|^broadcast$|^corpus-\d+$|\.glb$|\.png$/.test(e)) continue;
     const p = join(root, rel);
     if (statSync(p).isDirectory()) walk(root, rel, out);
     else out.push(rel);
