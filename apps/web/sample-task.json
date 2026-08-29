@@ -1,0 +1,86 @@
+{
+  "network": "Monad Testnet (10143)",
+  "registry": "0x70244c42300f427a721a86416331d2a8d6ce2a51",
+  "market": "0x754845ff489f16a4a216562f0029aea29c678bad",
+  "log": "0x10325941C86397a4355b4801dC28EDf6c41F3c6f",
+  "taskId": 0,
+  "specHash": "0x6a667267f1ea50260e193246c676e0c05a7f00c081f393f5a245c4ce2f928b05",
+  "spec": {
+    "version": 1,
+    "embodiment": "franka_panda",
+    "actionSpace": "ee_pose_gripper",
+    "instruction": "Place the mug upright on the shelf (1787989633294)",
+    "world": {
+      "base": "kitchen_counter_v2",
+      "objects": [
+        {
+          "category": "mug",
+          "instances": [
+            "mug_a",
+            "mug_b",
+            "mug_c"
+          ],
+          "x": [
+            0.28,
+            0.42
+          ],
+          "y": [
+            -0.15,
+            0.15
+          ],
+          "yaw": [
+            0,
+            6.283
+          ]
+        },
+        {
+          "category": "distractor",
+          "instances": [
+            "box",
+            "can"
+          ],
+          "x": [
+            0.1,
+            0.5
+          ],
+          "y": [
+            -0.3,
+            0.3
+          ],
+          "count": [
+            0,
+            3
+          ]
+        }
+      ],
+      "lightingIntensity": [
+        0.6,
+        1.4
+      ]
+    },
+    "success": {
+      "predicate": "upright_on(mug, shelf) && settled(2.0)",
+      "toleranceMm": 25,
+      "settleS": 2
+    },
+    "acceptance": {
+      "minScoreBps": 5500,
+      "maxDurationS": 120,
+      "targetEpisodes": 500
+    }
+  },
+  "anchorIndex": 3,
+  "corpusId": 0,
+  "receiptId": 0,
+  "contributors": [
+    "0x20eb1a85321b4f0c7988e85AdbA97F53B519b272",
+    "0x749D7963B614743B6ceF42b4cA39451483473E8f",
+    "0x1bD1A86d375b1C3EEC8AecCaDb0FC96B1784229c"
+  ],
+  "weights": [
+    "36400",
+    "22200",
+    "12400"
+  ],
+  "licenceTx": "0x1a222fc0ebd920908518ff70e039ee89105379b4f65b0f7f7dd9902c8fc9ee74"
+}

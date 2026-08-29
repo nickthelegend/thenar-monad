@@ -9,6 +9,7 @@
     "deploy:monad": "cd packages/contracts && forge script script/Deploy.s.sol:Deploy --rpc-url monad_testnet --broadcast --slow"
   },
   "devDependencies": {
+    "@types/node": "^26.4.0",
     "tsx": "^4.19.2",
     "typescript": "^5.9.3",
     "viem": "^2.55.19"
