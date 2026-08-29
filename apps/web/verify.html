@@ -202,6 +202,21 @@ $("#logaddr").href = `${CHAIN.explorer}/address/${CHAIN.log}`;
 $("#mktaddr").textContent = short(CHAIN.market);
 $("#mktaddr").href = `${CHAIN.explorer}/address/${CHAIN.market}`;
 
+/* With nothing deployed there can be no published samples and nothing to ask
+ * the contract about. Say so once, rather than letting every button fetch a
+ * file that cannot exist and answer with a 404. */
+const NO_DEPLOYMENT = CHAIN.log === "0x0000000000000000000000000000000000000000";
+if (NO_DEPLOYMENT) {
+  for (const id of ["#vsample", "#vepisode", "#vrecorded", "#vform button[type=submit]"]) {
+    const el = $(id);
+    if (el) { el.disabled = true; el.title = `Nothing is deployed on ${CHAIN.name} yet.`; }
+  }
+  $("#vout").className = "verdict";
+  $("#vout").textContent =
+    `Nothing is deployed on ${CHAIN.name} yet, so there is no log to check against.`;
+}
+
+
 let anchorCount = null;
 (async () => {
   try {
