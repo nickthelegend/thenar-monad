@@ -25,9 +25,21 @@ function wireCopy(root) {
         b.classList.add("ok");
         setTimeout(() => { b.textContent = was; b.classList.remove("ok"); }, 1200);
       } catch {
-        // Clipboard is permission-gated; say so rather than pretending it worked.
-        b.textContent = "press ⌘C";
-        setTimeout(() => { b.textContent = short(v); }, 1400);
+        // Clipboard access is permission-gated and can be refused outright.
+        // Telling somebody to press ⌘C without selecting anything is useless,
+        // so put the value on the page and select it — then the instruction is
+        // true and the keystroke actually copies.
+        const holder = document.createElement("span");
+        holder.className = "mono";
+        holder.textContent = v;
+        holder.style.cssText = "user-select:all;word-break:break-all";
+        b.replaceWith(holder);
+        const range = document.createRange();
+        range.selectNodeContents(holder);
+        const sel = getSelection();
+        sel.removeAllRanges();
+        sel.addRange(range);
+        holder.title = "Selected — press ⌘C to copy";
       }
     });
   }
@@ -139,21 +151,32 @@ function card(c, task, receipts) {
   return el;
 }
 
-(async () => {
-  const host = $("#corpora");
+/** Exported so the empty and populated states can be tested without a chain. */
+export function render(host, corpora, tasks, receipts) {
+  host.innerHTML = "";
+  if (corpora.length === 0) {
+    host.innerHTML = `<div class="cempty" data-state="empty">No corpus has been sealed yet.
+      A corpus appears here once a task's accepted episodes are anchored and sealed.</div>`;
+    return;
+  }
+  for (const c of corpora) {
+    host.appendChild(card(c, tasks.find((t) => BigInt(t.index) === c.taskId), receipts));
+  }
+}
+
+export function renderError(host, message) {
+  host.innerHTML = `<div class="cempty" data-state="error">
+    Could not reach Monad, so nothing is shown rather than guessed. ${message}</div>`;
+}
+
+export async function load(host) {
   try {
     const [corpora, tasks, receipts] = await Promise.all([readCorpora(), readTasks(), readReceiptCount()]);
-    host.innerHTML = "";
-    if (corpora.length === 0) {
-      host.innerHTML = `<div class="cempty">No corpus has been sealed yet.
-        A corpus appears here once a task's accepted episodes are anchored and sealed.</div>`;
-      return;
-    }
-    for (const c of corpora) {
-      host.appendChild(card(c, tasks.find((t) => BigInt(t.index) === c.taskId), receipts));
-    }
+    render(host, corpora, tasks, receipts);
   } catch (e) {
-    host.innerHTML = `<div class="cempty" data-state="error">
-      Could not reach Monad, so nothing is shown rather than guessed. ${e.message}</div>`;
+    renderError(host, e.message);
   }
-})();
+}
+
+const host = $("#corpora");
+if (host) load(host);
