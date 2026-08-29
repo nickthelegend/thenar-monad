@@ -6,3 +6,4 @@ packages/contracts/broadcast/
 .env*
 !.env.example
 .vercel/
+.data/

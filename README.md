@@ -14,9 +14,19 @@ licence terms in the same transaction.
 | --- | --- |
 | **Site** | https://thenar.io |
 | **Network** | Monad Testnet — chain `10143` |
-| **`GraspLog`** | [`0x10325941C86397a4355b4801dC28EDf6c41F3c6f`](https://testnet.monadscan.com/address/0x10325941C86397a4355b4801dC28EDf6c41F3c6f) — verified |
-| **`GraspMarket`** | [`0x0f87309F410BDBB13B3E0d5c206e7aAC1397fBFa`](https://testnet.monadscan.com/address/0x0f87309F410BDBB13B3E0d5c206e7aAC1397fBFa) — verified |
-| **Verify a capture** | [thenar.io/verify](https://thenar.io/verify) — reads the contract directly, nothing through our servers |
+| **`GraspLog`** | [`0xe9950e8377787d6d6c4c6bda9e4188925a18da6a`](https://testnet.monadscan.com/address/0xe9950e8377787d6d6c4c6bda9e4188925a18da6a) |
+| **`LeafVerifier`** | [`0x0d789ee35382e1ea06ed0d82f55dcbf4c6130356`](https://testnet.monadscan.com/address/0x0d789ee35382e1ea06ed0d82f55dcbf4c6130356) |
+| **`TaskRegistry`** | [`0xf99bdc3512b074d7b6d21cb609ff05e54f465d24`](https://testnet.monadscan.com/address/0xf99bdc3512b074d7b6d21cb609ff05e54f465d24) |
+| **`FoundryMarket`** | [`0x735057412d1ef884a28bc409731a6f91679265f3`](https://testnet.monadscan.com/address/0x735057412d1ef884a28bc409731a6f91679265f3) |
+| **Verify** | [thenar.io/verify](https://thenar.io/verify) — reads the contract directly, nothing through our servers |
+
+All four are `full`-verified on Sourcify. The addresses live in `.env.contracts`,
+and `packages/protocol/test/selectors.ts` fails the build if the site or the
+scripts drift from them — this table was wrong once and that is the guard.
+
+Two earlier deployments are superseded and should not be used: `GraspLog`
+`0x10325941…`, whose anchors declared a size their root did not describe, and
+`GraspMarket` `0x0f87309F…`, replaced by `FoundryMarket`.
 
 Every check below passed against the live deployment:
 

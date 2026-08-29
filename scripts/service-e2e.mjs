@@ -49,7 +49,10 @@ function makeEpisode(i) {
       consentCommitment: h(`consent-${i}-${stamp}`), termsId: h("thenar-licence-v1"),
       taskId: tid, capturedAt: stamp - BigInt(900 - i * 60), submittedAt: stamp - BigInt(600 - i * 30),
       durationMs: 3200 + i * 140, scopeBits: 11, channels: 6,
-      worldSeed: seed, successFlag: success ? 1 : 0, qualityScore: success ? 6200 + i * 300 : 1800,
+      worldSeed: seed, successFlag: success ? 1 : 0,
+      // Basis points: the encoder refuses anything above 10000, and the index
+      // is not bounded, so the spread has to wrap rather than run away.
+      qualityScore: success ? 6200 + (i % 12) * 300 : 1800,
     },
   };
 }
@@ -166,8 +169,8 @@ check(live === true, "an unwithdrawn consent still proves live against the ancho
 
 // ---- the service can re-derive every anchor it wrote ------------------------
 const audit = await auditAnchors(store, LOG);
-check(audit.every((r) => r.coherent), "every anchor re-derives from the stored leaves",
-  audit.map((r) => `#${r.index} ${r.coherent ? "ok" : "INCOHERENT"}`).join(" "));
+check(audit.every((r) => r.status === "coherent"), "every anchor re-derives from the stored leaves",
+  audit.map((r) => `#${r.index} ${r.status}`).join(" "));
 
 writeFileSync("apps/web/sample-episode.json", JSON.stringify({
   network: "Monad Testnet (10143)", log: LOG, verifier: VERIFIER,

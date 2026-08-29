@@ -93,25 +93,50 @@ export async function anchorHead(store: LogStore, logAddress: Hex): Promise<Anch
 }
 
 /**
- * Check every on-chain anchor this store believes it wrote: the root the chain
- * holds must be the root of exactly the first `size` leaves we still have.
- * A log that cannot re-derive its own anchors is not serving proofs.
+ * Check every anchor the CHAIN holds, not just the ones this store happens to
+ * remember. Auditing only our own records is how an anchor nobody can verify
+ * stays invisible: the store is restored from a copy, an older anchor's leaves
+ * are gone, and a silent skip reports a clean log over a hole in it.
+ *
+ * An anchor is coherent when the root the chain carries is the root of exactly
+ * the first `size` leaves this store still holds. Anything else is reported,
+ * with which of the two it is: a hole we cannot re-derive, or a genuine mismatch.
  */
-export async function auditAnchors(store: LogStore, logAddress: Hex) {
+export type AnchorAudit = {
+  index: number;
+  status: "coherent" | "unverifiable" | "mismatch";
+  detail: string;
+};
+
+export async function auditAnchors(store: LogStore, logAddress: Hex): Promise<AnchorAudit[]> {
   const pub = createPublicClient({ chain: MONAD, transport: http() });
-  const out: { index: number; coherent: boolean; detail: string }[] = [];
-  for (const a of store.anchors()) {
+  const count = Number(await pub.readContract({
+    address: logAddress, abi: LOG_ABI, functionName: "anchorCount",
+  }));
+
+  const out: AnchorAudit[] = [];
+  for (let i = 0; i < count; i++) {
     const onChain = await pub.readContract({
-      address: logAddress, abi: LOG_ABI, functionName: "anchorAt", args: [BigInt(a.idx)],
+      address: logAddress, abi: LOG_ABI, functionName: "anchorAt", args: [BigInt(i)],
     }) as { root: Hex; size: bigint };
-    const rebuilt = store.root(Number(onChain.size));
-    const coherent = onChain.root === rebuilt && Number(onChain.size) === a.size;
-    out.push({
-      index: a.idx, coherent,
-      detail: coherent
-        ? `size ${a.size}, root re-derives`
-        : `chain says size ${onChain.size} root ${onChain.root.slice(0, 12)}…, store rebuilds ${rebuilt.slice(0, 12)}…`,
-    });
+    const size = Number(onChain.size);
+
+    if (size > store.size()) {
+      out.push({
+        index: i, status: "unverifiable",
+        detail: `chain anchored ${size} leaves; this store holds ${store.size()}`,
+      });
+      continue;
+    }
+    const rebuilt = store.root(size);
+    out.push(
+      rebuilt === onChain.root
+        ? { index: i, status: "coherent", detail: `size ${size}, root re-derives` }
+        : {
+            index: i, status: "mismatch",
+            detail: `size ${size}: chain ${onChain.root.slice(0, 14)}…, store rebuilds ${rebuilt.slice(0, 14)}…`,
+          },
+    );
   }
   return out;
 }

@@ -8,10 +8,10 @@ Target: https://thenar.io · Monad Testnet (10143)
 
 | Contract | Address |
 | --- | --- |
-| `GraspLog` | `0x1594cc3a47bd92a10f85f0f611abae45b6fa94b2` |
-| `LeafVerifier` | `0x86bc21f33c93739b13c48ca1a90c2f84c20e5a27` |
-| `TaskRegistry` | `0x1a2d0d9f0763480cb2c2f3a5bf9e52140f4c59a8` |
-| `FoundryMarket` | `0xf5ff82fae366133ec64b5e8cda107d89d3c0449d` |
+| `GraspLog` | `0xe9950e8377787d6d6c4c6bda9e4188925a18da6a` |
+| `LeafVerifier` | `0x0d789ee35382e1ea06ed0d82f55dcbf4c6130356` |
+| `TaskRegistry` | `0xf99bdc3512b074d7b6d21cb609ff05e54f465d24` |
+| `FoundryMarket` | `0x735057412d1ef884a28bc409731a6f91679265f3` |
 
 Addresses live in `.env.contracts`; `packages/protocol/test/selectors.ts` fails
 the build if the web pages or scripts drift from them.

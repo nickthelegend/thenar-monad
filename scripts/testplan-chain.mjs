@@ -65,8 +65,8 @@ const { auditAnchors } = await import("../services/log/src/anchorer.ts");
 const store = new LogStore(process.env.THENAR_LOG_DB ?? ".data/log.db");
 const audit = await auditAnchors(store, LOG);
 store.close();
-item("C3", audit.length > 0 && audit.every((r) => r.coherent),
-  `every anchor's size and root describe the same tree — ${audit.map((r) => `#${r.index}${r.coherent ? "" : " INCOHERENT"}`).join(" ")}`);
+item("C3", audit.length > 0 && audit.every((r) => r.status === "coherent"),
+  `every anchor's size and root describe the same tree — ${audit.map((r) => `#${r.index} ${r.status}`).join(" ")}`);
 
 const ep = JSON.parse(readFileSync("apps/web/sample-episode.json", "utf8"));
 const epOk = await pub.readContract({ address: VERIFIER, abi: vAbi, functionName: "verifyLeaf",

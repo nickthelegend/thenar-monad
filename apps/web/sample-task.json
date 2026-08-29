@@ -1,15 +1,15 @@
 {
   "network": "Monad Testnet (10143)",
-  "registry": "0x1a2d0d9f0763480cb2c2f3a5bf9e52140f4c59a8",
-  "market": "0xf5ff82fae366133ec64b5e8cda107d89d3c0449d",
-  "log": "0x1594cc3a47bd92a10f85f0f611abae45b6fa94b2",
+  "registry": "0xf99bdc3512b074d7b6d21cb609ff05e54f465d24",
+  "market": "0x735057412d1ef884a28bc409731a6f91679265f3",
+  "log": "0xe9950e8377787d6d6c4c6bda9e4188925a18da6a",
   "taskId": 0,
-  "specHash": "0x05c75801db1d69bba298690505a5bb835712e7952a08a2adb7335d164f31522c",
+  "specHash": "0xd408b39c1a9ba05556b68239415ffbb6f7f5ee8c08d7573f844f4691b25206b2",
   "spec": {
     "version": 1,
     "embodiment": "franka_panda",
     "actionSpace": "ee_pose_gripper",
-    "instruction": "Place the mug upright on the shelf (1787992767259)",
+    "instruction": "Place the mug upright on the shelf (1787997651885)",
     "world": {
       "base": "kitchen_counter_v2",
       "objects": [
@@ -69,18 +69,18 @@
       "targetEpisodes": 500
     }
   },
-  "anchorIndex": 4,
+  "anchorIndex": 2,
   "corpusId": 0,
   "receiptId": 0,
   "contributors": [
-    "0x3D4227aA114dEf0dA34E4B49e39Aa9d64B83FB98",
-    "0xb59fb46990991BD96e48eEB6cBfb09D0e478b892",
-    "0x1179afa5ed9Fe6Ece066DB9Bf79ae31e19B3B23e"
+    "0x074A835Db27C083618C695472a1D716DA5daC42f",
+    "0x30C84Ac0B7Ec3D18a489e2aAe28cA8d30AF2dB09",
+    "0x894345f34468c3656Cf8b722d9F66aF72F4fbAE3"
   ],
   "weights": [
     "36400",
     "22200",
     "12400"
   ],
-  "licenceTx": "0x8fee565f5cca727121151810a5e63d854e12be790f88ebe758305a13615e0c19"
+  "licenceTx": "0x74cd1a4fd0348ceaf0cbdaf4f91a54291d57e4dd2d50f2084f5ad8141d8402cc"
 }
