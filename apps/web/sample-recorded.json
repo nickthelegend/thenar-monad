@@ -1,0 +1,29 @@
+{
+  "network": "Monad Testnet (10143)",
+  "log": "0xe9950e8377787d6d6c4c6bda9e4188925a18da6a",
+  "verifier": "0x0d789ee35382e1ea06ed0d82f55dcbf4c6130356",
+  "anchorIndex": 11,
+  "leafIndex": 78,
+  "preimage": "0x02c8b861dd828d6b1a835661a1a7cae7effc2d52e49449bd1179e6fc05b3f13227bd7dd82bc0c1075eabb73ea4f450e50492696f5b4eb2abb3360e734e3edcca671393de4db939d370e3699a311417f89bffc2c8a50c66d02f3750f27fd23537fefb9c1a3190e75ddecfc791fb7b667d7c05a1368e50f401dc6f4a9969685fc07fd408b39c1a9ba05556b68239415ffbb6f7f5ee8c08d7573f844f4691b25206b2000000006a8374b7000000006a8374c0000024ea0000000b0300000000013527dd011edb",
+  "proof": [
+    "0x1f52ceb6d7eada7cba58ff572081e428ddead609f5dbe9949c103b5f49dd5c48",
+    "0xed9d5cc18294076cfdd8ec0dacd6c3c7589657a9db3ae4bbd602a6d0dd023946",
+    "0x9eb74808bc58c5af2130e6e984b2af2f678fb5852d5c8b113cd5a049c92aa9b6",
+    "0x98f267545bf1ce3dabed384f5b2685846f2b241cf2e26d5a99f674b98d79d37f"
+  ],
+  "taskId": "0xd408b39c1a9ba05556b68239415ffbb6f7f5ee8c08d7573f844f4691b25206b2",
+  "worldSeed": 20260829,
+  "success": true,
+  "qualityScore": 7899,
+  "expected": true,
+  "recorded": {
+    "method": "browser-kinematic-v1",
+    "hz": 20,
+    "samples": 190,
+    "durationS": 9.45,
+    "deviationMm": 4.49,
+    "meanJerk": 4.58,
+    "physics": "none: kinematic, no contact model",
+    "note": "A trajectory recorded through the capture page, not a synthetic payload. The score was computed from these samples; the payload hash commits to them."
+  }
+}

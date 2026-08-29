@@ -3,7 +3,7 @@
   "private": true,
   "packageManager": "pnpm@10.29.2",
   "scripts": {
-    "test:protocol": "tsx packages/protocol/test/run.ts && tsx packages/protocol/test/foundry.ts && tsx packages/protocol/test/episode.ts && tsx packages/protocol/test/selectors.ts && tsx packages/protocol/test/ci.ts",
+    "test:protocol": "tsx packages/protocol/test/run.ts && tsx packages/protocol/test/foundry.ts && tsx packages/protocol/test/episode.ts && tsx packages/protocol/test/selectors.ts && tsx packages/protocol/test/score.ts && tsx packages/protocol/test/ci.ts",
     "test:contracts": "cd packages/contracts && forge test",
     "test:log": "tsx services/log/test/log.test.ts",
     "test": "pnpm test:contracts && pnpm test:protocol && pnpm test:log && pnpm test:export && pnpm test:web && pnpm test:samples",
@@ -13,7 +13,7 @@
     "deploy:foundry": "cd packages/contracts && forge script script/DeployFoundry.s.sol:DeployFoundry --rpc-url monad_testnet --broadcast --slow",
     "deploy:verifier": "cd packages/contracts && forge script script/DeployVerifier.s.sol:DeployVerifier --rpc-url monad_testnet --broadcast --slow",
     "test:samples": "tsx scripts/check-samples.mjs",
-    "test:web": "node apps/web/test/grasp.test.mjs && node apps/web/test/imports.test.mjs && tsx apps/web/test/keccak.test.mjs && tsx apps/web/test/scene.test.mjs && tsx apps/web/test/corpus.test.mjs && tsx apps/web/test/taskspec.test.mjs && tsx apps/web/test/build.test.mjs",
+    "test:web": "node apps/web/test/grasp.test.mjs && node apps/web/test/imports.test.mjs && tsx apps/web/test/keccak.test.mjs && tsx apps/web/test/scene.test.mjs && tsx apps/web/test/corpus.test.mjs && tsx apps/web/test/taskspec.test.mjs && tsx apps/web/test/build.test.mjs && tsx apps/web/test/score.test.mjs && tsx apps/web/test/episode.test.mjs && node apps/web/test/capture.test.mjs && node apps/web/test/nav.test.mjs",
     "test:export": "tsx services/export/test/lerobot.test.ts",
     "export": "tsx scripts/export-corpus.mjs",
     "test:parity": "node scripts/check-parity.mjs . ../thenar-avax",

@@ -18,7 +18,7 @@ const abi = parseAbi([
 let fails = 0;
 const ok = (c_, m, x = "") => { if (!c_) fails++; console.log(`${c_ ? "  ok  " : " FAIL "} ${m}${x ? ` — ${x}` : ""}`); };
 
-for (const [file, kind, bytes] of [["sample-proof.json", "capture", 154], ["sample-episode.json", "episode", 197]]) {
+for (const [file, kind, bytes] of [["sample-proof.json", "capture", 154], ["sample-episode.json", "episode", 197], ["sample-recorded.json", "recorded episode", 197]]) {
   const s = JSON.parse(readFileSync(`apps/web/${file}`, "utf8"));
   ok(s.log?.toLowerCase() === c.GRASP_LOG.toLowerCase(), `${file} names the current log`);
   ok((s.preimage.length - 2) / 2 === bytes, `${file} preimage is ${bytes} bytes`);
@@ -44,5 +44,31 @@ ok(facts[0] === ep.taskId && Number(facts[1]) === ep.worldSeed && facts[3] === e
    "the episode sample's advertised facts match what the chain decodes",
    `seed ${facts[1]}, ${facts[3]} bps`);
 
-console.log(fails === 0 ? "\nboth published samples verify against the live deployment\n" : `\n${fails} check(s) failed\n`);
+/* The recorded sample is the one that claims to be a real capture, so it is
+   held to more than the others: the published trajectory has to earn the score
+   the chain reports, and commit to the payload hash inside the leaf. Otherwise
+   "recorded" is a word on a page rather than a property of the data. */
+{
+  const rec = JSON.parse(readFileSync("apps/web/sample-recorded.json", "utf8"));
+  const bundle = JSON.parse(readFileSync("apps/web/samples/episode-c8571734.json", "utf8"));
+  const chainFacts = await pub.readContract({ address: c.LEAF_VERIFIER, abi,
+    functionName: "episodeFacts", args: [rec.preimage] });
+
+  const { scoreTrajectory, canonicalTrajectory } = await import("../packages/protocol/src/score.ts");
+  const { keccak256, toHex } = await import("viem");
+  const again = scoreTrajectory(bundle.trajectory);
+
+  ok(bundle.leaf === (await import("../packages/protocol/src/episode.ts"))
+       .hashEpisodeLeaf(rec.preimage), "the published trajectory belongs to the anchored leaf");
+  ok(again.totalBps === Number(chainFacts[3]),
+     "and re-scoring it gives the score the chain reports",
+     `${again.totalBps} bps`);
+  ok(keccak256(toHex(canonicalTrajectory(bundle.trajectory))).toLowerCase()
+       === String(bundle.episode.payloadHash).toLowerCase(),
+     "and the payload hash still commits to every sample");
+  ok(bundle.trajectory.samples.length === rec.recorded.samples,
+     "and the sample count is the one advertised", `${bundle.trajectory.samples.length}`);
+}
+
+console.log(fails === 0 ? "\nevery published sample verifies against the live deployment\n" : `\n${fails} check(s) failed\n`);
 process.exit(fails ? 1 : 0);

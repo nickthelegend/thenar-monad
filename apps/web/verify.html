@@ -54,6 +54,7 @@
     <a href="./faq.html">FAQ</a>
     <a href="./company.html">Company</a>
     <a href="./build.html">Build</a>
+    <a href="./capture.html">Capture</a>
     <a href="./corpus.html">Corpora</a>
     <a href="./verify.html" aria-current="page">Verify</a>
   </nav>
@@ -135,6 +136,7 @@
       <button class="btn primary" type="submit">Ask the contract</button>
       <button class="btn" type="button" id="vsample">Load a real capture</button>
       <button class="btn" type="button" id="vepisode">Load a real episode</button>
+      <button class="btn" type="button" id="vrecorded">Load a recorded episode</button>
       <span id="vout" class="verdict wait">nothing checked yet</span>
     </div>
   </form>
@@ -264,6 +266,7 @@ addEventListener("keydown", (e) => {
   if ((e.metaKey || e.ctrlKey) && e.key === "Enter") { e.preventDefault(); $("#vform button[type=submit]").click(); }
   else if (e.key === "s" && !e.metaKey && !e.ctrlKey) { e.preventDefault(); $("#vsample").click(); }
   else if (e.key === "e" && !e.metaKey && !e.ctrlKey) { e.preventDefault(); $("#vepisode").click(); }
+  else if (e.key === "r" && !e.metaKey && !e.ctrlKey) { e.preventDefault(); $("#vrecorded").click(); }
 });
 
 $("#vsample").addEventListener("click", async () => {
@@ -297,6 +300,28 @@ $("#vepisode").addEventListener("click", async () => {
   } catch {
     out.className = "verdict no";
     out.textContent = "no episode sample published yet";
+  }
+});
+
+/* The recorded sample is the one that came out of the capture page: a real
+   trajectory, scored from its own samples. The others were built to exercise
+   the encoding, and saying so is cheaper than being caught not saying it. */
+$("#vrecorded").addEventListener("click", async () => {
+  const out = $("#vout");
+  try {
+    const s = await fetch("./sample-recorded.json").then((r) => r.json());
+    $("#vindex").value = s.anchorIndex;
+    $("#vpre").value = s.preimage;
+    $("#vleaf").value = s.leafIndex;
+    $("#vproof").value = s.proof.join(", ");
+    out.className = "verdict wait";
+    const r = s.recorded;
+    out.textContent = `loaded a recorded episode — ${r.samples} samples at ${r.hz} Hz over ` +
+      `${r.durationS} s, ${r.deviationMm} mm from the datum, scored ${(s.qualityScore / 100).toFixed(2)}%`;
+    showDecoded(s.preimage);
+  } catch {
+    out.className = "verdict no";
+    out.textContent = "no recorded sample published yet";
   }
 });
 

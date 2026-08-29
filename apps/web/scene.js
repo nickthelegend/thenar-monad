@@ -70,6 +70,29 @@ const kelvinToRgb = (k) => {
  * Drawn to the canvas' own pixels so it stays crisp, and it never invents an
  * object the spec did not declare.
  */
+/**
+ * World to screen. Framed on the spec's declared ranges, not on this
+ * particular sample, so the view is the task's rather than one draw's — and
+ * exported because the capture page draws an arm into the same frame. A frame
+ * computed twice is a frame that eventually disagrees with itself.
+ */
+export function sceneMapping(w, h, spec) {
+  let lo = [Infinity, Infinity], hi = [-Infinity, -Infinity];
+  for (const o of spec.world.objects) {
+    lo = [Math.min(lo[0], o.x[0]), Math.min(lo[1], o.y[0])];
+    hi = [Math.max(hi[0], o.x[1]), Math.max(hi[1], o.y[1])];
+  }
+  if (!isFinite(lo[0])) { lo = [0, 0]; hi = [1, 1]; }
+  const padX = Math.max(0.08, (hi[0] - lo[0]) * 0.16), padY = Math.max(0.08, (hi[1] - lo[1]) * 0.16);
+  lo = [lo[0] - padX, lo[1] - padY]; hi = [hi[0] + padX, hi[1] + padY];
+  const s = Math.min(w / (hi[0] - lo[0]), h / (hi[1] - lo[1]));
+  const ox = (w - (hi[0] - lo[0]) * s) / 2, oy = (h - (hi[1] - lo[1]) * s) / 2;
+  return { s, lo, hi,
+    X: (x) => ox + (x - lo[0]) * s,
+    Y: (y) => h - (oy + (y - lo[1]) * s),
+    toWorld: (px, py) => [lo[0] + (px - ox) / s, lo[1] + (h - py - oy) / s] };
+}
+
 export function drawScene(cv, scene, spec) {
   const ctx = cv.getContext("2d");
   const dpr = Math.min(devicePixelRatio || 1, 2);
@@ -79,21 +102,7 @@ export function drawScene(cv, scene, spec) {
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   ctx.clearRect(0, 0, w, h);
 
-  // Bounds come from the spec's declared ranges, so the view frames the task
-  // rather than whatever this particular sample happened to land on.
-  let lo = [Infinity, Infinity], hi = [-Infinity, -Infinity];
-  for (const o of spec.world.objects) {
-    lo = [Math.min(lo[0], o.x[0]), Math.min(lo[1], o.y[0])];
-    hi = [Math.max(hi[0], o.x[1]), Math.max(hi[1], o.y[1])];
-  }
-  if (!isFinite(lo[0])) { lo = [0, 0]; hi = [1, 1]; }
-  const padX = Math.max(0.08, (hi[0] - lo[0]) * 0.16), padY = Math.max(0.08, (hi[1] - lo[1]) * 0.16);
-  lo = [lo[0] - padX, lo[1] - padY]; hi = [hi[0] + padX, hi[1] + padY];
-  const sx = w / (hi[0] - lo[0]), sy = h / (hi[1] - lo[1]);
-  const s = Math.min(sx, sy);
-  const ox = (w - (hi[0] - lo[0]) * s) / 2, oy = (h - (hi[1] - lo[1]) * s) / 2;
-  const X = (x) => ox + (x - lo[0]) * s;
-  const Y = (y) => h - (oy + (y - lo[1]) * s);
+  const { s, lo, hi, X, Y } = sceneMapping(w, h, spec);
 
   const [lr, lg, lb] = kelvinToRgb(scene.lightingTemperatureK);
   const warmth = Math.max(0.05, Math.min(0.5, scene.lightingIntensity * 0.22));

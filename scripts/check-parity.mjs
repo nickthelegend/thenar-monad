@@ -26,6 +26,7 @@ const EXEMPT = new Set([
   "apps/web/sample-proof.json",
   "apps/web/sample-episode.json",
   "apps/web/sample-task.json",
+  "apps/web/sample-recorded.json",   // names an anchor on one chain
   "packages/protocol/test/selectors.ts",
   "scripts/check-samples.mjs",
   "scripts/check-parity.mjs",
@@ -42,7 +43,8 @@ function walk(root, dir, out = []) {
   for (const e of readdirSync(full)) {
     const rel = join(dir, e);
     // An exported corpus belongs to the deployment that produced it.
-    if (/node_modules|\.git|^out$|^cache$|^lib$|^broadcast$|^corpus-\d+$|\.glb$|\.png$/.test(e)) continue;
+    // A recorded episode is anchored on one chain; each repo carries its own.
+    if (/node_modules|\.git|^out$|^cache$|^lib$|^broadcast$|^corpus-\d+$|^samples$|\.glb$|\.png$/.test(e)) continue;
     const p = join(root, rel);
     if (statSync(p).isDirectory()) walk(root, rel, out);
     else out.push(rel);

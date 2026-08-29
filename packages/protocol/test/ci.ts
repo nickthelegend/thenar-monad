@@ -39,5 +39,25 @@ for (const s of suites) {
   ok(agg.includes(s), `pnpm test chains ${s}`);
 }
 
+
+/* A suite that is a hand-written chain of files hides a second way to go
+   unrun: adding a test file and forgetting to add it to the chain. The file
+   exists, passes locally when invoked by hand, and never runs again. */
+import { readdirSync } from "node:fs";
+const CHAINS: Record<string, string> = {
+  "apps/web/test": pkg.scripts["test:web"] ?? "",
+  "packages/protocol/test": pkg.scripts["test:protocol"] ?? "",
+  "services/log/test": pkg.scripts["test:log"] ?? "",
+  "services/export/test": pkg.scripts["test:export"] ?? "",
+};
+/* Not a suite: imported by other tests rather than run on its own. */
+const NOT_A_SUITE = new Set(["vectors.ts", "helpers.ts"]);
+for (const [dir, chain] of Object.entries(CHAINS)) {
+  for (const f of readdirSync(dir)) {
+    if (!/\.(ts|mjs)$/.test(f) || NOT_A_SUITE.has(f)) continue;
+    ok(chain.includes(`${dir}/${f}`), `${dir}/${f} is in its suite`);
+  }
+}
+
 console.log(fails === 0 ? "\nCI covers every suite\n" : `\n${fails} suite(s) unguarded\n`);
 process.exit(fails ? 1 : 0);

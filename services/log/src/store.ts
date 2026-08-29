@@ -62,8 +62,24 @@ export class LogStore {
     `);
   }
 
-  /** Append a leaf. Returns its index. A duplicate leaf is refused, not silently reindexed. */
+  /**
+   * Append a leaf. Returns its index. A duplicate leaf is refused, not silently
+   * reindexed.
+   *
+   * The argument is the leaf *hash*, never the preimage. Passing a preimage
+   * here is an easy mistake — both are hex, both look plausible, and the tree
+   * will happily hash whatever it is given — but it produces a leaf that no
+   * inclusion proof can ever tie back to an episode, and the anchor audit will
+   * not catch it, because the audit re-derives the root from these same stored
+   * values and so agrees with itself. It cost an anchor to learn that. The
+   * length check makes the mistake unrepresentable instead.
+   */
   append(leaf: Hex, meta: Partial<Omit<StoredLeaf, "index" | "leaf" | "createdAt">> = {}): number {
+    if (!/^0x[0-9a-fA-F]{64}$/.test(leaf)) {
+      throw new Error(
+        `a leaf must be a 32-byte hash, got ${(leaf.length - 2) / 2} bytes — ` +
+        `did you pass the preimage instead of hashLeaf(preimage)?`);
+    }
     const existing = this.db.prepare("SELECT idx FROM leaf WHERE leaf = ?").get(leaf) as { idx: number } | undefined;
     if (existing) throw new Error(`leaf already in the log at index ${existing.idx}`);
     const idx = this.size();
