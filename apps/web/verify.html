@@ -21,6 +21,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="./site.css">
+<link rel="stylesheet" href="./chainui.css">
 <style>
   .vtable{width:100%;border-collapse:collapse;margin:24px 0;font-size:14px}
   .vtable th{text-align:left;font-weight:600;color:var(--mute,#6E6E6E);
@@ -52,6 +53,7 @@
     <a href="./market.html">Market</a>
     <a href="./faq.html">FAQ</a>
     <a href="./company.html">Company</a>
+    <a href="./corpus.html">Corpora</a>
     <a href="./verify.html" aria-current="page">Verify</a>
   </nav>
   <a class="btn primary" href="./index.html#contact">Talk to us</a>
@@ -135,6 +137,18 @@
       <span id="vout" class="verdict wait">nothing checked yet</span>
     </div>
   </form>
+  <div id="vdecoded" hidden style="margin-top:26px">
+    <h3 style="font-size:15px;margin:0 0 4px">What this episode committed to</h3>
+    <p style="color:#9B9B9B;font-size:13px;margin:0 0 12px;max-width:62ch">
+      Decoded from the preimage itself, not from an index we keep. The world
+      below is rebuilt from the task and the seed — the same arrangement the
+      demonstration was recorded in.
+    </p>
+    <div class="figs" id="vfacts"></div>
+    <canvas class="scene" id="vscene" aria-label="The sampled world this episode was recorded in"></canvas>
+    <p style="color:#6E6E6E;font-size:12px;margin-top:8px" id="vscenecap"></p>
+  </div>
+
   <p style="color:#6E6E6E;font-size:13px;margin-top:14px;max-width:62ch">
     A failed check here is the system working. If a preimage is altered by one
     byte the proof stops matching, which is the whole reason the commitment is a
@@ -174,6 +188,7 @@
 <!-- FOOT:END -->
 <script type="module">
 import { MONAD, readAnchors } from "./grasp-chain.js";
+import { sampleScene, drawScene } from "./scene.js";
 
 const $ = (s) => document.querySelector(s);
 const short = (h) => h.slice(0, 10) + "…" + h.slice(-6);
@@ -236,6 +251,20 @@ function encodeVerify(index, preimage, proof, leafIndex) {
 
 /* A worked example nobody can reproduce is not evidence. This loads a capture
    that is genuinely in the anchored log, written by the end-to-end run. */
+if (applyDeepLink()) setTimeout(() => $("#vform button[type=submit]").click(), 400);
+
+/* Keyboard, for anyone checking more than one thing. */
+addEventListener("keydown", (e) => {
+  // e.target is not always an Element — a synthetic event can target window,
+  // and calling .matches on that throws and kills the handler silently.
+  const t = e.target instanceof Element ? e.target : null;
+  const typing = !!t && (t.matches("input, textarea") || t.isContentEditable);
+  if (typing && !(e.metaKey || e.ctrlKey)) return;
+  if ((e.metaKey || e.ctrlKey) && e.key === "Enter") { e.preventDefault(); $("#vform button[type=submit]").click(); }
+  else if (e.key === "s" && !e.metaKey && !e.ctrlKey) { e.preventDefault(); $("#vsample").click(); }
+  else if (e.key === "e" && !e.metaKey && !e.ctrlKey) { e.preventDefault(); $("#vepisode").click(); }
+});
+
 $("#vsample").addEventListener("click", async () => {
   const out = $("#vout");
   try {
@@ -246,6 +275,7 @@ $("#vsample").addEventListener("click", async () => {
     $("#vproof").value = s.proof.join(", ");
     out.className = "verdict wait";
     out.textContent = "loaded — now ask the contract";
+    showDecoded(s.preimage);
   } catch {
     out.className = "verdict no";
     out.textContent = "no sample published yet";
@@ -262,11 +292,105 @@ $("#vepisode").addEventListener("click", async () => {
     $("#vproof").value = s.proof.join(", ");
     out.className = "verdict wait";
     out.textContent = `loaded episode — task ${s.taskId.slice(0, 10)}…, world seed ${s.worldSeed}`;
+    showDecoded(s.preimage);
   } catch {
     out.className = "verdict no";
     out.textContent = "no episode sample published yet";
   }
 });
+
+/* Decode the 197-byte episode leaf and rebuild the world it names. The layout
+   is EpisodeLeaf.sol's, and packages/protocol/test/episode.ts holds both to it. */
+function decodeEpisode(preimage) {
+  const raw = preimage.replace(/^0x/, "");
+  if (raw.length / 2 !== 197) return null;
+  const at = (off, len) => "0x" + raw.slice(off * 2, (off + len) * 2);
+  return {
+    taskId: at(129, 32),
+    capturedAt: Number(BigInt(at(161, 8))),
+    durationMs: Number(BigInt(at(177, 4))),
+    channels: Number(BigInt(at(185, 1))),
+    worldSeed: BigInt(at(186, 8)),
+    success: Number(BigInt(at(194, 1))) === 1,
+    qualityScore: Number(BigInt(at(195, 2))),
+  };
+}
+
+let taskSpec = null;
+const specReady = fetch("./sample-task.json")
+  .then((r) => r.json())
+  .then((d) => { taskSpec = d.spec; return d.spec; })
+  .catch(() => null);
+
+async function showDecoded(preimage) {
+  const panel = $("#vdecoded");
+  const cap = $("#vscenecap");
+  const f = decodeEpisode(preimage);
+  // Captures are 154 bytes and carry no task or seed, so there is nothing to
+  // rebuild — that is not an error, it is the other leaf version.
+  if (!f) {
+    panel.hidden = true;
+    return;
+  }
+  panel.hidden = false;
+  try {
+    await renderDecoded(f, cap);
+  } catch (e) {
+    cap.textContent = `Could not rebuild the world: ${e.message}`;
+  }
+}
+
+async function renderDecoded(f, cap) {
+  const panel = $("#vdecoded");
+  const fig = (k, v) => `<div class="fig"><div class="k">${k}</div><div class="v small">${v}</div></div>`;
+  $("#vfacts").innerHTML =
+    fig("Verdict", f.success ? '<span style="color:#7CE0A5">succeeded</span>' : '<span style="color:#FA9DCD">failed</span>') +
+    fig("Quality", `${(f.qualityScore / 100).toFixed(2)}%`) +
+    fig("World seed", String(f.worldSeed)) +
+    fig("Duration", `${(f.durationMs / 1000).toFixed(1)} s`) +
+    fig("Channels", String(f.channels)) +
+    fig("Captured", new Date(f.capturedAt * 1000).toISOString().slice(0, 16).replace("T", " "));
+
+  const cv = $("#vscene");
+  // The spec may still be in flight on a fast click; wait for it rather than
+  // reporting that it does not exist.
+  if (!taskSpec) taskSpec = await specReady;
+  if (!taskSpec) {
+    cap.textContent = "The task spec is not published here, so the world cannot be rebuilt.";
+    return;
+  }
+  const scene = sampleScene(taskSpec, f.taskId, f.worldSeed);
+  drawScene(cv, scene, taskSpec);
+  cap.textContent =
+    `Rebuilt from task ${f.taskId.slice(0, 10)}… and seed ${f.worldSeed}. ` +
+    `Dashed outlines are the ranges the curator authored; the shapes are where this seed placed them.`;
+  addEventListener("resize", () => drawScene(cv, scene, taskSpec), { passive: true });
+}
+
+/* A verification anyone can be sent. */
+function applyDeepLink() {
+  const q = new URLSearchParams(location.search);
+  let used = false;
+  for (const [key, sel] of [["anchor", "#vindex"], ["leaf", "#vleaf"], ["preimage", "#vpre"]]) {
+    const v = q.get(key);
+    if (v) { $(sel).value = v; used = true; }
+  }
+  const proof = q.get("proof");
+  if (proof) { $("#vproof").value = proof.split(",").join(", "); used = true; }
+  if (used && q.get("preimage")) showDecoded(q.get("preimage").trim());
+  return used && q.get("go") === "1";
+}
+
+/** Put the current form in the address bar, so the result is shareable. */
+function shareLink() {
+  const q = new URLSearchParams({
+    anchor: $("#vindex").value.trim(), leaf: $("#vleaf").value.trim(),
+    preimage: $("#vpre").value.trim(),
+    proof: $("#vproof").value.split(",").map((s) => s.trim()).filter(Boolean).join(","),
+    go: "1",
+  });
+  return `${location.origin}${location.pathname}?${q}`;
+}
 
 $("#vform").addEventListener("submit", async (e) => {
   e.preventDefault();
@@ -313,6 +437,7 @@ $("#vform").addEventListener("submit", async (e) => {
         : raw);
     }
     const yes = BigInt(res.result) === 1n;
+    if (yes) { history.replaceState(null, "", shareLink()); showDecoded(pre); }
     out.className = `verdict ${yes ? "yes" : "no"}`;
     out.textContent = yes
       ? `in the log — the contract confirms this ${bytes === 197 ? "episode" : "capture"}`

@@ -26,7 +26,39 @@ const SEL = {
   anchorCount: "0x34f96c8c",  // anchorCount()
   anchorAt: "0x16994960",     // anchorAt(uint256)
   receiptCount: "0x7f038f3c", // receiptCount()
+  corpusCount: "0x60d0f933",  // corpusCount()
+  corpusAt: "0x2a1b631d",     // corpusAt(uint256)
+  taskCount: "0xb6cb58a5",    // taskCount()
+  taskAt: "0x4dc6deba",       // taskAt(uint256)
+  capTable: "0x5bcdd86e",     // capTable(uint256)
+  receiptAt: "0x8f18191b",    // receiptAt(uint256)
+  episodeFacts: "0x7a05da04", // episodeFacts(bytes)
 };
+
+/* --- minimal ABI decoding ------------------------------------------------
+   The site ships no web3 bundle, so returned data is decoded by hand. Every
+   reader below reads its own head offsets rather than assuming a layout: a
+   struct with a dynamic member is returned behind a pointer, and guessing that
+   wrong silently yields plausible-looking rubbish. */
+const W = 64;                                    // one abi word, in hex chars
+const at = (hex, i) => "0x" + hex.slice(2 + i * W, 2 + (i + 1) * W);
+const uint = (hex, i) => BigInt(at(hex, i));
+const addr = (hex, i) => "0x" + hex.slice(2 + i * W + 24, 2 + (i + 1) * W);
+const bool = (hex, i) => uint(hex, i) === 1n;
+
+/** A dynamic array of words that starts at word `ptr` (in words from `base`). */
+function words(hex, ptrWord, base = 0) {
+  const off = Number(uint(hex, ptrWord)) / 32 + base;
+  const len = Number(uint(hex, off));
+  return Array.from({ length: len }, (_, k) => at(hex, off + 1 + k));
+}
+
+function str(hex, ptrWord, base = 0) {
+  const off = Number(uint(hex, ptrWord)) / 32 + base;
+  const len = Number(uint(hex, off));
+  const raw = hex.slice(2 + (off + 1) * W, 2 + (off + 1) * W + len * 2);
+  return decodeURIComponent(raw.replace(/(..)/g, "%$1"));
+}
 
 async function rpc(method, params) {
   const r = await fetch(MONAD.rpc, {
@@ -77,6 +109,58 @@ function round(c, x, y, w, h, r) {
   c.arcTo(x, y + h, x, y, r);
   c.arcTo(x, y, x + w, y, r);
   c.closePath();
+}
+
+/** Every sealed corpus the market holds, with its cap table.
+ *  `corpusAt` returns a flat tuple and keeps the arrays behind `capTable`, so
+ *  the cap table is a second read rather than a pointer into the first. */
+export async function readCorpora() {
+  const n = Number(BigInt(await call(MONAD.market, SEL.corpusCount)));
+  const out = [];
+  for (let i = 0; i < n; i++) {
+    const raw = await call(MONAD.market, SEL.corpusAt + pad(i));
+    const cap = await call(MONAD.market, SEL.capTable + pad(i));
+    out.push({
+      index: i,
+      taskId: uint(raw, 0),
+      corpusRoot: at(raw, 1),
+      corpusSize: Number(uint(raw, 2)),
+      price: uint(raw, 3),
+      token: addr(raw, 4),
+      open: bool(raw, 5),
+      contributorCount: Number(uint(raw, 6)),
+      contributors: words(cap, 0).map((w) => "0x" + w.slice(26)),
+      weights: words(cap, 1).map((w) => BigInt(w)),
+      weightTotal: uint(cap, 2),
+    });
+  }
+  return out;
+}
+
+/** Every published task in the registry. */
+export async function readTasks() {
+  const n = Number(BigInt(await call(MONAD.registry, SEL.taskCount)));
+  const out = [];
+  for (let i = 0; i < n; i++) {
+    const raw = await call(MONAD.registry, SEL.taskAt + pad(i));
+    const base = Number(uint(raw, 0)) / 32;
+    out.push({
+      index: i,
+      specHash: at(raw, base + 0),
+      curator: addr(raw, base + 1),
+      uri: str(raw, base + 2, base),
+      curatorBps: Number(uint(raw, base + 3)),
+      targetEpisodes: Number(uint(raw, base + 4)),
+      publishedAt: Number(uint(raw, base + 5)),
+      open: bool(raw, base + 6),
+    });
+  }
+  return out;
+}
+
+/** How many licences have been sold, across all corpora. */
+export async function readReceiptCount() {
+  return Number(BigInt(await call(MONAD.market, SEL.receiptCount)));
 }
 
 export function mountChain(cv) {
