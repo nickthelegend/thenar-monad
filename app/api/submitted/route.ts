@@ -1,12 +1,14 @@
+import { logged } from "@/lib/server/log";
 import { NextResponse } from "next/server";
-import { createPublicClient, http } from "viem";
-import { AXON_ADDRESS, monadTestnet } from "@/lib/chain";
+
+import { chainClient } from "@/lib/rpc";
+import { AXON_ADDRESS } from "@/lib/chain";
 import { markSettled } from "@/lib/server/db";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const client = createPublicClient({ chain: monadTestnet, transport: http() });
+const client = chainClient();
 
 /**
  * Record the transaction that settled a run.
@@ -17,7 +19,7 @@ const client = createPublicClient({ chain: monadTestnet, transport: http() });
  * read back and has to say success, against this contract, before anything is
  * written.
  */
-export async function POST(req: Request) {
+async function handlePOST(req: Request) {
   let trajHash: string, txHash: string;
   try {
     ({ trajHash, txHash } = await req.json());
@@ -37,7 +39,7 @@ export async function POST(req: Request) {
     receipt = await client.getTransactionReceipt({ hash: txHash as `0x${string}` });
   } catch {
     return NextResponse.json(
-      { error: "no such transaction on Monad Testnet" },
+      { error: "no such transaction on Avalanche Fuji" },
       { status: 409 },
     );
   }
@@ -52,6 +54,8 @@ export async function POST(req: Request) {
     );
   }
 
-  markSettled(trajHash, txHash);
+  await markSettled(trajHash, txHash);
   return NextResponse.json({ ok: true, block: Number(receipt.blockNumber) });
 }
+
+export const POST = logged("/api/submitted", handlePOST);

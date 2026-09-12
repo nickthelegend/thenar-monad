@@ -1,3 +1,4 @@
+import { canonicalise } from "@/lib/canonical";
 import "server-only";
 import { keccak256, toHex } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
@@ -14,19 +15,6 @@ export class VerifyError extends Error {
 }
 
 /** Canonical serialisation. The hash has to be reproducible from the stored rows. */
-export function canonicalise(taskId: number, contributor: string, samples: Sample[]): string {
-  return JSON.stringify({
-    v: 1,
-    taskId,
-    contributor: contributor.toLowerCase(),
-    samples: samples.map((s) => [
-      Number(s.t.toFixed(3)),
-      s.q.map((q) => Number(q.toFixed(5))),
-      Number(s.grip.toFixed(2)),
-      s.object.map((o) => Number(o.toFixed(5))),
-    ]),
-  });
-}
 
 export function validateSamples(raw: unknown): Sample[] {
   if (!Array.isArray(raw)) throw new VerifyError("samples must be an array");
@@ -40,11 +28,46 @@ export function validateSamples(raw: unknown): Sample[] {
       Array.isArray(s.q) && s.q.length === 6 && s.q.every((n: unknown) => typeof n === "number" && Number.isFinite(n)) &&
       typeof s.grip === "number" && Number.isFinite(s.grip) &&
       Array.isArray(s.object) && s.object.length === 3 &&
-      s.object.every((n: unknown) => typeof n === "number" && Number.isFinite(n));
+      s.object.every((n: unknown) => typeof n === "number" && Number.isFinite(n)) &&
+      (s.object2 === undefined ||
+        (Array.isArray(s.object2) && s.object2.length === 3 &&
+         s.object2.every((n: unknown) => typeof n === "number" && Number.isFinite(n)))) &&
+      (s.q2 === undefined ||
+        (Array.isArray(s.q2) && s.q2.length === 6 &&
+         s.q2.every((n: unknown) => typeof n === "number" && Number.isFinite(n)) &&
+         typeof s.grip2 === "number" && Number.isFinite(s.grip2)));
     if (!ok) throw new VerifyError(`sample ${i} is malformed`);
     if (s.t < lastT) throw new VerifyError(`sample ${i} goes backwards in time`);
     lastT = s.t;
     return s as Sample;
+  }).map((s, i, all) => {
+    // A scene does not gain or lose a payload mid-run. Allowing it would let a
+    // client hash as version 2 while driving a version 1 scene, and the second
+    // object's whole placement would be unmeasurable on the samples that omit it.
+    if (Boolean(s.object2) !== Boolean(all[0].object2)) {
+      throw new VerifyError(`sample ${i} disagrees with the scene's payload count`);
+    }
+    // Nor does it gain or lose an arm. A recording whose second arm appears
+    // halfway through is a recording of two different rooms.
+    if (Boolean(s.q2) !== Boolean(all[0].q2)) {
+      throw new VerifyError(`sample ${i} disagrees with the scene's arm count`);
+    }
+    return s;
+  });
+}
+
+/** The prop ids a run was driven against. Free text from the client, so it is
+ *  bounded here rather than trusted: they become part of the hashed trajectory
+ *  and are rendered back on the run page. */
+export function validatePayloadIds(raw: unknown): string[] | undefined {
+  if (raw === undefined || raw === null) return undefined;
+  if (!Array.isArray(raw) || raw.length === 0) throw new VerifyError("payloadIds must be a non-empty array");
+  if (raw.length > 2) throw new VerifyError("a scene carries at most two payloads");
+  return raw.map((id) => {
+    if (typeof id !== "string" || !/^[a-z0-9_]{1,32}$/.test(id)) {
+      throw new VerifyError("payloadIds must be prop ids");
+    }
+    return id;
   });
 }
 
@@ -56,6 +79,10 @@ export type VerifyResult = {
   parts: { placement: number; efficiency: number; smoothness: number };
   signature: `0x${string}`;
   accepted: boolean;
+  /** Measured from the samples, not the figure the caller sent. This is what
+   *  the ledger records, so a run page shows the distance the recording
+   *  actually ends at rather than the one it was described with. */
+  deviationMm: number;
 };
 
 /**
@@ -89,6 +116,7 @@ export async function verifyAndSign(args: {
   rewardWei: bigint;
   contractAddress: `0x${string}`;
   chainId: number;
+  payloadIds?: string[];
 }): Promise<VerifyResult> {
   const pk = process.env.VERIFIER_PRIVATE_KEY;
   if (!pk) throw new VerifyError("verifier key is not configured", 500);
@@ -105,7 +133,7 @@ export async function verifyAndSign(args: {
   // the contract does the real multiplication against its own escrowed rate.
   const verdict = evaluate(traj, args.parSeconds, 1);
 
-  const payload = canonicalise(args.taskId, args.contributor, args.samples);
+  const payload = canonicalise(args.taskId, args.contributor, args.samples, args.payloadIds);
   const trajHash = keccak256(toHex(payload));
   const cid = `axon:${trajHash.slice(2, 18)}`;
 
@@ -139,5 +167,8 @@ export async function verifyAndSign(args: {
     parts: verdict.parts,
     signature,
     accepted: verdict.success,
+    deviationMm: verdict.deviationMm,
   };
 }
+
+export { canonicalise };

@@ -1,15 +1,31 @@
 "use client";
 
+import Link from "next/link";
+
 import { DimRule } from "@/components/primitives";
+import { useEffect, useState } from "react";
 import { useLeaderboard } from "@/lib/hooks";
+import { readSeen, writeSeen, delta, type Seen } from "@/lib/standings-memory";
 import { useSession } from "@/components/session";
-import { addressUrl } from "@/lib/chain";
+import { CURRENCY } from "@/lib/chain";
 import { cn } from "@/lib/cn";
 import { fmtInt, fmtMon, fmtScore, shortHash } from "@/lib/format";
 
 export default function LeaderboardPage() {
   const { standings, isLoading, isError } = useLeaderboard();
   const { address } = useSession();
+
+  // Captured once on arrival, before this render's ordering overwrites it, so a
+  // row can say how it moved since you last looked.
+  const [seen, setSeen] = useState<Seen>({});
+  useEffect(() => {
+    // Off the effect's synchronous pass; the value is only read for display.
+    const t = setTimeout(() => setSeen(readSeen()), 0);
+    return () => clearTimeout(t);
+  }, []);
+  useEffect(() => {
+    if (standings.length) writeSeen(standings);
+  }, [standings]);
 
   const totalRuns = standings.reduce((n, o) => n + o.runs, 0);
   const totalPaid = standings.reduce((n, o) => n + o.earned, 0);
@@ -20,6 +36,8 @@ export default function LeaderboardPage() {
       <p className="mt-3 max-w-[62ch] text-[15px] leading-relaxed text-scribe-2">
         Every accepted run on this contract, read back from its trajectory ledger.
         Nothing here is a fixture — an address appears the moment its first run is paid.
+        Runs from before the move to Avalanche settled on a different chain and are
+        kept in the <a href="/archive" className="text-scribe-2 underline underline-offset-2 hover:text-probe">archive</a> instead.
       </p>
 
       <div className="mt-6 flex flex-wrap items-center gap-x-8 gap-y-2 border-y border-rule py-3">
@@ -34,7 +52,7 @@ export default function LeaderboardPage() {
         <span className="flex items-baseline gap-2">
           <span className="label">Paid out</span>
           <span className="font-mono text-[15px] tabular-nums text-signal">
-            {fmtMon(totalPaid, 4)} <span className="text-[12px] text-scribe-3">MON</span>
+            {fmtMon(totalPaid, 4)} <span className="text-[12px] text-scribe-3">{CURRENCY}</span>
           </span>
         </span>
       </div>
@@ -68,17 +86,27 @@ export default function LeaderboardPage() {
                   you && "bg-signal-dim",
                 )}
               >
-                <span className="font-mono text-[15px] tabular-nums text-scribe-3">
+                <span className="flex items-baseline gap-1 font-mono text-[15px] tabular-nums text-scribe-3">
                   {String(o.rank).padStart(2, "0")}
+                  {(() => {
+                    const d = delta(seen, o.address, o.rank);
+                    if (!d) return null;
+                    return (
+                      <span
+                        className={cn("text-[12px]", d > 0 ? "text-go" : "text-reject")}
+                        title={`${d > 0 ? "Up" : "Down"} ${Math.abs(d)} since you last looked`}
+                      >
+                        {d > 0 ? "\u2191" : "\u2193"}{Math.abs(d)}
+                      </span>
+                    );
+                  })()}
                 </span>
-                <a
-                  href={addressUrl(o.address)}
-                  target="_blank"
-                  rel="noreferrer"
+                <Link
+                  href={`/operator/${o.address}`}
                   className={cn("truncate font-mono text-[13px] hover:text-probe", you ? "text-signal" : "text-scribe")}
                 >
                   {shortHash(o.address)}{you ? " · you" : ""}
-                </a>
+                </Link>
                 <Cell label="Runs" value={fmtInt(o.runs)} />
                 <Cell label="Mean" value={fmtScore(o.meanScore)} className="hidden sm:flex" />
                 <Cell label="Tasks" value={String(o.tasks)} className="hidden sm:flex" />

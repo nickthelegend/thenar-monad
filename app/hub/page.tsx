@@ -1,14 +1,20 @@
 "use client";
 
 import Link from "next/link";
+import { payloadLabel } from "@/lib/props";
 import { useMemo, useState } from "react";
 import { formatEther } from "viem";
 import { Difficulty, DimRule, SlotTally, StageTrack } from "@/components/primitives";
 import { ActivityFeed } from "@/components/activity-feed";
-import { useTasks, type ChainTask } from "@/lib/hooks";
+import { Sitting } from "@/components/sitting";
+import { useMeasured, contradiction, type Measured } from "@/lib/measured";
+import { fmtPercent } from "@/lib/format";
+import { PropPreview } from "@/components/prop-picker";
 import { cn } from "@/lib/cn";
-import { SCENARIOS } from "@/lib/chain";
+import { SCENARIOS, CURRENCY, isSeedFunded } from "@/lib/chain";
 import { fmtInt, fmtMon, fmtSeconds } from "@/lib/format";
+import { useTaskCatalogue, type TaskWithScene } from "@/components/tasks-provider";
+import { SKILLS, SKILL_LABEL } from "@/lib/skills";
 
 type SortKey = "reward" | "slots" | "difficulty" | "escrow";
 
@@ -20,8 +26,9 @@ const SORTS: [SortKey, string][] = [
 ];
 
 export default function HubPage() {
-  const { data: tasks, isLoading, isError, error, refetch } = useTasks();
+  const { tasks, isLoading, isError, error, refetch } = useTaskCatalogue();
   const [scenario, setScenario] = useState<string>("all");
+  const [skill, setSkill] = useState<string>("all");
   const [openOnly, setOpenOnly] = useState(true);
   const [sort, setSort] = useState<SortKey>("reward");
   const [q, setQ] = useState("");
@@ -31,38 +38,113 @@ export default function HubPage() {
     const list = (tasks ?? []).filter(
       (t) =>
         (scenario === "all" || t.scenario === scenario) &&
+          (skill === "all" || t.skill === skill) &&
         (!openOnly || t.open) &&
         (!needle || t.name.toLowerCase().includes(needle) || String(t.id) === needle),
     );
-    const by: Record<SortKey, (a: ChainTask, b: ChainTask) => number> = {
+    const by: Record<SortKey, (a: TaskWithScene, b: TaskWithScene) => number> = {
       reward: (a, b) => b.rewardMon - a.rewardMon,
       slots: (a, b) => b.slotsTotal - b.slotsFilled - (a.slotsTotal - a.slotsFilled),
       difficulty: (a, b) => b.difficulty - a.difficulty,
       escrow: (a, b) => Number(b.escrowWei - a.escrowWei),
     };
     return [...list].sort(by[sort]);
-  }, [tasks, scenario, openOnly, sort, q]);
+  }, [tasks, scenario, skill, openOnly, sort, q]);
 
-  const openSlots = rows.reduce((n, t) => n + (t.slotsTotal - t.slotsFilled), 0);
-  const escrow = rows.reduce((n, t) => n + Number(formatEther(t.escrowWei)), 0);
+  // Thenar has no third-party funders yet. Counted rather than asserted: the
+  // product's own rule is that anything shown before real traffic exists is
+  // labelled, not left to look like organic demand.
+  const seeded = (tasks ?? []).filter((t) => isSeedFunded(t.funder)).length;
+  const totalTasks = (tasks ?? []).length;
+
+  // Over every task, not over the filtered rows.
+  //
+  // This strip sits above the filter chips, says "Live from the contract" and
+  // is read as a description of the board. Computed from `rows` it silently
+  // tracked whatever filter happened to be on — so the default view showed
+  // "Tasks 5" directly above a sentence reading "All 6 were posted from the
+  // address that deployed the protocol". Two numbers for the same quantity, a
+  // paragraph apart, and the chain says 6. The filtered count is not lost:
+  // the table below is the filtered view.
+  const allTasks = tasks ?? [];
+  /**
+   * Slots a run driven now could actually fill.
+   *
+   * This counted every unfilled slot on every task, including four on a task
+   * whose funder has already closed it and taken the escrow back. They cannot
+   * be filled by anybody, ever, and the figure sits under a heading that reads
+   * as available work.
+   */
+  const openSlots = allTasks
+    .filter((t) => t.open)
+    .reduce((n, t) => n + (t.slotsTotal - t.slotsFilled), 0);
+  const escrow = allTasks.reduce((n, t) => n + Number(formatEther(t.escrowWei)), 0);
   const scenariosPresent = useMemo(
     () => SCENARIOS.filter((s) => (tasks ?? []).some((t) => t.scenario === s)),
     [tasks],
   );
+
+  // Only the skills tasks actually ask for: a chip for a skill nobody has
+  // posted filters to an empty hub and reads as a dead control.
+  const skillsPresent = useMemo(
+    () => SKILLS.filter((k) => (tasks ?? []).some((t) => t.skill === k)),
+    [tasks],
+  );
+
+  /**
+   * What the record says about each task, against what its funder declared.
+   *
+   * Difficulty is a claim somebody typed when they posted. Every other claim on
+   * this site is checked against the ledger; this one never was.
+   */
+  const measured = useMeasured();
+  const clash = measured ? contradiction(tasks ?? [], measured) : null;
 
   return (
     <div className="mx-auto max-w-[1400px] px-5 py-8">
       <div className="flex flex-col gap-4">
         <h1 className="font-display text-4xl font-600 leading-none tracking-[-0.01em]">Open work</h1>
         <div className="flex flex-wrap items-center gap-x-8 gap-y-2 border-y border-rule py-3">
-          <Reading label="Tasks" value={isLoading ? "—" : fmtInt(rows.length)} />
+          <Reading label="Tasks" value={isLoading ? "—" : fmtInt(totalTasks)} />
           <Reading label="Unfilled slots" value={isLoading ? "—" : fmtInt(openSlots)} />
-          <Reading label="Escrow at stake" value={isLoading ? "—" : fmtMon(escrow, 3)} unit="MON" tone="signal" />
+          <Reading label="Escrow at stake" value={isLoading ? "—" : fmtMon(escrow, 3)} unit={CURRENCY} tone="signal" />
           <Reading label="Cap per operator" value="5" unit="runs / task" />
           <span className="font-mono text-[12px] text-scribe-3 sm:ml-auto">
-            Live from the contract on Monad Testnet
+            Live from the contract on Avalanche Fuji
           </span>
         </div>
+
+        {clash ? (
+          <p className="max-w-[76ch] text-[13px] leading-relaxed text-scribe-3">
+            <span className="text-scribe-2">Declared difficulty is not predicting anything.</span>{" "}
+            Task #{clash.easier} is declared easier than #{clash.harder} and has paid{" "}
+            {fmtPercent(clash.easierRate, 0)} of the {clash.easierN} runs submitted to it,
+            against {fmtPercent(clash.harderRate, 0)} of {clash.harderN} on the harder one.
+            Those are small numbers and are shown as counts for that reason &mdash; but the
+            figure beside each difficulty below is what happened, and the bars are what
+            somebody typed.
+          </p>
+        ) : null}
+
+        {/* What the operator just came out of. They leave the station to pick
+            the next task, and the tally that answers "how did that stretch go"
+            was thrown away at exactly that moment. */}
+        <Sitting />
+
+        {totalTasks > 0 && seeded === totalTasks ? (
+          <p className="max-w-[76ch] text-[13px] leading-relaxed text-scribe-3">
+            <span className="text-scribe-2">Every task here was funded by us.</span>{" "}
+            All {totalTasks} were posted from the address that deployed the protocol,
+            to demonstrate the loop end to end. The escrow, the payouts and the
+            trajectories are real and on chain; the demand is not. No third party has
+            funded a task yet.
+          </p>
+        ) : seeded > 0 ? (
+          <p className="max-w-[76ch] text-[13px] leading-relaxed text-scribe-3">
+            {seeded} of {totalTasks} tasks were funded by the address that deployed
+            the protocol, to demonstrate the loop.
+          </p>
+        ) : null}
       </div>
 
       <div className="mt-6 flex flex-col gap-3">
@@ -70,6 +152,13 @@ export default function HubPage() {
           <Chip active={scenario === "all"} onClick={() => setScenario("all")}>All</Chip>
           {scenariosPresent.map((s) => (
             <Chip key={s} active={scenario === s} onClick={() => setScenario(s)}>{s}</Chip>
+          ))}
+        </FilterRow>
+
+        <FilterRow label="Skill">
+          <Chip active={skill === "all"} onClick={() => setSkill("all")}>All</Chip>
+          {skillsPresent.map((k) => (
+            <Chip key={k} active={skill === k} onClick={() => setSkill(k)}>{SKILL_LABEL[k]}</Chip>
           ))}
         </FilterRow>
 
@@ -99,7 +188,7 @@ export default function HubPage() {
         <div className="mt-6 border border-reject bg-reject-dim px-6 py-10 text-center">
           <p className="text-[15px] text-reject">Could not read the task registry.</p>
           <p className="mx-auto mt-1 max-w-[52ch] text-[14px] text-scribe-2">
-            {error instanceof Error ? error.message : "The Monad RPC did not answer."}
+            {error instanceof Error ? error.message : "The Avalanche RPC did not answer."}
           </p>
           <button
             onClick={() => refetch()}
@@ -171,10 +260,19 @@ export default function HubPage() {
                       <Link href={`/task/${t.id}`} className="text-[14px] text-scribe hover:text-signal">
                         {t.name}
                       </Link>
-                      <span className="font-mono text-[12px] capitalize text-scribe-3">{t.scenario}</span>
+                      <span className="font-mono text-[12px] text-scribe-3">
+                      <span className="capitalize">{t.scenario}</span>
+                      <span className="mx-1.5 text-rule-strong">/</span>
+                      {payloadLabel(t.scene, t.scenario)}
+                      <span className="mx-1.5 text-rule-strong">&rarr;</span>
+                      {t.scene.target.label}
+                    </span>
                     </div>
                   </Td>
-                  <Td><Difficulty level={t.difficulty} /></Td>
+                  <Td>
+                    <Difficulty level={t.difficulty} />
+                    <MeasuredNote m={measured?.get(t.id)} loaded={Boolean(measured)} />
+                  </Td>
                   <Td><StageTrack stage={t.policyMinted ? "post" : t.open ? "pre" : "training"} /></Td>
                   <Td>
                     <div className="flex flex-col gap-1.5">
@@ -183,6 +281,21 @@ export default function HubPage() {
                         {fmtInt(t.slotsTotal - t.slotsFilled)} left
                         <span className="text-scribe-3"> / {fmtInt(t.slotsTotal)}</span>
                       </span>
+                      {/* A deadline is a property of the offer, not a detail:
+                          after it the funder may take the escrow back, and a
+                          run driven the day after pays nothing. */}
+                      {t.expiresAt !== null ? (
+                        <span className={cn(
+                          "font-mono text-[11px] tabular-nums",
+                          t.closed || t.expired ? "text-reject" : "text-scribe-3",
+                        )}>
+                          {t.closed
+                            ? "escrow returned to the funder"
+                            : t.expired
+                              ? "deadline passed"
+                              : `until ${new Date(t.expiresAt).toLocaleDateString()}`}
+                        </span>
+                      ) : null}
                     </div>
                   </Td>
                   <Td align="right">
@@ -196,9 +309,18 @@ export default function HubPage() {
                     </span>
                   </Td>
                   <Td align="right">
-                    <span className="font-mono text-[15px] font-medium tabular-nums text-signal">
-                      {fmtMon(t.rewardMon)}
-                      <span className="ml-1 text-[12px] text-scribe-3">MON</span>
+                    <span className="flex flex-col items-end gap-0.5">
+                      <span className="font-mono text-[15px] font-medium tabular-nums text-signal">
+                        {fmtMon(t.rewardMon)}
+                        <span className="ml-1 text-[12px] text-scribe-3">{CURRENCY}</span>
+                      </span>
+                      {/* Per run is not comparable across tasks that take
+                          different lengths of time. Par is the task's own
+                          estimate of that, so this is the rate an operator is
+                          actually choosing between. */}
+                      <span className="font-mono text-[11px] tabular-nums text-scribe-3">
+                        {fmtMon((t.rewardMon * 60) / Math.max(1, t.parSeconds), 4)} / min
+                      </span>
                     </span>
                   </Td>
                   <Td align="right">
@@ -211,7 +333,7 @@ export default function HubPage() {
                       </Link>
                     ) : (
                       <span className="font-mono text-[12px] uppercase tracking-[0.14em] text-scribe-3">
-                        Filled
+                        {closedBecause(t)}
                       </span>
                     )}
                   </Td>
@@ -224,9 +346,25 @@ export default function HubPage() {
             {rows.map((t) => (
               <li key={t.id} className="border-b border-rule py-4">
                 <div className="flex items-start justify-between gap-4">
-                  <div className="flex flex-col gap-1">
-                    <span className="font-mono text-[12px] text-scribe-3">#{t.id}</span>
+                  <div className="flex min-w-0 flex-col gap-1">
+                    <span className="flex items-center gap-2">
+                      <span className="font-mono text-[12px] text-scribe-3">#{t.id}</span>
+                      {/* The objects themselves, from the same GLBs the station
+                          loads — a task should look like what it is before you
+                          open it. Drawn only when the row is on screen. */}
+                      {t.scene.payloads.map((p) => (
+                        <PropPreview key={p.id} url={p.url} className="h-8 w-8 shrink-0" />
+                      ))}
+                      <PropPreview url={t.scene.target.url} className="h-8 w-8 shrink-0" />
+                    </span>
                     <Link href={`/task/${t.id}`} className="text-[15px] text-scribe">{t.name}</Link>
+                      <span className="mt-0.5 block font-mono text-[12px] text-scribe-3">
+                        {payloadLabel(t.scene, t.scenario)}
+                        <span className="mx-1.5 text-rule-strong">&rarr;</span>
+                        {t.scene.target.label}
+                        <span className="mx-1.5 text-rule-strong">/</span>
+                        {t.scene.room.label}
+                      </span>
                     <span className="font-mono text-[12px] capitalize text-scribe-3">{t.scenario}</span>
                   </div>
                   <span className="shrink-0 font-mono text-[16px] font-medium tabular-nums text-signal">
@@ -249,7 +387,11 @@ export default function HubPage() {
                     >
                       Run
                     </Link>
-                  ) : null}
+                  ) : (
+                    <span className="font-mono text-[12px] uppercase tracking-[0.14em] text-scribe-3">
+                      {closedBecause(t)}
+                    </span>
+                  )}
                 </div>
               </li>
             ))}
@@ -279,7 +421,12 @@ function Reading({ label, value, unit, tone }: { label: string; value: string; u
 function FilterRow({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="flex items-start gap-2">
-      <span className="label mt-[7px] w-[58px] shrink-0">{label}</span>
+      {/* Wide enough for "Scenario", which is the longest of the four and
+          measured 71px against the 58px this column used to be. The chips that
+          follow it are opaque and come later in the flex order, so the excess
+          was not clipped or wrapped — it was painted over, and the row read
+          "SCENARI" on a phone. The other three labels fit either width. */}
+      <span className="label mt-[7px] w-[72px] shrink-0">{label}</span>
       <div className="flex min-w-0 flex-1 gap-2 overflow-x-auto pb-1 [scrollbar-width:none] sm:flex-wrap sm:overflow-visible sm:pb-0 [&::-webkit-scrollbar]:hidden">
         {children}
       </div>
@@ -312,4 +459,49 @@ function Td({ children, className, align = "left" }: { children: React.ReactNode
       {align === "right" ? <div className="flex justify-end">{children}</div> : children}
     </td>
   );
+}
+
+/**
+ * What the record says, under the difficulty somebody declared.
+ *
+ * Counts rather than only a rate: "0 of 2" and "0 of 200" are the same rate and
+ * are not the same statement, and at these sample sizes the count is most of
+ * the information. A task nobody has submitted a run on says so rather than
+ * showing a zero, because a rate over no attempts is unknown, not zero.
+ */
+function MeasuredNote({ m, loaded }: { m: Measured | undefined; loaded: boolean }) {
+  if (!loaded) return null;
+  // A task with no episodes at all has no row in the corpus, which is a
+  // different thing from an empty one — and both mean "nobody has driven it".
+  const submitted = m ? m.paid + m.failed : 0;
+  if (!m) {
+    return (
+      <span className="mt-1 block font-mono text-[11px] text-scribe-3">no runs yet</span>
+    );
+  }
+  return (
+    <span className="mt-1 block font-mono text-[11px] tabular-nums text-scribe-3">
+      {submitted === 0
+        ? m.unsubmitted > 0
+          ? `${m.unsubmitted} never sent`
+          : "no runs yet"
+        : `${m.paid}/${submitted} paid`}
+    </span>
+  );
+}
+
+/**
+ * Why a task cannot be run, in the order the reasons actually bite.
+ *
+ * "Filled" was the only answer the hub had, and it was wrong for three of the
+ * four ways a task stops taking runs. A closed one has had its escrow taken
+ * back by its funder; an expired one will be; a minted one has become a policy.
+ * An operator who drives any of them has done the work before the contract
+ * refuses to pay, which is the one outcome this interface exists to prevent.
+ */
+function closedBecause(t: TaskWithScene): string {
+  if (t.closed) return "Escrow returned";
+  if (t.expired) return "Expired";
+  if (t.policyMinted) return "Minted";
+  return "Filled";
 }

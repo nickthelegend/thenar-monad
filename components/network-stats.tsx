@@ -3,13 +3,13 @@
 import { useReadContracts } from "wagmi";
 import { formatEther } from "viem";
 import { AXON_ABI } from "@/lib/abi";
-import { AXON_ADDRESS, IS_DEPLOYED, addressUrl } from "@/lib/chain";
-import { useTasks } from "@/lib/hooks";
+import { AXON_ADDRESS, IS_DEPLOYED, addressUrl, CURRENCY } from "@/lib/chain";
 import { fmtInt, fmtMon, shortHash } from "@/lib/format";
+import { useTaskCatalogue } from "@/components/tasks-provider";
 
 /** What the contract actually holds right now. Nothing here is a fixture. */
 export function NetworkStats() {
-  const { data: tasks } = useTasks();
+  const { tasks } = useTaskCatalogue();
   const { data } = useReadContracts({
     contracts: [
       { address: AXON_ADDRESS, abi: AXON_ABI, functionName: "taskCount" },
@@ -32,7 +32,7 @@ export function NetworkStats() {
         <Reading label="Trajectories recorded" value={fmtInt(n(1))} />
         <Reading label="Policies minted" value={fmtInt(n(2))} />
         <Reading label="Open slots" value={fmtInt(openSlots)} />
-        <Reading label="Escrowed" value={fmtMon(escrow, 3)} unit="MON" tone="signal" />
+        <Reading label="Escrowed" value={fmtMon(escrow, 3)} unit={CURRENCY} tone="signal" />
       </div>
       <a
         href={addressUrl(AXON_ADDRESS)}
@@ -40,7 +40,7 @@ export function NetworkStats() {
         rel="noreferrer"
         className="font-mono text-[12px] text-scribe-3 transition-colors hover:text-probe"
       >
-        AxonProtocol · {shortHash(AXON_ADDRESS)} · verified on Monad Testnet →
+        AxonProtocol · {shortHash(AXON_ADDRESS)} · verified on Avalanche Fuji →
       </a>
     </div>
   );

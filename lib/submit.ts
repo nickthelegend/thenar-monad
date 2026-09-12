@@ -6,6 +6,7 @@ import { BaseError, ContractFunctionRevertedError, UserRejectedRequestError } fr
 import { AXON_ABI } from "./abi";
 import { AXON_ADDRESS } from "./chain";
 import type { Sample } from "./types";
+import { CURRENCY, FAUCET_URL } from "@/lib/chain";
 
 export type SubmitPhase =
   | "idle" | "verifying" | "signing" | "pending" | "confirmed" | "error";
@@ -48,18 +49,18 @@ export function explainTxError(e: unknown): string {
       if (name) return `The contract rejected this: ${name}.`;
     }
     const text = `${e.shortMessage ?? ""} ${e.message ?? ""} ${e.details ?? ""}`;
-    // Monad reserves against the gas limit rather than gas used, and the floor
+    // The chain reserves against the gas limit rather than gas used, and the floor
     // it enforces sits well above value + gas. The wallet's own wording for
     // this ("Signer had insufficient balance") tells an operator nothing.
     if (/signer had insufficient balance/i.test(text)) {
       return (
-        "Monad holds back more than the transaction costs — it reserves against " +
+        "The chain holds back more than the transaction costs — it reserves against " +
         "your whole gas limit, not what the transaction actually uses. Top up " +
-        "from faucet.monad.xyz and try again."
+        `from ${new URL(FAUCET_URL).host} and try again.`
       );
     }
     if (/insufficient funds/i.test(text)) {
-      return "Not enough MON to cover gas. Top up from the faucet and try again.";
+      return `Not enough ${CURRENCY} to cover gas. Top up from the faucet and try again.`;
     }
     if (/user rejected/i.test(e.shortMessage ?? e.message)) {
       return "You rejected the transaction in your wallet.";
@@ -84,6 +85,17 @@ export function useSubmitRun() {
       durationSeconds: number;
       deviationMm: number;
       success: boolean;
+      /** The props the run was driven against, when the instruction did not
+       *  determine them. Sent so the verifier hashes the same scene the
+       *  operator actually drove, rather than one it guessed at. */
+      payloadIds?: string[];
+      /**
+       * Authorise the run with a registered passkey instead of a wallet
+       * signature. The wallet still sends the transaction and pays the gas;
+       * what changes is that the operator's consent to *this run* is bound to
+       * the trajectory rather than implied by the transaction.
+       */
+      withPasskey?: boolean;
     }) => {
       if (!address) {
         setState({ phase: "error", error: "Connect a wallet first." });
@@ -113,12 +125,31 @@ export function useSubmitRun() {
         // 2. One transaction records the trajectory and pays for it.
         setState({ phase: "signing", trajHash: v.trajHash, cid: v.cid, score: v.score });
         const started = performance.now();
-        const txHash = await writeContractAsync({
-          address: AXON_ADDRESS,
-          abi: AXON_ABI,
-          functionName: "submitTrajectory",
-          args: [BigInt(args.taskId), v.trajHash, v.cid, v.score, v.signature],
-        });
+
+        // The passkey path exists again because the contract can now verify
+        // what a browser is able to sign. v1 handed the raw trajectory hash to
+        // the precompile while WebCrypto signs sha256 of it, so the call could
+        // never succeed and the path was removed rather than shipped broken.
+        let txHash: `0x${string}`;
+        if (args.withPasskey) {
+          const { storedKey, signDigest } = await import("@/lib/passkey");
+          const pair = await storedKey();
+          if (!pair) throw new Error("No passkey on this device. Register one first.");
+          const { r, s: sv } = await signDigest(pair, v.trajHash);
+          txHash = await writeContractAsync({
+            address: AXON_ADDRESS,
+            abi: AXON_ABI,
+            functionName: "submitTrajectoryWithPasskey",
+            args: [BigInt(args.taskId), v.trajHash, v.cid, v.score, v.signature, r, sv],
+          });
+        } else {
+          txHash = await writeContractAsync({
+            address: AXON_ADDRESS,
+            abi: AXON_ABI,
+            functionName: "submitTrajectory",
+            args: [BigInt(args.taskId), v.trajHash, v.cid, v.score, v.signature],
+          });
+        }
 
         setState((s) => ({ ...s, phase: "pending", txHash }));
 
@@ -162,3 +193,5 @@ export function useSubmitRun() {
 
   return { ...state, submit, reset };
 }
+
+
