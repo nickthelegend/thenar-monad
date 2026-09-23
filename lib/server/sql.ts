@@ -302,6 +302,84 @@ export function migrate(): Promise<void> {
           added_at   BIGINT NOT NULL,
           PRIMARY KEY (task_id, member)
         );
+
+        -- How many free pulls each World ID-backed human has had from an
+        -- endpoint, and which AgentKit challenges have already been answered.
+        -- Kept here rather than in memory: a free trial that resets whenever
+        -- the process restarts is not a trial with a limit.
+        CREATE TABLE IF NOT EXISTS agentkit_usage (
+          endpoint   TEXT NOT NULL,
+          human_id   TEXT NOT NULL,
+          uses       INTEGER NOT NULL,
+          PRIMARY KEY (endpoint, human_id)
+        );
+        CREATE TABLE IF NOT EXISTS agentkit_nonce (
+          nonce      TEXT PRIMARY KEY,
+          created_at BIGINT NOT NULL
+        );
+
+        -- Every corpus an agent took, and on what terms: an x402 payment
+        -- settled in USDC on Monad (id is its transaction hash), or an
+        -- AgentKit free pull (id is the challenge nonce it signed).
+        CREATE TABLE IF NOT EXISTS corpus_sale (
+          id         TEXT PRIMARY KEY,
+          task_id    INTEGER NOT NULL,
+          method     TEXT NOT NULL,
+          buyer      TEXT,
+          network    TEXT NOT NULL,
+          amount     TEXT,
+          asset      TEXT,
+          created_at BIGINT NOT NULL
+        );
+
+        -- The sha256 of what each sale served, and the SalesLog entry on
+        -- Monad that logged it. A row with an error and no entry is a sale
+        -- the log is missing, kept so the gap is visible.
+        CREATE TABLE IF NOT EXISTS corpus_sale_audit (
+          sale_id        TEXT PRIMARY KEY,
+          sha256         TEXT NOT NULL,
+          log_contract   TEXT,
+          log_seq        BIGINT,
+          transaction_id TEXT,
+          error          TEXT,
+          created_at     BIGINT NOT NULL
+        );
+
+        -- A World ID proof that a live human stands behind an operator
+        -- address. The nullifier is the key because it is what World makes
+        -- unique per human per action: one person cannot verify two addresses,
+        -- and one address cannot borrow somebody else's face.
+        CREATE TABLE IF NOT EXISTS human (
+          nullifier   TEXT PRIMARY KEY,
+          address     TEXT NOT NULL UNIQUE,
+          credential  TEXT NOT NULL,
+          protocol    TEXT NOT NULL,
+          action      TEXT NOT NULL,
+          environment TEXT NOT NULL,
+          verified_at BIGINT NOT NULL
+        );
+
+        -- Every write this server made to CorpusShares on Monad: the
+        -- control-list entry that follows a human proof, the shares a paid run
+        -- earns, a dividend declared from sales. Keyed on the transaction, so
+        -- each line can be found on Monadscan.
+        CREATE TABLE IF NOT EXISTS token_event (
+          tx         TEXT PRIMARY KEY,
+          kind       TEXT NOT NULL,
+          account    TEXT,
+          amount     TEXT,
+          detail     TEXT,
+          created_at BIGINT NOT NULL
+        );
+
+        -- Proof requests this server signed and has not yet seen answered.
+        -- World's verify endpoint checks a proof, not whether this server
+        -- asked for it, so the nonce is written down before it leaves.
+        CREATE TABLE IF NOT EXISTS world_nonce (
+          nonce      TEXT PRIMARY KEY,
+          address    TEXT NOT NULL,
+          expires_at BIGINT NOT NULL
+        );
       `);
 
       // CREATE TABLE IF NOT EXISTS does nothing to a table that already
@@ -454,6 +532,58 @@ export function migrate(): Promise<void> {
       );
       CREATE INDEX IF NOT EXISTS idx_policy_rank
         ON policy_submission(placed DESC, grasped DESC, median_mm ASC);
+
+      CREATE TABLE IF NOT EXISTS agentkit_usage (
+        endpoint   TEXT NOT NULL,
+        human_id   TEXT NOT NULL,
+        uses       INTEGER NOT NULL,
+        PRIMARY KEY (endpoint, human_id)
+      );
+      CREATE TABLE IF NOT EXISTS agentkit_nonce (
+        nonce      TEXT PRIMARY KEY,
+        created_at INTEGER NOT NULL
+      );
+      CREATE TABLE IF NOT EXISTS corpus_sale (
+        id         TEXT PRIMARY KEY,
+        task_id    INTEGER NOT NULL,
+        method     TEXT NOT NULL,
+        buyer      TEXT,
+        network    TEXT NOT NULL,
+        amount     TEXT,
+        asset      TEXT,
+        created_at INTEGER NOT NULL
+      );
+      CREATE TABLE IF NOT EXISTS corpus_sale_audit (
+        sale_id        TEXT PRIMARY KEY,
+        sha256         TEXT NOT NULL,
+        log_contract   TEXT,
+        log_seq        INTEGER,
+        transaction_id TEXT,
+        error          TEXT,
+        created_at     INTEGER NOT NULL
+      );
+      CREATE TABLE IF NOT EXISTS human (
+        nullifier   TEXT PRIMARY KEY,
+        address     TEXT NOT NULL UNIQUE,
+        credential  TEXT NOT NULL,
+        protocol    TEXT NOT NULL,
+        action      TEXT NOT NULL,
+        environment TEXT NOT NULL,
+        verified_at INTEGER NOT NULL
+      );
+      CREATE TABLE IF NOT EXISTS token_event (
+        tx         TEXT PRIMARY KEY,
+        kind       TEXT NOT NULL,
+        account    TEXT,
+        amount     TEXT,
+        detail     TEXT,
+        created_at INTEGER NOT NULL
+      );
+      CREATE TABLE IF NOT EXISTS world_nonce (
+        nonce      TEXT PRIMARY KEY,
+        address    TEXT NOT NULL,
+        expires_at INTEGER NOT NULL
+      );
     `);
   })();
   return ready;
@@ -463,7 +593,7 @@ export function migrate(): Promise<void> {
  * Give every pre-existing row the deployment it actually settled against.
  *
  * Rows written before the column existed carry no contract, and they are not
- * all the same one — this project has settled on Monad and on two Avalanche
+ * all the same one — this project has settled on two Monad and two Avalanche
  * deployments. The chain each row already records is enough to say which,
  * because only one contract was ever live per chain at the time. Run once,
  * touching only rows that have no contract, so it cannot rewrite a row that
