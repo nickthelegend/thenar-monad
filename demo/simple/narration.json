@@ -1,0 +1,46 @@
+[
+  {
+    "id": "intro",
+    "text": "Robots learn from examples. Thenar pays people to make those examples, by driving a robot arm in a web browser. It runs on Monad."
+  },
+  {
+    "id": "landing",
+    "text": "This is Thenar, live on Monad testnet."
+  },
+  {
+    "id": "hub",
+    "text": "Labs post tasks here. Each reward is locked in a smart contract until someone does the work."
+  },
+  {
+    "id": "station",
+    "text": "Anyone can practise at the station, no wallet needed. You drive the arm with the keyboard, and every run is scored on where the object lands, how smooth the motion was, and how long it took."
+  },
+  {
+    "id": "lab",
+    "text": "Labs fund tasks from a Privy wallet that is only allowed to pay into Thenar. Let's post a small task now."
+  },
+  {
+    "id": "bounty",
+    "text": "Privy signed it, Monad confirmed it, and the new task is funded."
+  },
+  {
+    "id": "refuse",
+    "text": "If the same wallet tries to send money anywhere else, Privy refuses. Nothing is signed."
+  },
+  {
+    "id": "agents",
+    "text": "AI agents buy the recorded data per download, for one cent of USDC, and every sale is written on chain."
+  },
+  {
+    "id": "shares",
+    "text": "The people who record the data own it. Only World ID verified humans can hold these shares."
+  },
+  {
+    "id": "contracts",
+    "text": "All twelve contracts are live and verified on Monad testnet."
+  },
+  {
+    "id": "outro",
+    "text": "Thenar. Robot data, made by people, owned by people."
+  }
+]
