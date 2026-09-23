@@ -1,5 +1,11 @@
 [
   {
+    "hash": "db7a267",
+    "date": "2026-09-23T16:21:55+05:30",
+    "subject": "Let the issuer reclaim a dividend nobody can hold, and redeploy CorpusShares",
+    "body": "A dividend declared while no share exists is owed to nobody: at its record\ndate every holder's entitlement is zero, so no claim can ever succeed. The\nfirst CorpusShares had no other way for that MON to leave, and the test\nrun's 0.01 MON dividend is still locked in it.\n\nreclaimDividend returns what is left of such a dividend to the issuer,\nonly after the record date and only when the supply at that date was\nzero. A dividend with holders is theirs and it cannot touch it. Three new\ntests; on chain, a dividend was declared on the new contract, the record\ndate passed, and it came back in full, leaving the contract empty.\n\nCorpusShares alone is redeployed by DeployShares.s.sol at 0xAE1F…0fc7,\nexact_match on Sourcify; apply-deploy overlays it from that script's\nconfirmed broadcast. The first one is listed as superseded with the reason.\n\n/corpus-token's event list now says it is this server's writes, which it\nis: the issuer can also write from scripts/shares.mjs, and those are in\nthe figures above but not in that log.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+  },
+  {
     "hash": "a1cd3c4",
     "date": "2026-09-23T16:06:57+05:30",
     "subject": "Stop showing numbers nobody measured, and 404 what does not exist",
@@ -352,11 +358,5 @@
     "date": "2026-09-05T13:38:11+05:30",
     "subject": "test: headless checks and the live on-chain end-to-end proof",
     "body": "check-loop.ts verifies the IK round-trips to machine precision and that\nscoring is deterministic and correctly ordered.\n\ne2e.mjs is the one that matters: it records a run, has the server score and\nsign it, submits it on chain, then asserts the escrow fell by exactly the\npayout, the operator's balance rose by exactly the payout net of gas, that\nreplaying the same trajectory is refused, and that a forged score is refused.\n\nCo-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
-  },
-  {
-    "hash": "5840409",
-    "date": "2026-09-05T13:03:25+05:30",
-    "subject": "feat(app): every surface — landing, hub, station, portfolio, leaderboard, foundry",
-    "body": "Plus task detail with its score distribution, a public run-verification page\nthat re-hashes the stored samples and replays the tool path, task posting with\nreal escrow, the AXON-6 spec sheet generated from the CAD constants, and the\nAPI surface: contract metadata, health, dataset export, feed.\n\nEmpty states, error boundary and 404 are written in the product's own voice.\n\nCo-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
   }
 ]

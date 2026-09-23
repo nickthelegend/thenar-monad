@@ -124,7 +124,7 @@ are not deployed: they attest through Avalanche's Warp and Teleporter.
 
 The Blitz deployment, `AxonProtocol` v1 at
 [`0x89384f46…6Ed4`](https://testnet.monadscan.com/address/0x89384f46e430F37DB61Afb98810eba995C0d6Ed4),
-is still on Monad testnet with its Hyderabad runs, and `/archive` shows it.
+is still on Monad testnet with its Hyderabad runs, and `/contracts` lists it under Superseded.
 
 ---
 

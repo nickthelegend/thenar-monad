@@ -122,20 +122,38 @@ export function Tour() {
     router.push(pathname);
   }, [router, pathname]);
 
+  /**
+   * The nearest step in a direction whose subject exists.
+   *
+   * A step with nothing to show yet — no paid run, so no run page — is passed
+   * over rather than made the end of the tour. Disabling Next there left the
+   * foundry and the status page, which always exist, out of reach until
+   * somebody had been paid.
+   */
+  const reachable = useCallback((from: number, dir: 1 | -1): number | null => {
+    for (let n = from + dir; n >= 0 && n < STEPS.length; n += dir) {
+      if (STEPS[n].href({ taskId, runHash })) return n;
+    }
+    return null;
+  }, [taskId, runHash]);
+
   useEffect(() => {
     if (!active) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") leave();
-      if (e.key === "ArrowRight" && step! < STEPS.length - 1) goto(step! + 1);
-      if (e.key === "ArrowLeft" && step! > 0) goto(step! - 1);
+      if (e.key === "ArrowRight") { const n = reachable(step!, 1); if (n !== null) goto(n); }
+      if (e.key === "ArrowLeft") { const n = reachable(step!, -1); if (n !== null) goto(n); }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [active, step, goto, leave]);
+  }, [active, step, goto, leave, reachable]);
 
   if (!active || step === null) return null;
   const s = STEPS[step];
-  const nextHref = STEPS[step + 1]?.href({ taskId, runHash }) ?? null;
+  const next = reachable(step, 1);
+  const prev = reachable(step, -1);
+  // Steps between here and the next one that have nothing to show yet.
+  const skipped = next === null ? [] : STEPS.slice(step + 1, next).map((x, i) => ({ n: step + 2 + i, title: x.title }));
 
   return (
     <aside
@@ -158,15 +176,21 @@ export function Tour() {
         </div>
 
         <p className="max-w-[72ch] text-[14px] leading-relaxed text-scribe-2">{s.body}</p>
+        {skipped.length ? (
+          <p className="font-mono text-[12px] text-scribe-3">
+            Next skips {skipped.map((x) => `step ${x.n}, “${x.title}”`).join(" and ")}: nothing on
+            this deployment has reached it yet.
+          </p>
+        ) : null}
 
         <div className="flex items-center gap-2">
           <button
             type="button"
-            onClick={() => goto(step - 1)}
-            disabled={step === 0}
+            onClick={() => prev !== null && goto(prev)}
+            disabled={prev === null}
             className={cn(
               "border px-3 py-1.5 font-mono text-[12px] uppercase tracking-[0.12em] transition-colors",
-              step === 0
+              prev === null
                 ? "border-rule text-scribe-3"
                 : "border-rule-strong text-scribe hover:border-signal hover:text-signal",
             )}
@@ -175,14 +199,14 @@ export function Tour() {
           </button>
           <button
             type="button"
-            onClick={() => goto(step + 1)}
-            // A step whose subject does not exist yet — no runs on any task, so
-            // no run page to open — is disabled rather than sent somewhere
-            // wrong. The tour is only worth anything if every stop is real.
-            disabled={step === STEPS.length - 1 || !nextHref}
+            onClick={() => next !== null && goto(next)}
+            // A step whose subject does not exist yet is never a destination —
+            // the tour is only worth anything if every stop is real — and it is
+            // skipped with the reason said above, not made a dead end.
+            disabled={next === null}
             className={cn(
               "border px-3 py-1.5 font-mono text-[12px] uppercase tracking-[0.12em] transition-colors",
-              step === STEPS.length - 1 || !nextHref
+              next === null
                 ? "border-rule text-scribe-3"
                 : "border-signal bg-signal-dim text-signal-hi hover:bg-signal/20",
             )}
