@@ -1,5 +1,29 @@
 [
   {
+    "hash": "057162f",
+    "date": "2026-09-23T16:46:19+05:30",
+    "subject": "Add the SO-101 (MG996R) as a second arm, and mirror it onto a real one",
+    "body": "A task can now be for the open SO-101 as well as the THENAR-6. The arm\ntravels in the task's name on chain as \"[arm so101]\", next to any scan tag,\nso the station, the verifier and the exports all read it from chain state.\n\n- Every task is shaped into its sentence (name), its stored name\n  (chainName, which scoring reads), its arm and its scanned bench. Cards,\n  the hub and the station show the sentence and add SO-101 and Scanned\n  chips. The hub gets an Arm filter.\n- The station draws and solves the SO-101 from thenar-arms' CAD chain\n  (DLS IK with the gripper down and joint limits enforced). It records the\n  arm's own joints and tool. Replays pose the right arm.\n- Teach, the coherence check and dataset exports read the joints back\n  through the arm that recorded them. Exports name the embodiment and its\n  joints.\n- /post has an Arm picker, and shows the tagged name that goes on chain.\n- /spec/so101 lets you drive the arm and read the joints it solves.\n- scripts/arm-relay.mjs streams the station to a real follower using the\n  thenar-arms firmware protocol. It listens on loopback only, refuses other\n  websites, and arms only with --arm and only from home. It refuses poses\n  into the table or past the joint limits, and stops the arm when the page\n  goes quiet. \"Mirror to my SO-101\" holds home, then eases to the pose on\n  screen.\n- Lint skips MediaPipe's copied WASM glue.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+  },
+  {
+    "hash": "49b0574",
+    "date": "2026-09-23T16:11:15+05:30",
+    "subject": "Scan a task from the real table, drive the station from a Quest, and teach the arm",
+    "body": "/post can measure a task from a photo of the bench: four clicks on a sheet\nof A4 fix a homography to the arm's frame, MediaPipe (served from this site)\nnames what is on the table, and the pick and place positions go into the\ntask's name on chain as \"[scan x,y > x,y]\". goalFor/startFor read them back,\nso the station draws the payload where it stood and /api/sign scores against\nwhere its target is, from chain state; untagged tasks score as before.\n\nThe station's headset mode is now real teleop: squeeze to take hold and the\ntool follows the controller 1:1, the trigger sets the jaws, hands work too,\nA begins and ends a run, B stands the bench where the controller rests, and\nmixed reality puts it on your own table. It drives the same target and jaws\nas the keyboard, so runs keep one shape.\n\nTeach learns from the best paid run through /api/dataset and Repeat runs it\nbent to the scene, as practice only.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+  },
+  {
+    "hash": "d942ec4",
+    "date": "2026-09-23T16:48:18+05:30",
+    "subject": "Record the first pass of the Monad test plan",
+    "body": "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+  },
+  {
+    "hash": "80a587f",
+    "date": "2026-09-23T16:46:53+05:30",
+    "subject": "Document the statuses the index and physics routes really answer",
+    "body": "The end-to-end check that every route answers only what the OpenAPI\ndocument says caught three: /api/task/{id}/history and /api/calls/{address}\nanswer 503 on a deployment with no key for Monadscan's index and 502 when\nthe index errors, and /api/physics/{hash} answers 404 for a hash nothing\nwas stored under. All three are the right answers; they were missing from\nthe document.\n\nThe page sweep asked for /licence/0 to be a 200. A licence page exists only\nfor a minted policy, and that page is now a 404 until policy 0 exists, so\nthe check asks the contract's policyCount which answer to expect.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+  },
+  {
     "hash": "d82e5ff",
     "date": "2026-09-23T16:26:54+05:30",
     "subject": "Skip a tour stop that has nothing to show yet, instead of ending the tour there",
@@ -334,29 +358,5 @@
     "date": "2026-09-05T16:32:03+05:30",
     "subject": "fix(station): the run measured itself before the operator had moved",
     "body": "The settle detector was true from the first frame: the payload starts at rest\nand ungrasped, so 700 ms into every run it measured the payload at its starting\nposition and returned OUT OF TOLERANCE / 0.00. Driving the arm correctly made\nno difference — the verdict was already in. The headless end-to-end test never\ncaught it because it constructs samples directly and never touches the UI.\n\nA run can now only be measured once the payload has actually been picked up and\nlet go, and an operator who cannot finish has an End run escape instead of\nbeing stuck.\n\nAlso recalibrates the smoothness term. The jerk reference was 3.0, taken from a\nsynthetic path; real runs driven through the station measure 25.9 m/s^3 when\ndriven carefully and 51.3 when snatched, so the term scored zero for everybody\nand a quarter of the score was dead weight. The band is now 18..60 from those\nmeasurements, and check-loop asserts both endpoints stay inside it.\n\nThe score breakdown now shows the raw measurement beside each percentage —\ndeviation in mm, jerk in m/s^3, elapsed against par — which is the product's\nown rule and what made the miscalibration visible in the first place.\n\nCo-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
-  },
-  {
-    "hash": "9070db5",
-    "date": "2026-09-05T15:57:16+05:30",
-    "subject": "docs: Monad integration audit, contract changes, and 50 ranked features",
-    "body": "Verified against the live chain rather than the docs: sub-second blocks, a\n150M block gas limit, and the P256 precompile at 0x0100 confirmed working with\na real WebCrypto secp256r1 signature (tampered signatures refused).\n\nThe honest finding: Monad is genuinely the settlement layer here, but only its\nEVM-compatible half. Nothing yet needs Monad specifically, and the contract\ncontains a parallel-execution contention bug — every submitter writes one\nshared slotsFilled slot, which is the exact anti-pattern on an optimistically\nparallel chain.\n\nCo-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
-  },
-  {
-    "hash": "bb343c5",
-    "date": "2026-09-05T15:22:30+05:30",
-    "subject": "refactor: delete the seeded catalogue and synthetic standings",
-    "body": "Both were replaced by live contract reads and nothing imported them any more.\n290 lines of fixture data sitting in the tree reads as faked state to anyone\nauditing the project, which is the opposite of what it is: tasks, slots,\nescrow, scores, payouts and cap tables all come from AxonProtocol now.\n\nCo-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
-  },
-  {
-    "hash": "daea008",
-    "date": "2026-09-05T14:47:44+05:30",
-    "subject": "feat(brand): orange on black, new type stack, and the Axon mark",
-    "body": "The category's incumbent runs Borna + formularMono + Press Start 2P on acid\ngreen over black. Borna and formularMono are commercial, so the closest free\nequivalents carry the same feel — Hanken Grotesk for display and body, DM Mono\nfor every measured value — and Press Start 2P, which is free, stays as the\npixel voice on the wordmark. The neutral steps are the same greys; the accent\nis ours.\n\nColour still means data: signal orange carries value and live state, the\nverdict pair sits deliberately off that hue so a reject can never read as a\npayout, and controls stay achromatic.\n\nThe arm's collars are regenerated in the signal colour from cad/arm.py, so the\ngeometry and the interface agree rather than the 3D being dressed separately.\nThe reduced-motion hold pose is now mid-traverse, which is the arm's most\nlegible frame instead of whichever one the clock started on.\n\nNew mark: an A drawn as two arm links rising to a pivot, crossed by the datum\nline where a measurement would be taken.\n\nCo-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
-  },
-  {
-    "hash": "fc359f6",
-    "date": "2026-09-05T14:12:57+05:30",
-    "subject": "docs: PRODUCT, DESIGN, README, and the ranked feature list",
-    "body": "Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
   }
 ]
