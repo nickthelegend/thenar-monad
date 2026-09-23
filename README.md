@@ -113,6 +113,12 @@ an empty address there means not deployed yet, and every page says so.
 | Referrals, Foundry, PrizePool | A referral bounty, a treasury contributors vote to spend, a pot for task 1. |
 | ConfidentialPayouts | ElGamal on secp256k1: totals add up without the chain holding a number. |
 
+CorpusShares was redeployed on its own the same day by
+[`contracts/script/DeployShares.s.sol`](contracts/script/DeployShares.s.sol): the
+first one could not return a dividend declared while no share existed, and
+still holds the 0.01 MON declared that way in testing. The current one has
+`reclaimDividend`, proven on chain by declaring and reclaiming one.
+
 `LicenceReceipt`, `PolicyAnnouncer` and `PolicyRegistry` stay in the source and
 are not deployed: they attest through Avalanche's Warp and Teleporter.
 

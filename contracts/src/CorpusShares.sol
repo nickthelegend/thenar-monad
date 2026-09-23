@@ -42,6 +42,7 @@ contract CorpusShares {
     error AlreadyClaimed(uint256 id, address account);
     error NothingOwed(uint256 id, address account);
     error PaymentFailed(address to, uint256 amount);
+    error NothingToReclaim(uint256 id);
 
     // ---------------------------------------------------------------- events
 
@@ -51,6 +52,7 @@ contract CorpusShares {
     event Issued(address indexed holder, uint256 value, bytes32 indexed trajHash);
     event DividendDeclared(uint256 indexed id, uint64 recordDate, uint64 executionDate, uint256 amount);
     event DividendClaimed(uint256 indexed id, address indexed holder, uint256 amount);
+    event DividendReclaimed(uint256 indexed id, uint256 amount);
 
     // ---------------------------------------------------------------- storage
 
@@ -279,6 +281,24 @@ contract CorpusShares {
         (bool ok,) = msg.sender.call{value: amount}("");
         if (!ok) revert PaymentFailed(msg.sender, amount);
         emit DividendClaimed(id, msg.sender, amount);
+    }
+
+    /**
+     * @notice Take back a dividend nobody can ever claim.
+     * @dev Only when no share existed at the record date: then every holder's
+     *      entitlement is zero, and without this the MON escrowed for it would
+     *      sit in the contract for good. A dividend with holders is theirs,
+     *      and this cannot touch it.
+     */
+    function reclaimDividend(uint256 id) external onlyIssuer returns (uint256 amount) {
+        Dividend storage d = _dividend(id);
+        if (block.timestamp <= d.recordDate || totalSupplyAt(d.recordDate) != 0) revert NothingToReclaim(id);
+        amount = d.amount - d.claimed;
+        if (amount == 0) revert NothingToReclaim(id);
+        d.claimed = d.amount;
+        (bool ok,) = issuer.call{value: amount}("");
+        if (!ok) revert PaymentFailed(issuer, amount);
+        emit DividendReclaimed(id, amount);
     }
 
     function _dividend(uint256 id) internal view returns (Dividend storage) {

@@ -12,6 +12,7 @@
  *   ... dividend 0.01         declare a dividend of 0.01 MON, escrowed in the contract;
  *                             record date in two minutes, payment two minutes after
  *   ... holder 0x…            one holder's shares and what each dividend owes them
+ *   ... reclaim 1             take back dividend 1 if no share existed at its record date
  *
  * Every write is signed by CORPUS_ISSUER_PRIVATE_KEY, the only key the
  * contract lets admit, issue or declare.
@@ -101,6 +102,13 @@ switch (command) {
     break;
   }
 
+  case "reclaim": {
+    const id = BigInt(args[0] ?? fail("usage: reclaim <dividend id>"));
+    const amount = await write("reclaimDividend", [id]);
+    console.log(`  dividend ${id}: ${formatEther(amount)} MON back to the issuer`);
+    break;
+  }
+
   default:
-    fail("usage: node --import ./test/register.mjs scripts/shares.mjs state | compliance 0x… | dividend <MON> | holder 0x…");
+    fail("usage: node --import ./test/register.mjs scripts/shares.mjs state | compliance 0x… | dividend <MON> | holder 0x… | reclaim <id>");
 }

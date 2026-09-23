@@ -213,7 +213,10 @@ export default function CorpusTokenPage() {
       {s && s.events.length > 0 ? (
         <section className="mt-6 border border-rule">
           <div className="border-b border-rule px-4 py-2.5">
-            <span className="label">Every write to the shares</span>
+            {/* This server's writes, from its own log. The issuer can also write
+                from scripts/shares.mjs; those are on chain and in the figures
+                above, not in this list, so it does not claim to be every write. */}
+            <span className="label">Every write this server made to the shares</span>
           </div>
           <ul className="divide-y divide-rule">
             {s.events.map((e) => (

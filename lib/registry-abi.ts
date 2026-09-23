@@ -1264,6 +1264,25 @@ export const CORPUS_SHARES_ABI = [
   },
   {
     "type": "function",
+    "name": "reclaimDividend",
+    "inputs": [
+      {
+        "name": "id",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "amount",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
     "name": "setDividend",
     "inputs": [
       {
@@ -1475,6 +1494,17 @@ export const CORPUS_SHARES_ABI = [
         "name": "account",
         "type": "address",
         "internalType": "address"
+      }
+    ]
+  },
+  {
+    "type": "error",
+    "name": "NothingToReclaim",
+    "inputs": [
+      {
+        "name": "id",
+        "type": "uint256",
+        "internalType": "uint256"
       }
     ]
   },

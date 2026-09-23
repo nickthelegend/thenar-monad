@@ -165,6 +165,16 @@ export const LIVE_CONTRACTS: Deployed[] = DEPLOYED.filter((d) => /^0x[0-9a-fA-F]
 /** Deployments this protocol ran on before, kept so their runs stay explicable. */
 export const SUPERSEDED: Deployed[] = [
   {
+    key: "shares-v1",
+    name: "CorpusShares, first deployment",
+    address: "0xd19688FafB863238D9BAf880f71A2A9b968DfCcd",
+    does:
+      "Replaced the same day. A dividend declared while no share existed could never be paid or returned, " +
+      "and 0.01 MON declared that way during testing is still in it. The current CorpusShares can reclaim one.",
+    source: "contracts/src/CorpusShares.sol",
+    surface: "/contracts only",
+  },
+  {
     key: "axon-blitz",
     name: "AxonProtocol v1 on Monad Testnet",
     address: "0x89384f46e430F37DB61Afb98810eba995C0d6Ed4",

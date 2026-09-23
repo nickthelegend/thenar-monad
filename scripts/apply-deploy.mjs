@@ -54,6 +54,28 @@ for (const t of run.transactions) {
   if (t.contractName === "AxonProtocolV2") axonHash = t.hash;
 }
 
+/**
+ * Contracts replaced after the main broadcast, each by its own script, taken
+ * from that script's newest confirmed record. DeployShares.s.sol replaced
+ * CorpusShares with the version that can reclaim a dividend nobody holds.
+ */
+const OVERLAYS = { "DeployShares.s.sol": ["CorpusShares"] };
+for (const [script, names] of Object.entries(OVERLAYS)) {
+  const dir = `contracts/broadcast/${script}/10143`;
+  let files = [];
+  try { files = readdirSync(dir).filter((f) => /^run-\d+\.json$/.test(f)); } catch { continue; }
+  const newest = files
+    .map((f) => JSON.parse(readFileSync(`${dir}/${f}`, "utf8")))
+    .filter(confirmed)
+    .sort((x, y) => y.timestamp - x.timestamp)[0];
+  if (!newest) continue;
+  for (const t of newest.transactions) {
+    if (t.transactionType === "CREATE" && names.includes(t.contractName)) {
+      contracts[KEYS[t.contractName]] = getAddress(t.contractAddress);
+    }
+  }
+}
+
 const missing = Object.entries(contracts).filter(([, a]) => !a).map(([k]) => k);
 if (missing.length) throw new Error(`${RUN} has no CREATE for ${missing.join(", ")}`);
 

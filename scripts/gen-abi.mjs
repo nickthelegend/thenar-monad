@@ -26,7 +26,7 @@ const WANT = {
   CorpusShares: [
     "name", "symbol", "decimals", "issuer", "totalSupply", "balanceOf", "transfer",
     "addToControlList", "isInControlList", "getControlListCount", "getControlListMembers", "issue",
-    "setDividend", "getDividendsCount", "getDividend", "getDividendFor", "claimDividend",
+    "setDividend", "getDividendsCount", "getDividend", "getDividendFor", "claimDividend", "reclaimDividend",
     "balanceOfAt", "totalSupplyAt",
   ],
   SalesLog: ["seller", "logSale", "saleCount", "getSale", "seqOf", "servedCount"],

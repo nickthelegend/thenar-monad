@@ -133,6 +133,57 @@ contract CorpusSharesTest is Test {
     }
 }
 
+contract CorpusSharesReclaimTest is Test {
+    CorpusShares shares;
+    address issuer = address(0x1551);
+    address alice = address(0xA11CE);
+
+    function setUp() public {
+        vm.warp(1_000_000);
+        shares = new CorpusShares("Thenar Robot Corpus", "THNRC", issuer);
+        vm.deal(issuer, 10 ether);
+    }
+
+    function test_aDividendWithNoHoldersComesBack() public {
+        vm.prank(issuer);
+        uint256 id = shares.setDividend{value: 1 ether}(uint64(block.timestamp + 60), uint64(block.timestamp + 120));
+
+        vm.expectRevert(abi.encodeWithSelector(CorpusShares.NothingToReclaim.selector, id));
+        vm.prank(issuer);
+        shares.reclaimDividend(id);
+
+        vm.warp(block.timestamp + 61);
+        uint256 before = issuer.balance;
+        vm.prank(issuer);
+        shares.reclaimDividend(id);
+        assertEq(issuer.balance - before, 1 ether);
+
+        vm.expectRevert(abi.encodeWithSelector(CorpusShares.NothingToReclaim.selector, id));
+        vm.prank(issuer);
+        shares.reclaimDividend(id);
+    }
+
+    function test_aDividendWithHoldersCannotBeTakenBack() public {
+        vm.startPrank(issuer);
+        shares.addToControlList(alice);
+        shares.issue(alice, 10, keccak256("a"));
+        uint256 id = shares.setDividend{value: 1 ether}(uint64(block.timestamp + 60), uint64(block.timestamp + 60));
+        vm.warp(block.timestamp + 61);
+        vm.expectRevert(abi.encodeWithSelector(CorpusShares.NothingToReclaim.selector, id));
+        shares.reclaimDividend(id);
+        vm.stopPrank();
+    }
+
+    function test_onlyTheIssuerReclaims() public {
+        vm.prank(issuer);
+        uint256 id = shares.setDividend{value: 1 ether}(uint64(block.timestamp + 60), uint64(block.timestamp + 60));
+        vm.warp(block.timestamp + 61);
+        vm.expectRevert(CorpusShares.NotIssuer.selector);
+        vm.prank(alice);
+        shares.reclaimDividend(id);
+    }
+}
+
 contract SalesLogTest is Test {
     SalesLog sales;
     address seller = address(0x5E11);

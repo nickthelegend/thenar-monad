@@ -1,5 +1,11 @@
 [
   {
+    "hash": "a1cd3c4",
+    "date": "2026-09-23T16:06:57+05:30",
+    "subject": "Stop showing numbers nobody measured, and 404 what does not exist",
+    "body": "The first browser pass against the Monad deployment found pages stating\nfigures that were not readings:\n\n- /operator reported \"0 protocol calls, 0 reverted\" whenever the index or\n  the ledger failed, because a failure was stored as an empty list. It now\n  says \"—\" and why, and \"no runs\" means only that.\n- /post showed \"Your balance 0.0000 MON\" with no wallet connected, and\n  projected the whole escrow as \"scoring shortfall\" from a mean score of\n  zero when no run had been scored. Its gas note named \"the six tasks\n  here\" after a seventh was posted; it now says what the receipts show.\n- /task said a task \"was posted with createTask\" when it was posted with\n  createTaskUntil and a zero deadline; it now says what the state shows.\n- /handheld said the arm reaches 408 mm beside a spec sheet saying 512.\n  Both are true of different things, so it now names the solver's reach\n  and reads it from REACH_MAX.\n- The manifest answered matches: false for a task with nothing committed,\n  which reads as a mismatch. It is null until there is something to compare.\n\nPages that call Monadscan's index no longer ask when this deployment has\nno key: next.config.ts exposes whether one exists, not the key, so an\nunconfigured index is a stated reason rather than a 503 and a console\nerror on every load. A failure that does happen shows the server's own\nsentence instead of \"would not answer just now\".\n\n/station/999, /station/abc, /licence/<unminted>, /operator/nope were 200s\nsaying \"not found\"; they are 404s, asked of the contract the same way\n/task asks, and still rendered when the chain does not answer.\n\n/lab refetched its list once on the receipt, and on Monad the endpoint\nserving the read can be a block behind the one that confirmed it, so the\nlist omitted the task the line above had just announced. It asks again\neach second until the task is there. The Privy policy name is shortened\nto Privy's 50-character limit, and the changelog is regenerated from this\nrepository's own history.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+  },
+  {
     "hash": "a935ab1",
     "date": "2026-09-23T15:44:13+05:30",
     "subject": "Deploy Thenar to Monad testnet",
@@ -352,11 +358,5 @@
     "date": "2026-09-05T13:03:25+05:30",
     "subject": "feat(app): every surface — landing, hub, station, portfolio, leaderboard, foundry",
     "body": "Plus task detail with its score distribution, a public run-verification page\nthat re-hashes the stored samples and replays the tool path, task posting with\nreal escrow, the AXON-6 spec sheet generated from the CAD constants, and the\nAPI surface: contract metadata, health, dataset export, feed.\n\nEmpty states, error boundary and 404 are written in the product's own voice.\n\nCo-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
-  },
-  {
-    "hash": "be9c552",
-    "date": "2026-09-05T12:28:38+05:30",
-    "subject": "feat(chain): wire the app to the deployed contract",
-    "body": "Every surface reads live state: tasks, slots, escrow, scores, payouts,\nstandings and cap tables all come from AxonProtocol, not a fixture.\n\nThe verifier re-scores each run server-side with the same deterministic\nfunction the client used and signs the result with EIP-712; the client's own\nscore is never sent and never trusted. Trajectories are persisted to SQLite\nunder the same hash the chain records, so any payout can be recomputed from\nthe artefact that earned it.\n\nActivity is read from the trajectory ledger rather than event logs, because\nMonad's public RPC caps a getLogs range far below the history this needs.\n\nWallet failures are decoded into sentences an operator can act on — all\nthirteen custom errors, user rejection, and insufficient gas.\n\nCo-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
   }
 ]
