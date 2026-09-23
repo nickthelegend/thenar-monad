@@ -6,6 +6,8 @@ import { Canvas } from "@react-three/fiber";
 import { useGLTF } from "@react-three/drei";
 import * as THREE from "three";
 import { GOAL_R, PAYLOAD_R, PAYLOAD_H, TABLE_HALF } from "@/components/station/viewport";
+import { So101Pose } from "@/components/station/so101-arm";
+import type { ArmKind } from "@/lib/scan";
 
 /**
  * A recorded run, played back in the scene it was recorded in.
@@ -161,8 +163,10 @@ function Trail({ points }: { points: Float32Array }) {
 }
 
 export function ReplayViewport({
-  frame, trail, payloads, targetUrl, targetWidthMm, environmentUrl, goal,
+  frame, trail, payloads, targetUrl, targetWidthMm, environmentUrl, goal, arm = "thenar6",
 }: {
+  /** Which arm recorded the run: its joints only mean anything on that arm. */
+  arm?: ArmKind;
   frame: React.RefObject<ReplaySample | null>;
   trail: Float32Array;
   /** Every payload the run was recorded against, in the order it placed them. */
@@ -190,7 +194,7 @@ export function ReplayViewport({
         {payloads.map((p, i) => (
           <Payload key={`${p.url}-${i}`} slot={i} frame={frame} url={p.url} widthMm={p.widthMm} />
         ))}
-        <Arm frame={frame} />
+        {arm === "so101" ? <So101Pose frame={frame} /> : <Arm frame={frame} />}
       </Suspense>
       <Trail points={trail} />
     </Canvas>

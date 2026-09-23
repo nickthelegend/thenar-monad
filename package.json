@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "test": "npm run test:unit && npm run test:e2e",
-    "test:unit": "node --import ./test/register.mjs --test test/score.test.mjs test/phases.test.mjs test/merkle.test.mjs test/similarity.test.mjs test/failure.test.mjs test/split.test.mjs test/rollout.test.mjs test/progression.test.mjs test/shortfall.test.mjs test/engines.test.mjs test/store-failure.test.mjs test/scan-logs.test.mjs test/scan.test.mjs test/teach.test.mjs",
+    "test:unit": "node --import ./test/register.mjs --test test/score.test.mjs test/phases.test.mjs test/merkle.test.mjs test/similarity.test.mjs test/failure.test.mjs test/split.test.mjs test/rollout.test.mjs test/progression.test.mjs test/shortfall.test.mjs test/engines.test.mjs test/store-failure.test.mjs test/scan-logs.test.mjs test/scan.test.mjs test/teach.test.mjs test/so101.test.mjs test/embodiment.test.mjs test/arm-relay.test.mjs",
+    "arm-relay": "node scripts/arm-relay.mjs",
     "test:e2e": "node test/e2e.mjs",
     "postinstall": "mkdir -p public/vision/wasm && cp node_modules/@mediapipe/tasks-vision/wasm/vision_wasm_internal.* public/vision/wasm/"
   },
@@ -54,11 +55,14 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@types/three": "^0.185.4",
+    "@types/ws": "^8.18.1",
     "eslint": "^9",
     "eslint-config-next": "16.3.2",
     "playwright": "^1.62.1",
+    "serialport": "^13.0.0",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "ws": "^8.21.3"
   },
   "packageManager": "pnpm@10.29.2",
   "pnpm": {

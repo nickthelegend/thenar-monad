@@ -18,7 +18,8 @@ import { useTaskCatalogue } from "@/components/tasks-provider";
 import { SCENARIOS } from "@/lib/chain";
 import { payloads, targets, propById, type Prop } from "@/lib/props";
 import { ScanPanel, type ScanResult } from "@/components/scan/scan-panel";
-import { formatScan, instructionOf, parseScan } from "@/lib/scan";
+import { formatName, instructionOf, type ArmKind } from "@/lib/scan";
+import { EMBODIMENTS } from "@/lib/embodiment";
 
 /** Anyone can open work here: the escrow is what makes the bounty real. */
 export default function PostTaskPage() {
@@ -67,16 +68,24 @@ export default function PostTaskPage() {
    */
   const [scanning, setScanning] = useState(false);
   const [scan, setScan] = useState<ScanResult | null>(null);
-  const withScan = (text: string, r: ScanResult | null = scan) => (r ? formatScan(instructionOf(text), r.scene) : instructionOf(text));
+  /**
+   * Which arm the task is for. The station's own THENAR-6, or the SO-101 a
+   * contributor can build on their own desk — which is what makes a scanned
+   * task something they can do for real, on the table that was scanned.
+   */
+  const [arm, setArm] = useState<ArmKind>("thenar6");
   const onScene = (r: ScanResult | null) => {
     setScan(r);
-    if (!r) return setName((n) => instructionOf(n));
+    if (!r) return;
     const payload = r.pick.prop && propById(r.pick.prop)?.role === "payload" ? r.pick.prop : payloadId;
     const target = r.place.prop && propById(r.place.prop)?.role === "target" ? r.place.prop : "plate";
     setPayloadId(payload);
     setTargetId(target);
-    setName(withScan(compose(payload, target, uploaded), r));
+    setName(compose(payload, target, uploaded));
   };
+  // What goes on chain: the sentence the funder wrote, then the arm and the
+  // measured bench as tags. The field shows the sentence alone.
+  const chainName = formatName(name, { arm, scan: scan?.scene ?? null });
   /**
    * How long before the funder may take back what was never paid out.
    *
@@ -108,7 +117,7 @@ export default function PostTaskPage() {
 
   const slotsN = Number(slots);
   const rewardN = Number(reward);
-  const validName = name.trim().length >= 8;
+  const validName = instructionOf(name).length >= 8;
 
   /**
    * Other ways to say the same task, from the two objects already chosen.
@@ -161,11 +170,43 @@ export default function PostTaskPage() {
               Scan with a camera
             </button>
           )}
-          {parseScan(name) ? (
-            <span className="font-mono text-[12px] text-go">
-              Scanned: starts at {Math.round(parseScan(name)!.pick[0] * 1000)}, {Math.round(parseScan(name)!.pick[1] * 1000)} mm; goal at {Math.round(parseScan(name)!.place[0] * 1000)}, {Math.round(parseScan(name)!.place[1] * 1000)} mm from the base.
+          {scan ? (
+            <span className="flex flex-wrap items-center gap-x-3 font-mono text-[12px] text-go">
+              Scanned: starts at {Math.round(scan.scene.pick[0] * 1000)}, {Math.round(scan.scene.pick[1] * 1000)} mm; goal at {Math.round(scan.scene.place[0] * 1000)}, {Math.round(scan.scene.place[1] * 1000)} mm from the base.
+              <button type="button" onClick={() => { setScan(null); setScanning(false); }} className="uppercase tracking-[0.12em] text-scribe-3 hover:text-reject">
+                Drop the scan
+              </button>
             </span>
           ) : null}
+        </div>
+
+        <div className="flex flex-col gap-1.5">
+          <span className="label">Arm</span>
+          <div role="radiogroup" aria-label="Arm" className="grid gap-2 sm:grid-cols-2">
+            {(["thenar6", "so101"] as const).map((k) => (
+              <button
+                key={k}
+                type="button"
+                role="radio"
+                aria-checked={arm === k}
+                onClick={() => setArm(k)}
+                className={cn(
+                  "flex flex-col gap-1 border px-3 py-2.5 text-left transition-colors",
+                  arm === k ? "border-signal bg-ink-2" : "border-rule hover:border-rule-strong",
+                )}
+              >
+                <span className={cn("font-mono text-[12px] uppercase tracking-[0.14em]", arm === k ? "text-signal" : "text-scribe")}>
+                  {EMBODIMENTS[k].name}
+                </span>
+                <span className="text-[13px] leading-snug text-scribe-3">{EMBODIMENTS[k].blurb}</span>
+              </button>
+            ))}
+          </div>
+          <span className="max-w-[62ch] text-[13px] leading-relaxed text-scribe-3">
+            Runs are recorded in the chosen arm&rsquo;s own joints, so a corpus never
+            mixes two machines. An SO-101 task is always one arm.{" "}
+            <a href="/spec/so101" className="text-signal hover:text-signal-hi">The SO-101, drivable &rarr;</a>
+          </span>
         </div>
 
         <PropPicker
@@ -173,7 +214,7 @@ export default function PostTaskPage() {
           hint="The payload the operator picks up. This is the model the station loads — the preview is the asset itself, not a picture of it."
           options={allPayloads}
           value={payloadId}
-          onChange={(id) => { setPayloadId(id); setName(withScan(compose(id, targetId, uploaded))); }}
+          onChange={(id) => { setPayloadId(id); setName(compose(id, targetId, uploaded)); }}
         />
 
         <PropPicker
@@ -181,7 +222,7 @@ export default function PostTaskPage() {
           hint="Where it has to end up. The datum circle is placed on this, and the operator sees it in the scene."
           options={allTargets}
           value={targetId}
-          onChange={(id) => { setTargetId(id); setName(withScan(compose(payloadId, id, uploaded))); }}
+          onChange={(id) => { setTargetId(id); setName(compose(payloadId, id, uploaded)); }}
         />
 
         <Field label="Instruction" hint="Written from the two objects above. Edit the wording if it matters, but keep both names in it — the station reads them back to build the scene.">
@@ -191,6 +232,11 @@ export default function PostTaskPage() {
             placeholder="Put the toothpaste into the upper drawer"
             className={cn(inputCls, !validName && name.length > 0 && "border-reject")}
           />
+          {chainName !== name.trim() ? (
+            <span className="break-all font-mono text-[12px] text-scribe-3">
+              On chain as <span className="text-scribe-2">{chainName}</span>
+            </span>
+          ) : null}
           {!validName && name.length > 0 ? (
             <Err>Give the operator a full instruction — at least eight characters.</Err>
           ) : null}
@@ -314,6 +360,7 @@ export default function PostTaskPage() {
                     setPayloadId(t.scene.payload.id);
                     setTargetId(t.scene.target.id);
                     setName(t.name);
+                    setArm(t.arm);
                     setScenario(Math.max(0, SCENARIOS.indexOf(t.scenario as (typeof SCENARIOS)[number])));
                     setDifficulty(t.difficulty);
                     setReward(String(t.rewardMon));
@@ -419,14 +466,14 @@ export default function PostTaskPage() {
                 ? await tx.run(
                     "createTaskUntil",
                     [
-                      name.trim(), slotsN, parseEther(reward), scenario, difficulty,
+                      chainName, slotsN, parseEther(reward), scenario, difficulty,
                       BigInt(Math.floor(Date.now() / 1000) + days * 86_400),
                     ],
                     parseEther(String(total)),
                   )
                 : await tx.run(
                     "createTask",
-                    [name.trim(), slotsN, parseEther(reward), scenario, difficulty],
+                    [chainName, slotsN, parseEther(reward), scenario, difficulty],
                     parseEther(String(total)),
                   );
             if (r) router.push("/hub");

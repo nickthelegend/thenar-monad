@@ -42,6 +42,7 @@ const PAGES: Item[] = [
   { id: "p-port", label: "Portfolio", hint: "your own runs", href: "/portfolio", group: "Pages" },
   { id: "p-status", label: "Status", hint: "what has to be true for a run to pay", href: "/status", group: "Pages" },
   { id: "p-spec", label: "Spec sheet", hint: "the arm, in numbers", href: "/spec", group: "Pages" },
+  { id: "p-so101", label: "SO-101 spec", hint: "the arm you can own, drivable", href: "/spec/so101", group: "Pages" },
   { id: "p-archive", label: "Archive", hint: "runs on superseded deployments", href: "/archive", group: "Pages" },
   { id: "p-changelog", label: "Changelog", href: "/changelog", group: "Pages" },
   { id: "p-post", label: "Post a note", href: "/post", group: "Pages" },

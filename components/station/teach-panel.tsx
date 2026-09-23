@@ -4,6 +4,7 @@ import { useState } from "react";
 import { cn } from "@/lib/cn";
 import { learn, type Skill } from "@/lib/teach";
 import type { Sample } from "@/lib/types";
+import type { ArmKind } from "@/lib/scan";
 
 /**
  * Teach the arm from the best run a person was paid for on this task, then let
@@ -11,8 +12,10 @@ import type { Sample } from "@/lib/types";
  * export, so what the arm learns from is exactly what a buyer would download.
  * A repeat is practice: it is never submitted and never paid.
  */
-export function TeachPanel({ taskId, skill, onSkill, repeating, onRepeat }: {
+export function TeachPanel({ taskId, arm, skill, onSkill, repeating, onRepeat }: {
   taskId: number;
+  /** The arm the task is for, which is the arm its paid runs were recorded on. */
+  arm: ArmKind;
   skill: Skill | null;
   onSkill: (s: Skill | null) => void;
   repeating: boolean;
@@ -29,7 +32,7 @@ export function TeachPanel({ taskId, skill, onSkill, repeating, onRepeat }: {
       const ep = await fetch(`/api/dataset?traj=${best.traj_hash}`).then((r) => (r.ok ? r.json() : Promise.reject(new Error(`the dataset answered ${r.status}`))));
       const d = ep.data[0];
       const samples: Sample[] = d.timestamp.map((t: number, i: number) => ({ t, q: d.observation["state.joints"][i], grip: d.observation["state.gripper"][i], object: d.observation["state.object_pose"][i] }));
-      const out = learn(samples, best.traj_hash);
+      const out = learn(samples, best.traj_hash, (ep.arm as ArmKind | undefined) ?? arm);
       if (!out.skill) return setState({ text: out.reason, bad: true });
       onSkill(out.skill);
       setState({ text: `Learned from run ${best.traj_hash.slice(0, 10)}… (score ${(best.score / 100).toFixed(0)}): grasp at ${out.skill.graspT.toFixed(1)} s, release at ${out.skill.releaseT.toFixed(1)} s.` });

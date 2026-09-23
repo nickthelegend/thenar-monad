@@ -10,6 +10,7 @@ import { settledSamplesForTask } from "@/lib/server/db";
 import type { Sample } from "@/lib/types";
 import { appChain, AXON_ADDRESS, CORPUS_MANIFEST } from "@/lib/chain";
 import { AXON_ABI } from "@/lib/abi";
+import { armOf, instructionOf, parseScan } from "@/lib/scan";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -89,7 +90,9 @@ async function handleGET(_req: Request, ctx: { params: Promise<{ id: string }> }
         "payouts and the trajectories are real; third-party demand is not.",
     },
     composition: {
-      instruction: task?.name ?? null,
+      instruction: task ? instructionOf(task.name) : null,
+      arm: task ? armOf(task.name) : null,
+      scan: task ? parseScan(task.name) : null,
       episodes: accepted.length,
       contributors: contributors.size,
       frames_per_second: 20,

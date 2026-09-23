@@ -9,10 +9,19 @@ import { AXON_ABI } from "./abi";
 import { AXON_ADDRESS, IS_DEPLOYED, scenarioName } from "./chain";
 import { DEPLOYED } from "./registry";
 import { parSecondsFor } from "./par";
+import { armOf, instructionOf, parseScan, type ArmKind, type ScannedScene } from "./scan";
 
 export type ChainTask = {
   id: number;
+  /** The instruction as a sentence, without the tags the name carries on chain. */
   name: string;
+  /** The name exactly as the contract stores it, tags and all. The verifier
+   *  reads the goal from this, so anything that scores must too. */
+  chainName: string;
+  /** Which arm the task is for: "[arm so101]" in the name, THENAR-6 otherwise. */
+  arm: ArmKind;
+  /** Where the payload and its target really stood, for a task scanned from a table. */
+  scanned: ScannedScene | null;
   funder: `0x${string}`;
   rewardWei: bigint;
   rewardMon: number;
@@ -67,7 +76,10 @@ function shape(raw: RawTask, id: number): ChainTask {
   const expired = expiresAt !== null && Date.now() >= expiresAt;
   return {
     id,
-    name: raw.name,
+    name: instructionOf(raw.name),
+    chainName: raw.name,
+    arm: armOf(raw.name),
+    scanned: parseScan(raw.name),
     funder: raw.funder,
     rewardWei: raw.rewardPerTrajectory,
     rewardMon: Number(formatEther(raw.rewardPerTrajectory)),

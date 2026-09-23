@@ -23,7 +23,18 @@ export type ScannedScene = {
   place: [number, number];
 };
 
-const TAG = /\[scan (-?\d{1,4}),(-?\d{1,4}) > (-?\d{1,4}),(-?\d{1,4})\]\s*$/;
+const TAG = /\[scan (-?\d{1,4}),(-?\d{1,4}) > (-?\d{1,4}),(-?\d{1,4})\]/;
+const ARM_TAG = /\[arm (so101)\]/;
+const ANY_TAG = /\s*\[(?:scan|arm) [^\]]*\]/g;
+
+/**
+ * Which arm a task is for. THENAR-6 unless the name asks for the SO-101
+ * ("[arm so101]"): the MG996R-built arm a contributor can own and put on
+ * their own bench. Read from the name for the same reason the scan is.
+ */
+export type ArmKind = "thenar6" | "so101";
+export const armOf = (name: string): ArmKind => (ARM_TAG.test(name) ? "so101" : "thenar6");
+export const ARM_LABEL: Record<ArmKind, string> = { thenar6: "THENAR-6", so101: "SO-101 · MG996R" };
 
 /** The scene a task's name carries, or null for a task that was not scanned. */
 export function parseScan(name: string): ScannedScene | null {
@@ -35,12 +46,20 @@ export function parseScan(name: string): ScannedScene | null {
 }
 
 /** The instruction without its measurement, for surfaces that show a sentence. */
-export const instructionOf = (name: string) => name.replace(TAG, "").trim();
+export const instructionOf = (name: string) => name.replace(ANY_TAG, "").trim();
 
-export function formatScan(instruction: string, s: ScannedScene): string {
+/** A task's name as it goes on chain: the instruction, then its arm, then its scan. */
+export function formatName(instruction: string, opts: { arm?: ArmKind; scan?: ScannedScene | null } = {}): string {
   const mm = (v: number) => Math.round(v * 1000);
-  return `${instruction.trim()} [scan ${mm(s.pick[0])},${mm(s.pick[1])} > ${mm(s.place[0])},${mm(s.place[1])}]`;
+  const s = opts.scan;
+  return [
+    instructionOf(instruction),
+    opts.arm === "so101" ? "[arm so101]" : "",
+    s ? `[scan ${mm(s.pick[0])},${mm(s.pick[1])} > ${mm(s.place[0])},${mm(s.place[1])}]` : "",
+  ].filter(Boolean).join(" ");
 }
+
+export const formatScan = (instruction: string, s: ScannedScene) => formatName(instruction, { arm: armOf(instruction), scan: s });
 
 /** Why a scanned scene cannot be a task, or null when it can. */
 export function checkScan(s: ScannedScene): string | null {

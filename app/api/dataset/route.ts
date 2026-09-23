@@ -5,6 +5,8 @@ import { queryOne } from "@/lib/server/db";
 import { taskCorpus } from "@/lib/server/corpus-export";
 import { appChain, AXON_ADDRESS, CORPUS_ACCESS } from "@/lib/chain";
 import { corpusAccess } from "@/lib/server/access";
+import { armForTask } from "@/lib/server/task-arm";
+import { embodimentOf } from "@/lib/embodiment";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -43,12 +45,15 @@ export async function GET(req: Request) {
     }
 
     const samples = JSON.parse(row.samples) as Sample[];
+    const arm = embodimentOf(await armForTask(row.task_id));
 
     const body = JSON.stringify({
       dataset: `thenar-run-${row.traj_hash.slice(0, 10)}`,
-      embodiment: "THENAR-6",
+      embodiment: arm.name,
+      arm: arm.kind,
       degrees_of_freedom: 6,
-      gripper: "parallel-jaw, 42 mm",
+      joint_names: arm.joints,
+      gripper: arm.gripper,
       control_frequency_hz: 20,
       episodes: 1,
       total_frames: samples.length,

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { query } from "@/lib/server/db";
 import { coherenceOf } from "@/lib/coherence";
+import { armForTask } from "@/lib/server/task-arm";
 import type { Sample } from "@/lib/types";
 import { appChain, AXON_ADDRESS } from "@/lib/chain";
 
@@ -105,8 +106,9 @@ export async function GET(req: Request) {
    *
    * Measured rather than assumed, and reported before the price.
    */
+  const arm = await armForTask(taskId);
   const coherence = rows.map((r) => {
-    try { return coherenceOf(JSON.parse(r.samples) as Sample[]); }
+    try { return coherenceOf(JSON.parse(r.samples) as Sample[], arm); }
     catch { return null; }
   });
   const usable = coherence.filter((c) => c?.coherent).length;

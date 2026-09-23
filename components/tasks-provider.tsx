@@ -62,7 +62,8 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
           payloads,
           target,
           room: environmentForScenario(t.scenario),
-          arms: armsForTask(t.name),
+          // The SO-101 is a single arm; a pair of them is not a bench we model.
+          arms: t.arm === "so101" ? 1 : armsForTask(t.name),
           varies,
         },
         // The manipulation the instruction asks for. Derived, like the scene, so

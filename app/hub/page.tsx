@@ -15,6 +15,9 @@ import { SCENARIOS, CURRENCY, isSeedFunded, appChain } from "@/lib/chain";
 import { fmtInt, fmtMon, fmtSeconds } from "@/lib/format";
 import { useTaskCatalogue, type TaskWithScene } from "@/components/tasks-provider";
 import { SKILLS, SKILL_LABEL } from "@/lib/skills";
+import { TaskChips } from "@/components/task-chips";
+import { EMBODIMENTS } from "@/lib/embodiment";
+import type { ArmKind } from "@/lib/scan";
 
 type SortKey = "reward" | "slots" | "difficulty" | "escrow";
 
@@ -29,6 +32,7 @@ export default function HubPage() {
   const { tasks, isLoading, isError, error, refetch } = useTaskCatalogue();
   const [scenario, setScenario] = useState<string>("all");
   const [skill, setSkill] = useState<string>("all");
+  const [arm, setArm] = useState<ArmKind | "all">("all");
   const [openOnly, setOpenOnly] = useState(true);
   const [sort, setSort] = useState<SortKey>("reward");
   const [q, setQ] = useState("");
@@ -39,6 +43,7 @@ export default function HubPage() {
       (t) =>
         (scenario === "all" || t.scenario === scenario) &&
           (skill === "all" || t.skill === skill) &&
+          (arm === "all" || t.arm === arm) &&
         (!openOnly || t.open) &&
         (!needle || t.name.toLowerCase().includes(needle) || String(t.id) === needle),
     );
@@ -49,7 +54,7 @@ export default function HubPage() {
       escrow: (a, b) => Number(b.escrowWei - a.escrowWei),
     };
     return [...list].sort(by[sort]);
-  }, [tasks, scenario, skill, openOnly, sort, q]);
+  }, [tasks, scenario, skill, arm, openOnly, sort, q]);
 
   // Thenar has no third-party funders yet. Counted rather than asserted: the
   // product's own rule is that anything shown before real traffic exists is
@@ -162,6 +167,16 @@ export default function HubPage() {
           ))}
         </FilterRow>
 
+        {/* Only once there is a choice: a filter with one option is noise. */}
+        {(tasks ?? []).some((t) => t.arm === "so101") ? (
+          <FilterRow label="Arm">
+            <Chip active={arm === "all"} onClick={() => setArm("all")}>All</Chip>
+            {(["thenar6", "so101"] as const).map((k) => (
+              <Chip key={k} active={arm === k} onClick={() => setArm(k)}>{EMBODIMENTS[k].label}</Chip>
+            ))}
+          </FilterRow>
+        ) : null}
+
         <FilterRow label="View">
           <Chip active={openOnly} onClick={() => setOpenOnly(true)}>Accepting runs</Chip>
           <Chip active={!openOnly} onClick={() => setOpenOnly(false)}>Every task</Chip>
@@ -226,7 +241,7 @@ export default function HubPage() {
             {/* The skill filter was left set, so a list emptied by skill stayed
                 empty after "Clear filters". */}
             <button
-              onClick={() => { setScenario("all"); setSkill("all"); setOpenOnly(false); setQ(""); }}
+              onClick={() => { setScenario("all"); setSkill("all"); setArm("all"); setOpenOnly(false); setQ(""); }}
               className="border border-rule-strong px-4 py-2 font-mono text-[12px] uppercase tracking-[0.14em] text-scribe transition-colors hover:border-scribe"
             >
               Clear filters
@@ -264,6 +279,7 @@ export default function HubPage() {
                       <Link href={`/task/${t.id}`} className="text-[14px] text-scribe hover:text-signal">
                         {t.name}
                       </Link>
+                      <TaskChips task={t} />
                       <span className="font-mono text-[12px] text-scribe-3">
                       <span className="capitalize">{t.scenario}</span>
                       <span className="mx-1.5 text-rule-strong">/</span>
@@ -362,6 +378,7 @@ export default function HubPage() {
                       <PropPreview url={t.scene.target.url} className="h-8 w-8 shrink-0" />
                     </span>
                     <Link href={`/task/${t.id}`} className="text-[15px] text-scribe">{t.name}</Link>
+                    <TaskChips task={t} className="mt-1" />
                       <span className="mt-0.5 block font-mono text-[12px] text-scribe-3">
                         {payloadLabel(t.scene, t.scenario)}
                         <span className="mx-1.5 text-rule-strong">&rarr;</span>

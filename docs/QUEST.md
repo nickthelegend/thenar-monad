@@ -66,3 +66,50 @@ The measured positions go into the task's name on chain:
 - **Teach** learns from the best paid run on the task, fetched through `/api/dataset`: the same export a buyer downloads.
 - **Repeat alone** runs the arm by itself. The demonstration is bent to this scene's start and goal (`lib/teach.ts`).
 - A repeat is practice only: it is never submitted and never paid.
+
+## The SO-101 (MG996R) as a second arm
+
+A task can be for the open SO-101, built with MG996R servos, as well as the
+station's THENAR-6. Choose **Arm** on `/post`. The name goes on chain with an
+`[arm so101]` tag, beside any scan:
+
+`Put the glass on the plate [arm so101] [scan 199,35 > 309,-52]`
+
+- `lib/scan.ts` reads the tags. `lib/hooks.ts` shapes every task into `name`
+  (the sentence), `chainName` (the name exactly as stored), `arm` and `scanned`.
+  Scoring always reads `chainName`.
+- `lib/so101-spec.ts` is the follower chain from thenar-arms' assembly manifest.
+  `lib/so101.ts` solves it: damped least squares, gripper down, limits enforced.
+  `public/models/so101-mg996r.glb` is built from the same manifest.
+- The station draws `components/station/so101-arm.tsx` for an SO-101 task. It
+  records the arm's own five joints and the jaw (radians) and its own tool
+  position. Grasp, placement and score are the same bench.
+- Replays, teach (`lib/teach.ts`) and the coherence check (`lib/coherence.ts`)
+  read the joints back through the arm that made them (`lib/embodiment.ts`).
+  Dataset exports carry `embodiment`, `arm` and `joint_names`.
+- `/spec/so101` is the arm on its own: drive the gripping point and read the
+  solved joints.
+
+### Mirroring onto a real SO-101
+
+```bash
+node scripts/arm-relay.mjs --follower /dev/cu.usbserial-XXXX --arm
+```
+
+Then press **Mirror to my SO-101** on an SO-101 task's station or on
+`/spec/so101`.
+
+The relay speaks thenar-arms' firmware protocol: `Q q0 … q5`, `ARM`, `STOP`,
+and `L …` from a leader given with `--leader`. It listens on 127.0.0.1 and
+refuses pages from other websites. It never arms without `--arm`, and then only
+from home. The page holds home, then eases to the pose on screen.
+
+The relay also refuses:
+
+- any pose outside the joint limits
+- any pose that would put the gripper or the wrist into the table
+
+It sends STOP when the page stops streaming. `test/arm-relay.test.mjs` checks
+all of this against a pseudo-terminal that answers like the firmware
+(`test/fake-follower.py`). `test/live-so101.mjs` drives `/spec/so101` in a real
+browser through the relay.

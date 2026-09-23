@@ -1,5 +1,6 @@
 "use client";
 
+import { TaskChips } from "@/components/task-chips";
 import Link from "next/link";
 import { Attempts } from "@/components/attempts";
 import { Coverage } from "@/components/coverage";
@@ -82,6 +83,7 @@ export default function TaskView() {
           {SKILL_LABEL[task.skill]}
         </span>
         <span className="font-mono text-[12px] text-scribe-3">{task.scene.room.label}</span>
+        <TaskChips task={task} />
         <a href={addressUrl(task.funder)} target="_blank" rel="noreferrer" className="font-mono text-[12px] text-scribe-3 hover:text-probe">
           funded by {shortHash(task.funder)}
           {isSeedFunded(task.funder) ? " \u00b7 posted by us to demonstrate the loop" : ""}

@@ -17,8 +17,10 @@ import { useRunsOnTask, useSubmitCost } from "@/lib/hooks";
 import { useTaskCatalogue, useCatalogueTask } from "@/components/tasks-provider";
 import { XR_ACTION, xrState } from "@/components/station/xr";
 import { TeachPanel } from "@/components/station/teach-panel";
+import { MirrorPanel } from "@/components/station/arm-link";
+import { TaskChips } from "@/components/task-chips";
+import { embodimentOf } from "@/lib/embodiment";
 import type { Skill } from "@/lib/teach";
-import { instructionOf } from "@/lib/scan";
 import { useSubmitRun } from "@/lib/submit";
 import { HumanGate } from "@/components/human-gate";
 import { SHARES_SYMBOL } from "@/lib/corpus-shares";
@@ -240,7 +242,7 @@ export default function StationPage() {
           },
           task.parSeconds,
           task.rewardMon,
-          goalFor(task.name),
+          goalFor(task.chainName),
         ),
       );
       setPhase("measured");
@@ -397,7 +399,7 @@ export default function StationPage() {
   useEffect(() => {
     if (!task) return;
     xrState.hud = [
-      instructionOf(task.name),
+      task.name,
       phase === "running"
         ? `Running ${elapsed.toFixed(1)} s · ${tel?.held ? "holding" : tel?.inRange ? "in range — close the jaws" : "reach the payload"} · ${tel ? Math.round(tel.deviationMm) : "—"} mm from the goal`
         : phase === "measured" && verdict
@@ -519,6 +521,7 @@ export default function StationPage() {
         <div className="flex min-w-0 flex-1 items-center gap-3 px-4 py-2.5">
           <span className="shrink-0 font-mono text-[12px] text-scribe-3">#{task.id}</span>
           <h1 className="truncate font-display text-lg font-600 leading-none">{task.name}</h1>
+          <TaskChips task={task} className="hidden shrink-0 sm:inline-flex" />
         </div>
         <div className="hidden items-center gap-5 border-l border-rule px-4 md:flex">
           <Stat label="Elapsed" value={fmtSeconds(elapsed)} />
@@ -552,6 +555,20 @@ export default function StationPage() {
                 happened.
               </p>
             ) : null}
+            {task.arm === "so101" ? (
+              <p className="mt-2 text-[13px] leading-relaxed text-scribe-3">
+                On an SO-101 built with MG996R servos, solved from its CAD. It
+                reaches 400 mm and holds with one moving jaw; the run records
+                its own five joints and the jaw, not the THENAR-6&rsquo;s.
+              </p>
+            ) : null}
+            {task.scanned ? (
+              <p className="mt-2 text-[13px] leading-relaxed text-scribe-3">
+                Measured off a real table: the payload stands where it stood in
+                the photo, and the run is scored against where the target really
+                was, read from the task on chain.
+              </p>
+            ) : null}
             {scene.varies ? (
               <p className="mt-2 text-[13px] leading-relaxed text-scribe-3">
                 This task names no object, so each run draws one &mdash; this
@@ -560,6 +577,11 @@ export default function StationPage() {
               </p>
             ) : null}
           </Section>
+          {task.arm === "so101" ? (
+            <Section title="Your SO-101">
+              <MirrorPanel />
+            </Section>
+          ) : null}
           <Section title="Controls">
             <dl className="flex flex-col gap-1.5">
               <Key keys={["Drag"]} action="Move the tool in the workspace" />
@@ -608,7 +630,7 @@ export default function StationPage() {
                 hover without ever grasping. Nothing it does is submitted.
               </p>
             ) : null}
-            <TeachPanel taskId={task.id} skill={skill} onSkill={setSkill} repeating={repeatOn} onRepeat={(on) => { setRepeatOn(on); if (on) setPolicyOn(false); }} />
+            <TeachPanel taskId={task.id} arm={task.arm} skill={skill} onSkill={setSkill} repeating={repeatOn} onRepeat={(on) => { setRepeatOn(on); if (on) setPolicyOn(false); }} />
             <dl className="flex flex-col gap-1.5">
               <div className="flex items-center gap-2 pt-1">
                 <button
@@ -649,10 +671,11 @@ export default function StationPage() {
           ) : canDraw === null ? null : (
           <StationViewport
             running={phase === "running"}
-            goal={goalFor(task.name)}
-            start={[...startFor(task.name)] as [number, number]}
+            goal={goalFor(task.chainName)}
+            start={[...startFor(task.chainName)] as [number, number]}
             payloads={scene.payloads.map((p) => ({ url: p.url, widthMm: p.widthMm }))}
             arms={scene.arms}
+            arm={task.arm}
             policy={policyOn ? policy : null}
             skill={repeatOn ? skill : null}
             targetUrl={scene.target.url}
@@ -922,6 +945,7 @@ export default function StationPage() {
         <aside className="order-3 flex flex-col border-rule lg:min-h-0 lg:overflow-y-auto lg:border-l">
           <Section title="This task">
             <div className="flex flex-col gap-3">
+              <Row label="Arm" value={embodimentOf(task.arm).label} />
               <Row label="Scenario" value={task.scenario} />
               <Row label="Room" value={room.label} />
               <Row label="Skill" value={SKILL_LABEL[task.skill]} />

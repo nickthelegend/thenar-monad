@@ -45,3 +45,14 @@ test("a scanned task is scored against its own goal, not the bench's", () => {
   assert.equal(evaluate(traj, 60, 1, place).success, true);
   assert.equal(evaluate(traj, 60, 1).success, false);
 });
+
+test("the arm travels in the name too, beside the scan, and either can be absent", async () => {
+  const { formatName, armOf, instructionOf, parseScan } = await import("../lib/scan.ts");
+  const n = formatName("Put the glass on the plate", { arm: "so101", scan: { pick: [0.199, 0.035], place: [0.309, -0.052] } });
+  assert.equal(n, "Put the glass on the plate [arm so101] [scan 199,35 > 309,-52]");
+  assert.equal(armOf(n), "so101");
+  assert.equal(instructionOf(n), "Put the glass on the plate");
+  assert.deepEqual(parseScan(n), { pick: [0.199, 0.035], place: [0.309, -0.052] });
+  assert.equal(armOf("Put the pen on the closed laptop"), "thenar6");
+  assert.equal(formatName(n, { arm: "thenar6" }), "Put the glass on the plate");
+});

@@ -31,6 +31,11 @@ export default function SpecPage() {
         the arm, this page, and the solver all move together.
       </p>
 
+      <p className="mt-3 text-[14px] text-scribe-3">
+        Tasks can also ask for a second arm:{" "}
+        <Link href="/spec/so101" className="text-signal hover:text-signal-hi">the SO-101 · MG996R &rarr;</Link>
+      </p>
+
       <div className="mt-8 grid grid-cols-2 gap-px bg-rule sm:grid-cols-4">
         <Cell label="Axes" value={String(spec.axes)} />
         <Cell label="Reach" value={`${spec.reach_mm} mm`} />

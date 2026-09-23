@@ -7,6 +7,8 @@ import { splitFor } from "@/lib/split";
 import { failedTrajectories, annotationsForTask, query } from "@/lib/server/db";
 import type { Sample } from "@/lib/types";
 import { appChain, AXON_ADDRESS } from "@/lib/chain";
+import { armForTask } from "@/lib/server/task-arm";
+import { embodimentOf } from "@/lib/embodiment";
 
 /**
  * One task's corpus, as a training set.
@@ -126,12 +128,15 @@ export async function taskCorpus(taskId: number): Promise<NextResponse> {
     };
   });
 
+  const arm = embodimentOf(await armForTask(taskId));
   const body = JSON.stringify(
     {
       dataset: `thenar-task-${taskId}`,
-      embodiment: "THENAR-6",
+      embodiment: arm.name,
+      arm: arm.kind,
       degrees_of_freedom: 6,
-      gripper: "parallel-jaw, 42 mm",
+      joint_names: arm.joints,
+      gripper: arm.gripper,
       control_frequency_hz: 20,
       episodes: episodes.length,
       total_frames: episodes.reduce((n, e) => n + e.length, 0),

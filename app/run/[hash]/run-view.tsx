@@ -391,7 +391,7 @@ export default function RunView() {
         samples={data.samples ?? []}
         scoredDeviationMm={data.deviationMm}
         onSeek={setCursor}
-        goal={goalFor(task?.name)}
+        goal={goalFor(task?.chainName)}
       />
 
       {/* What would have paid. A run under the floor is told how far under, in
@@ -427,7 +427,8 @@ export default function RunView() {
               targetUrl={task.scene.target.url}
               targetWidthMm={task.scene.target.widthMm}
               environmentUrl={task.scene.room.url}
-              goal={[...goalFor(task.name)] as [number, number]}
+              goal={[...goalFor(task.chainName)] as [number, number]}
+              arm={task.arm}
             />
           </div>
         </>

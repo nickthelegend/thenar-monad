@@ -21,7 +21,7 @@ export const dynamic = "force-dynamic";
  */
 const KNOWN = new Set<string>([
   "/", "/hub", "/space", "/inventory", "/portfolio", "/leaderboard", "/foundry",
-  "/status", "/changelog", "/archive", "/passkey", "/spec", "/post",
+  "/status", "/changelog", "/archive", "/passkey", "/spec", "/spec/so101", "/post",
   "/station", "/task", "/run", "/operator", "/licence",
 ]);
 

@@ -78,7 +78,11 @@ const nextConfig: NextConfig = {
         // this the Selfie Check failed in the browser before any request left it.
         "https://bridge.worldcoin.org " +
         "wss://relay.walletconnect.com wss://relay.walletconnect.org wss://www.walletlink.org " +
-        "https://explorer-api.walletconnect.com",
+        "https://explorer-api.walletconnect.com " +
+        // The arm relay (scripts/arm-relay.mjs) on the operator's own machine:
+        // the station mirrors a run onto their SO-101 through it. Loopback
+        // only, so a page can reach an arm on this desk and nowhere else.
+        "ws://localhost:8787 ws://127.0.0.1:8787",
       "frame-ancestors 'none'",
       "base-uri 'self'",
       "form-action 'self'",

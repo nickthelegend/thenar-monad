@@ -13,7 +13,8 @@
  * one as practice: it is never submitted, never paid, and never counted.
  */
 import type { Sample } from "./types";
-import { toolPosition } from "./kinematics";
+import { toolFor } from "./embodiment";
+import type { ArmKind } from "./scan";
 
 /** The jaws count as closed on something below this opening, in mm. */
 const CLOSED_MM = 14;
@@ -32,9 +33,12 @@ export type Skill = {
 };
 
 /** Learn a skill from a run's samples, or say why the run cannot teach one. */
-export function learn(samples: Sample[], taughtFrom: string): { skill: Skill } | { skill: null; reason: string } {
+export function learn(samples: Sample[], taughtFrom: string, arm: ArmKind = "thenar6"): { skill: Skill } | { skill: null; reason: string } {
   if (samples.length < 20) return { skill: null, reason: "A run needs at least a second of samples to teach from." };
-  const tool = samples.map((s) => toolPosition({ j1: s.q[0], j2: s.q[1], j3: s.q[2], j5: s.q[4], clamped: false }));
+  // The tool is read back through the arm that recorded the run: the same
+  // six numbers are different poses on a THENAR-6 and on an SO-101.
+  const fk = toolFor(arm);
+  const tool = samples.map((s) => fk(s.q));
   // The grasp: jaws closed with the payload between them, which is the moment
   // the payload starts following the tool.
   const grasp = samples.findIndex((s, i) => s.grip <= CLOSED_MM && Math.hypot(tool[i][0] - s.object[0], tool[i][1] - s.object[1]) < 0.09);

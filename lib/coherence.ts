@@ -1,5 +1,6 @@
 import type { Sample } from "@/lib/types";
-import { toolPosition } from "@/lib/kinematics";
+import { toolFor } from "@/lib/embodiment";
+import type { ArmKind } from "@/lib/scan";
 
 /**
  * Whether a recording's arm and its payload describe the same event.
@@ -44,7 +45,8 @@ export type Coherence = {
   reading: string;
 };
 
-export function coherenceOf(samples: Sample[]): Coherence {
+export function coherenceOf(samples: Sample[], arm: ArmKind = "thenar6"): Coherence {
+  const fk = toolFor(arm);
   const held = samples.filter((s) => s.grip <= GRIP_CLOSED_MM && Array.isArray(s.q));
   if (held.length < MIN_HELD) {
     return {
@@ -62,7 +64,7 @@ export function coherenceOf(samples: Sample[]): Coherence {
       // Forward kinematics on the angles as recorded. Not re-solved: the
       // question is where this recording's arm actually was, not where a
       // solver would have put it.
-      const t = toolPosition({ j1: s.q[0], j2: s.q[1], j3: s.q[2], j5: s.q[4], clamped: false });
+      const t = fk(s.q);
       return Math.hypot(t[0] - s.object[0], t[1] - s.object[1]);
     })
     .sort((a, b) => a - b);

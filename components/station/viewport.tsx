@@ -10,6 +10,9 @@ import { click } from "@/lib/click";
 import { act as policyAct } from "@/lib/policy";
 import { poseAt } from "@/lib/teach";
 import { REACH_MAX, solve, solveAt, toolPositionAt } from "@/lib/kinematics";
+import { SO101_REACH } from "@/lib/so101";
+import { So101Arm } from "@/components/station/so101-arm";
+import type { ArmKind } from "@/lib/scan";
 import type { Sample } from "@/lib/types";
 import { GOAL_R, TOLERANCE_M, SEAT_OFFSET, seatFor } from "@/lib/bench";
 
@@ -65,6 +68,12 @@ const DRAG_RIGHT = [0.716, -0.699];
 const DRAG_AWAY = [0.699, 0.715];
 const DRAG_METRES_PER_PX = 0.0012;
 
+/** A solved pose. The SO-101 adds its own six joints and its own tool, which
+ *  the THENAR-6's analytic model cannot describe. */
+type Joints = ReturnType<typeof solve> & { q?: Sample["q"]; tool?: [number, number, number] };
+const toolOf = (base: [number, number], j: Joints) => j.tool ?? toolPositionAt(base, j);
+const recordQ = (j: Joints): Sample["q"] => j.q ?? [j.j1, j.j2, j.j3, 0, j.j5, 0];
+
 /** Where the tool starts every run, in the arm's own frame. */
 const INITIAL_TARGET: [number, number, number] = [0.3, 0, 0.16];
 
@@ -107,6 +116,10 @@ type ViewportProps = {
   /** Two arms, when the task needs two. A scene with one is untouched: the
    *  single arm keeps the origin, its solver and its recorded columns. */
   arms?: 1 | 2;
+  /** Which arm stands at the origin. The SO-101 records its own joints and its
+   *  own tool (forward kinematics of its CAD chain); everything downstream of
+   *  the tool — grasp, placement, score — is the same bench. */
+  arm?: ArmKind;
   targetUrl: string;
   targetWidthMm: number;
   /** The room this task happens in, resolved from the scenario the contract
@@ -194,7 +207,7 @@ function Arm({
   grip: React.RefObject<number>;
   /** Whether the jaws currently have the payload. */
   held?: React.RefObject<boolean>;
-  onJoints: (j: ReturnType<typeof solve>) => void;
+  onJoints: (j: Joints) => void;
   /** Where this arm is bolted to the bench, in the table plane. Every arm here
    *  is the same THENAR-6, so a second one is a change of frame and nothing
    *  else — the solver, the link lengths and the reach are shared. */
@@ -347,7 +360,7 @@ function Room({ url }: { url: string }) {
   );
 }
 
-function SurfacePlate() {
+export function SurfacePlate() {
   const grid = useMemo(() => {
     const pts: number[] = [];
     const step = TABLE_HALF / 6;
@@ -557,8 +570,9 @@ function GhostTrail({ points }: { points: React.RefObject<Float32Array> }) {
  * what. It now marks the bearing the tool is actually pushing against, so the
  * limit reads as a direction to come back from rather than a general alarm.
  */
-function ReachEnvelope({ visible, target }: {
+function ReachEnvelope({ visible, target, reach = REACH_MAX }: {
   visible: boolean;
+  reach?: number;
   target?: React.RefObject<[number, number, number]>;
 }) {
   const spur = useRef<THREE.Group>(null);
@@ -575,10 +589,10 @@ function ReachEnvelope({ visible, target }: {
     const pts: THREE.Vector3[] = [];
     for (let i = 0; i <= 128; i += 1) {
       const a = (i / 128) * Math.PI * 2;
-      pts.push(new THREE.Vector3(Math.cos(a) * REACH_MAX, 0, Math.sin(a) * REACH_MAX));
+      pts.push(new THREE.Vector3(Math.cos(a) * reach, 0, Math.sin(a) * reach));
     }
     return new THREE.BufferGeometry().setFromPoints(pts);
-  }, []);
+  }, [reach]);
 
   if (!visible) return null;
   return (
@@ -589,8 +603,8 @@ function ReachEnvelope({ visible, target }: {
       </line>
       {/* A brighter spur on the bearing being pushed against. */}
       <group ref={spur}>
-        <mesh position={[REACH_MAX, 0, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-          <ringGeometry args={[REACH_MAX * 0.045, REACH_MAX * 0.075, 24]} />
+        <mesh position={[reach, 0, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+          <ringGeometry args={[reach * 0.045, reach * 0.075, 24]} />
           <meshBasicMaterial color={sceneColor.reject()} transparent opacity={0.95} side={THREE.DoubleSide} />
         </mesh>
       </group>
@@ -626,6 +640,7 @@ function Rig({
   start,
   payloads,
   arms = 1,
+  arm = "thenar6",
   targetUrl,
   targetWidthMm,
   environmentUrl,
@@ -658,7 +673,7 @@ function Rig({
   const gripB = useRef<number>(GRIP_OPEN_MM);
   const heldB = useRef(false);
   const holdsB = useRef<number | null>(null);
-  const jointsB = useRef(solveAt(ARM_B_BASE, initialB));
+  const jointsB = useRef<Joints>(solveAt(ARM_B_BASE, initialB));
   /** 0 is the arm at the origin. Switched with Tab. */
   const activeArm = useRef(0);
   const [activeArmView, setActiveArmView] = useState(0);
@@ -704,7 +719,7 @@ function Rig({
   const keys = useRef<Record<string, boolean>>({});
   const acc = useRef(0);
   const elapsed = useRef(0);
-  const joints = useRef(solve(INITIAL_TARGET));
+  const joints = useRef<Joints>(solve(INITIAL_TARGET));
   // The frame loop drives the ref; this mirrors it at the telemetry cadence so
   // the pinned callouts can render without reading a ref during render.
   const [jointsView, setJointsView] = useState(() => solve(INITIAL_TARGET));
@@ -780,7 +795,7 @@ function Rig({
     // handed the controls. Its action is a tool delta, so it is applied where
     // a key press would be rather than by moving the arm directly.
     if (policy && running) {
-      const now = toolPositionAt(activeBase, A === 0 ? joints.current : jointsB.current);
+      const now = toolOf(activeBase, A === 0 ? joints.current : jointsB.current);
       const o0 = objects.current[0];
       const a = policyAct(policy, now, o0, goal, grip.current);
       t[0] += a.delta[0]; t[1] += a.delta[1]; t[2] += a.delta[2];
@@ -825,10 +840,11 @@ function Rig({
     // Reach is measured from this arm's own base, not from the origin. A
     // second arm clamped against the first one's axis would be unable to reach
     // its own bench.
+    const reach = arm === "so101" ? SO101_REACH : REACH_MAX;
     const radial = Math.hypot(t[0] - activeBase[0], t[1] - activeBase[1]);
-    if (radial > REACH_MAX) {
-      t[0] = activeBase[0] + ((t[0] - activeBase[0]) / radial) * REACH_MAX;
-      t[1] = activeBase[1] + ((t[1] - activeBase[1]) / radial) * REACH_MAX;
+    if (radial > reach) {
+      t[0] = activeBase[0] + ((t[0] - activeBase[0]) / radial) * reach;
+      t[1] = activeBase[1] + ((t[1] - activeBase[1]) / radial) * reach;
     }
 
     // Each arm reads its own tool, holds its own payload and closes its own
@@ -843,11 +859,11 @@ function Rig({
     let planar = Infinity;
     let overIt = false;
     let withinHeight = false;
-    let activeTool: [number, number, number] = toolPositionAt(activeBase, A === 0 ? joints.current : jointsB.current);
+    let activeTool: [number, number, number] = toolOf(activeBase, A === 0 ? joints.current : jointsB.current);
     let activeObject: [number, number, number] = list[0];
 
     for (const rig of rigs) {
-      const tool = toolPositionAt(rig.base, rig.joints);
+      const tool = toolOf(rig.base, rig.joints);
 
       // Which payload these jaws are addressing. While holding one it stays
       // that one; otherwise it is whichever is nearest in the table plane, and
@@ -961,7 +977,7 @@ function Rig({
       if (running) {
         onSample({
           t: Number(elapsed.current.toFixed(3)),
-          q: [j.j1, j.j2, j.j3, 0, j.j5, 0],
+          q: recordQ(j),
           grip: grip.current,
           // Always the first payload, never "the one being held": a recording
           // whose object column swaps identity halfway through is not a
@@ -1036,7 +1052,7 @@ function Rig({
 
       {environmentUrl ? <HideInPassthrough><Room url={environmentUrl} /></HideInPassthrough> : null}
       <SurfacePlate />
-      <ReachEnvelope visible={outOfReach} target={target} />
+      <ReachEnvelope visible={outOfReach} target={target} reach={arm === "so101" ? SO101_REACH : REACH_MAX} />
       <GhostTrail points={trail} />
       <GoalZone at={goal} payload={object} seats={payloads.length} />
       {/* The landmark the instruction names, sitting at the datum it defines. */}
@@ -1045,15 +1061,26 @@ function Rig({
       {payloads.map((p, i) => (
         <Payload key={`${p.url}-${i}`} index={i} all={objects} url={p.url} widthMm={p.widthMm} />
       ))}
-      <Arm
-        target={target}
-        grip={grip}
-        held={held}
-        dim={arms > 1 && activeArmView !== 0}
-        onJoints={(next) => {
-          joints.current = next;
-        }}
-      />
+      {arm === "so101" ? (
+        <So101Arm
+          target={target}
+          grip={grip}
+          held={held}
+          onJoints={(next) => {
+            joints.current = next;
+          }}
+        />
+      ) : (
+        <Arm
+          target={target}
+          grip={grip}
+          held={held}
+          dim={arms > 1 && activeArmView !== 0}
+          onJoints={(next) => {
+            joints.current = next;
+          }}
+        />
+      )}
       {arms > 1 ? (
         <Arm
           base={ARM_B_BASE}
