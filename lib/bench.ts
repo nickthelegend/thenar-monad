@@ -36,6 +36,32 @@ export const START: readonly [number, number] = [0.22, 0.14];
 export const goalFor = (name?: string): readonly [number, number] => (name ? parseScan(name)?.place : undefined) ?? GOAL;
 export const startFor = (name?: string): readonly [number, number] => (name ? parseScan(name)?.pick : undefined) ?? START;
 
+/**
+ * Where each payload stands when a run begins, on the table plane.
+ *
+ * One payload stands at the task's start. Two stand apart either side of it,
+ * far enough that "the nearest one" is never a coin toss. The station draws
+ * them here, and the verifier checks that a recording begins here.
+ */
+export function startPoses(start: readonly [number, number], count: number): [number, number][] {
+  return count < 2
+    ? [[start[0], start[1]]]
+    : [
+        [start[0] - 0.03, start[1] + 0.03],
+        [start[0] + 0.06, start[1] - 0.05],
+      ];
+}
+
+/**
+ * Where a second arm stands, when a scene has one.
+ *
+ * Far enough that the two envelopes overlap only across the middle of the
+ * bench, which is the point of a two-arm scene: a region both can reach and a
+ * region only one can. Close enough that both bases and the datum fit in the
+ * camera's frame together.
+ */
+export const ARM_B_BASE: [number, number] = [0.34, 0.02];
+
 /** The goal ring drawn on the table. Outside this the payload was not placed
  *  at all, which is a different statement from placed badly. */
 export const GOAL_R = 0.075;

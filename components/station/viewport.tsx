@@ -14,7 +14,7 @@ import { SO101_REACH } from "@/lib/so101";
 import { So101Arm } from "@/components/station/so101-arm";
 import type { ArmKind } from "@/lib/scan";
 import type { Sample } from "@/lib/types";
-import { GOAL_R, TOLERANCE_M, SEAT_OFFSET, seatFor } from "@/lib/bench";
+import { ARM_B_BASE, GOAL_R, TOLERANCE_M, SEAT_OFFSET, seatFor, startPoses as benchStart } from "@/lib/bench";
 
 /* Scene constants, metres.
 
@@ -38,15 +38,7 @@ export const PAYLOAD_H = 0.075;
  * The test is now a cylinder, so this is the whole plane tolerance.
  */
 export const CAPTURE_R = 0.09;
-/**
- * Where a second arm stands, when a scene has one.
- *
- * Far enough that the two envelopes overlap only across the middle of the
- * bench — which is the whole point of a two-arm scene, a region both can reach
- * and a region only one can — and close enough that both bases and the datum
- * are in the camera's frame at once.
- */
-export const ARM_B_BASE: [number, number] = [0.34, 0.02];
+export { ARM_B_BASE } from "@/lib/bench";
 
 export const GRIP_CLOSED = 12; // mm jaw opening below which a grasp forms
 export const GRIP_OPEN_MM = 42;
@@ -686,12 +678,7 @@ function Rig({
    * nearest one" is never a coin toss.
    */
   const [startPoses] = useState<[number, number, number][]>(() =>
-    payloads.length < 2
-      ? [[start[0], start[1], TABLE_Z]]
-      : [
-          [start[0] - 0.03, start[1] + 0.03, TABLE_Z],
-          [start[0] + 0.06, start[1] - 0.05, TABLE_Z],
-        ],
+    benchStart(start, payloads.length).map(([x, y]) => [x, y, TABLE_Z] as [number, number, number]),
   );
   const objects = useRef<[number, number, number][]>(startPoses);
   /** Kept so everything downstream that only ever cared about one payload —

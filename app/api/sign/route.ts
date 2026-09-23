@@ -1,14 +1,16 @@
-import { goalFor } from "@/lib/bench";
+import { goalFor, startFor } from "@/lib/bench";
+import { armOf } from "@/lib/scan";
 import { logged } from "@/lib/server/log";
 import { NextResponse } from "next/server";
 
 import { chainClient } from "@/lib/rpc";
 import { AXON_ABI } from "@/lib/abi";
-import { AXON_ADDRESS, IS_DEPLOYED, appChain } from "@/lib/chain";
+import { AXON_ADDRESS, CORPUS_SHARES, IS_DEPLOYED, appChain } from "@/lib/chain";
+import { CORPUS_SHARES_ABI } from "@/lib/registry-abi";
 import { validateSamples, validatePayloadIds, verifyAndSign, VerifyError } from "@/lib/server/verifier";
 import { parSecondsFor } from "@/lib/par";
 import { canonicalise } from "@/lib/canonical";
-import { keccak256, toHex } from "viem";
+import { isAddress, keccak256, toHex } from "viem";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -70,6 +72,23 @@ async function handlePOST(req: Request) {
       throw new VerifyError("payloadIds do not match the recorded scene");
     }
 
+    // Only a person pays out. /api/verify checks this in front of the signer,
+    // but the key is here, so the rule is here too: an address on the
+    // CorpusShares whitelist is one a World ID Selfie Check put there, and the
+    // chain is what says so, not a table this service would have to trust.
+    if (isAddress(CORPUS_SHARES)) {
+      const human = await client.readContract({
+        address: CORPUS_SHARES, abi: CORPUS_SHARES_ABI, functionName: "isInControlList",
+        args: [contributor as `0x${string}`],
+      });
+      if (!human) {
+        return NextResponse.json(
+          { error: "Prove you are a live human with World ID before contributing.", humanRequired: true },
+          { status: 403 },
+        );
+      }
+    }
+
     // Read from the chain, not from the caller. par comes from the task's own
     // difficulty, so the efficiency term cannot be set by whoever calls this.
     const task = (await client.readContract({
@@ -98,6 +117,8 @@ async function handlePOST(req: Request) {
       payloadIds,
       // A scanned task's goal is in its name on chain; everything else keeps the bench's.
       goal: goalFor(task.name),
+      start: startFor(task.name),
+      arm: armOf(task.name),
     });
 
     return NextResponse.json({

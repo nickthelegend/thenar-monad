@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "test": "npm run test:unit && npm run test:e2e",
-    "test:unit": "node --import ./test/register.mjs --test test/score.test.mjs test/phases.test.mjs test/merkle.test.mjs test/similarity.test.mjs test/failure.test.mjs test/split.test.mjs test/rollout.test.mjs test/progression.test.mjs test/shortfall.test.mjs test/engines.test.mjs test/store-failure.test.mjs test/scan-logs.test.mjs test/scan.test.mjs test/teach.test.mjs test/so101.test.mjs test/embodiment.test.mjs test/arm-relay.test.mjs",
+    "test:unit": "node --import ./test/register.mjs --test test/score.test.mjs test/phases.test.mjs test/merkle.test.mjs test/similarity.test.mjs test/failure.test.mjs test/split.test.mjs test/rollout.test.mjs test/progression.test.mjs test/shortfall.test.mjs test/engines.test.mjs test/store-failure.test.mjs test/scan-logs.test.mjs test/scan.test.mjs test/teach.test.mjs test/so101.test.mjs test/embodiment.test.mjs test/arm-relay.test.mjs test/physicality.test.mjs",
     "arm-relay": "node scripts/arm-relay.mjs",
     "test:e2e": "node test/e2e.mjs",
     "postinstall": "mkdir -p public/vision/wasm && cp node_modules/@mediapipe/tasks-vision/wasm/vision_wasm_internal.* public/vision/wasm/"

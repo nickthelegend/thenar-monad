@@ -111,6 +111,11 @@ try {
   assert.ok(result.follow.every((f) => Math.abs(f - 1) < 0.05), `the tool followed the controller 1:1 (${result.follow})`);
   assert.equal(result.held, true, "the trigger closed the jaws on the payload");
   assert.ok(measured, "the run was measured");
+  // The recording the station kept is one the verifier will sign: the arm in
+  // it moved the payload (lib/coherence.ts physicalityOf, run before signing).
+  const draft = await page.evaluate(() => sessionStorage.getItem("thenar:run-draft:v1"));
+  if (draft && process.env.PHYSICALITY_OUT) (await import("node:fs")).writeFileSync(process.env.PHYSICALITY_OUT, draft);
+  log("draft-samples", draft ? JSON.parse(draft).samples?.length ?? null : null);
   log("console-errors", errors);
   log("failed-requests", failed);
   assert.deepEqual(errors, []);

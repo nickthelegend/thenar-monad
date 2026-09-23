@@ -1,4 +1,7 @@
 import { canonicalise } from "@/lib/canonical";
+import { physicalityOf } from "@/lib/coherence";
+import { START } from "@/lib/bench";
+import type { ArmKind } from "@/lib/scan";
 import "server-only";
 import { keccak256, toHex } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
@@ -119,9 +122,19 @@ export async function verifyAndSign(args: {
   payloadIds?: string[];
   /** Read from the task's name on chain by the caller, never from the request. */
   goal?: readonly [number, number];
+  /** Also from the task on chain: which arm the joints belong to, and where
+   *  its payloads start. */
+  arm?: ArmKind;
+  start?: readonly [number, number];
 }): Promise<VerifyResult> {
   const pk = process.env.VERIFIER_PRIVATE_KEY;
   if (!pk) throw new VerifyError("verifier key is not configured", 500);
+
+  // A score is only worth signing for a recording in which the arm moved the
+  // payload. Without this a script that glides the payload onto the goal
+  // while the joints sit still scored 100.00 and was paid in full.
+  const unphysical = physicalityOf(args.samples, { arm: args.arm ?? "thenar6", start: args.start ?? START });
+  if (unphysical) throw new VerifyError(`This recording cannot be paid: ${unphysical}.`, 422);
 
   const traj: Trajectory = {
     taskId: String(args.taskId),
