@@ -12,43 +12,40 @@
  * numbers are live, or quote numbers nobody can check. Both are on the card:
  * the date they were true, and the contract they came from.
  *
- *   node scripts/og.mjs
+ *   node --import ./test/register.mjs scripts/og.mjs
+ *
+ * The chain, the address and the ABI are the app's own — scripts/monad.mjs and
+ * lib/abi.ts — so the card cannot describe a deployment the site is not
+ * reading. It used to carry its own copies of all three, and every move of
+ * chain meant finding them.
  */
 import { ImageResponse } from "next/og.js";
 import React from "react";
-import { writeFileSync, readFileSync } from "node:fs";
-import { createPublicClient, http, parseAbi, formatEther } from "viem";
+import { writeFileSync } from "node:fs";
+import { createPublicClient, formatEther } from "viem";
+import { AXON_ABI as abi } from "../lib/abi.ts";
+import { monadTestnet as chain, transport, ADDR, need } from "./monad.mjs";
 
 const h = React.createElement;
 
-const AXON =
-  process.env.NEXT_PUBLIC_AXON_ADDRESS ??
-  (readFileSync(".env.local", "utf8").match(/^NEXT_PUBLIC_AXON_ADDRESS=(.*)$/m) ?? [])[1];
+const AXON = need(ADDR.axon, "AxonProtocolV2's address (lib/deployment.ts, or NEXT_PUBLIC_AXON_ADDRESS)");
 
-const chain = {
-  id: 43113, name: "Avalanche Fuji",
-  nativeCurrency: { name: "AVAX", symbol: "AVAX", decimals: 18 },
-  rpcUrls: { default: { http: ["https://api.avax-test.network/ext/bc/C/rpc"] } },
-};
-const abi = parseAbi([
-  "function taskCount() view returns (uint256)",
-  "function trajectoryCount() view returns (uint256)",
-  "function policyCount() view returns (uint256)",
-  "function getTask(uint256) view returns ((string name, address funder, uint128 rewardPerTrajectory, uint128 escrow, uint32 slotsTotal, uint32 slotsFilled, uint8 scenario, uint8 difficulty, bool policyMinted))",
-]);
-
-const pub = createPublicClient({ chain, transport: http() });
+const pub = createPublicClient({ chain, transport: transport() });
 const [tasks, runs, policies] = await Promise.all([
   pub.readContract({ address: AXON, abi, functionName: "taskCount" }),
   pub.readContract({ address: AXON, abi, functionName: "trajectoryCount" }),
   pub.readContract({ address: AXON, abi, functionName: "policyCount" }),
 ]);
 
-let escrow = 0n;
-for (let i = 0; i < Number(tasks); i += 1) {
-  const t = await pub.readContract({ address: AXON, abi, functionName: "getTask", args: [BigInt(i)] });
-  escrow += t.escrow;
-}
+// One multicall rather than a read per task: the escrow is a sum over storage,
+// and Monad's public endpoints would rather answer one request than a hundred.
+const rows = await pub.multicall({
+  allowFailure: false,
+  contracts: Array.from({ length: Number(tasks) }, (_, i) => ({
+    address: AXON, abi, functionName: "getTask", args: [BigInt(i)],
+  })),
+});
+const escrow = rows.reduce((sum, t) => sum + t.escrow, 0n);
 
 const INK = "#000000";
 const RULE = "#262626";
@@ -103,16 +100,16 @@ const el = h("div", {
     stat("a", "Tasks funded", String(tasks)),
     stat("b", "Runs paid", String(runs)),
     stat("c", "Policies", String(policies)),
-    stat("d", "Escrow", `${Number(formatEther(escrow)).toFixed(3)} AVAX`, SIGNAL),
+    stat("d", "Escrow", `${Number(formatEther(escrow)).toFixed(3)} ${chain.nativeCurrency.symbol}`, SIGNAL),
   ]),
 
   h("div", {
     key: "foot",
     style: { display: "flex", fontSize: 16, color: SCRIBE, letterSpacing: 0.5 },
-  }, `Avalanche Fuji · ${AXON} · read from the contract on ${asOf}`),
+  }, `${chain.name} · ${AXON} · read from the contract on ${asOf}`),
 ]);
 
 const res = new ImageResponse(el, { width: 1200, height: 630 });
 const buf = Buffer.from(await res.arrayBuffer());
 writeFileSync("public/og.png", buf);
-console.log(`public/og.png — ${buf.length} bytes · ${tasks} tasks, ${runs} runs, ${policies} policies, ${formatEther(escrow)} AVAX escrow, as of ${asOf}`);
+console.log(`public/og.png — ${buf.length} bytes · ${tasks} tasks, ${runs} runs, ${policies} policies, ${formatEther(escrow)} ${chain.nativeCurrency.symbol} escrow, as of ${asOf}`);

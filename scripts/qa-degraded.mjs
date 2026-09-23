@@ -7,14 +7,14 @@
  * machine that cannot do what it assumes — no GPU, a run abandoned midway, and
  * a theme change that inverts every surface at once.
  *
- *   node scripts/qa-degraded.mjs [baseUrl]
+ *   node --import ./test/register.mjs scripts/qa-degraded.mjs [baseUrl]
  */
 import { chromium } from "playwright";
-import { createPublicClient, fallback, http, parseAbiItem } from "viem";
-import { avalancheFuji } from "viem/chains";
-import { scanLogs } from "../lib/scan-logs.ts";
+import { createPublicClient, fallback, http } from "viem";
+import { AXON_ABI } from "../lib/abi.ts";
+import { monadTestnet, RPC_ENDPOINTS, ADDR, need } from "./monad.mjs";
 
-const BASE = process.argv[2] ?? "https://thenar.io";
+const BASE = process.argv[2] ?? "http://127.0.0.1:3111";
 
 const results = [];
 const check = (id, ok, detail) => {
@@ -138,38 +138,37 @@ await b.close();
   // Not a browser check. The failover is a property of the transport, and the
   // interesting case is the one that cannot be produced by loading a page:
   // the endpoint this app reads history from being gone.
-  const AXON = "0x909d9318d602Cb4Ba84D2851Ab9BFf60DB7077C0";
-  const accepted = parseAbiItem(
-    "event TrajectoryAccepted(uint256 indexed trajectoryId, uint256 indexed taskId, address indexed contributor, bytes32 trajHash, string cid, uint16 score, uint256 paid)",
-  );
+  //
+  // On Arc this was a million-block log scan, which proved the failover and
+  // the range narrowing in one go. Monad's public endpoints answer a hundred
+  // blocks of logs at most, so the app reads its history from storage instead,
+  // and so does this: the trajectory count and the newest trajectory's hash,
+  // read once through the app's own endpoint list and once with the primary
+  // replaced by a host that does not exist. Same answer, or the failover lost
+  // something on the way.
+  const AXON = need(ADDR.axon, "AxonProtocolV2's address (lib/deployment.ts, or NEXT_PUBLIC_AXON_ADDRESS)");
   const read = async (urls) => {
     const c = createPublicClient({
-      chain: avalancheFuji,
+      chain: monadTestnet,
       transport: fallback(
         urls.map((u) => http(u, { retryCount: 1, retryDelay: 200, timeout: 15000 })),
         { rank: false },
       ),
     });
-    const head = await c.getBlockNumber();
-    const logs = await scanLogs(
-      (r) => c.getLogs({ address: AXON, event: accepted, ...r }),
-      { fromBlock: head - 1_000_000n, toBlock: head },
-    );
-    return logs.length;
+    const n = await c.readContract({ address: AXON, abi: AXON_ABI, functionName: "trajectoryCount" });
+    const newest = n > 0n
+      ? await c.readContract({ address: AXON, abi: AXON_ABI, functionName: "getTrajectory", args: [n - 1n] })
+      : null;
+    return { runs: Number(n), newest: newest?.trajHash ?? null };
   };
 
-  const healthy = await read([
-    "https://api.avax-test.network/ext/bc/C/rpc",
-    "https://avalanche-fuji-c-chain-rpc.publicnode.com",
-  ]);
-  // The secondary refuses the million-block range the primary answers, so this
-  // also proves the narrowing in lib/scan-logs.ts: same count, more requests.
+  const healthy = await read(RPC_ENDPOINTS);
   const degraded = await read([
     "https://this-endpoint-does-not-exist.thenar.invalid/rpc",
-    "https://avalanche-fuji-c-chain-rpc.publicnode.com",
+    ...RPC_ENDPOINTS.slice(1),
   ]);
-  check("G4", healthy > 0 && degraded === healthy,
-        `losing the primary costs latency, not history: ${healthy} runs found, ${degraded} with it gone`);
+  check("G4", healthy.runs > 0 && degraded.runs === healthy.runs && degraded.newest === healthy.newest,
+        `losing the primary costs latency, not history: ${healthy.runs} runs found, ${degraded.runs} with it gone`);
 }
 
 const passed = results.filter((r) => r.ok).length;

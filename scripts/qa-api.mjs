@@ -5,7 +5,14 @@
  * behaviour as the site's.
  */
 const BASE = process.argv[2] ?? "https://thenar.io";
-const REAL_HASH = "0x77f0cc8cd166ce38679fee669324dc3b898ed308dbf7aee8752c96490941a7a2";
+// The newest stored run and the live contract, asked of the deployment. Both
+// used to be pinned — a trajectory hash and a contract address from the chain
+// before this one — and on Monad neither exists, so every item naming them
+// would have tested a 404 instead of the route.
+const REAL_HASH = await fetch(BASE + "/api/feed").then(r => r.json())
+  .then(j => (j.runs ?? [])[0]?.traj_hash).catch(() => null) ?? "0x" + "00".repeat(32);
+const AXON = await fetch(BASE + "/api/contract").then(r => r.json())
+  .then(j => j.address).catch(() => null) ?? "0x000000000000000000000000000000000000dEaD";
 // A real uploaded prop id, read from the table rather than pinned, so the item
 // keeps testing a prop that exists rather than one that used to.
 const PROP_ID = await fetch(BASE + "/api/props").then(r => r.json())
@@ -30,7 +37,7 @@ const ITEMS = [
   // are the item: the refusal must be a clean JSON 400, and a real address must
   // return data.
   ["B7a", "/api/task/1/history", 400, J((j) => [/address/i.test(j.error ?? ""), `refuses: ${j.error}`])],
-  ["B7b", "/api/task/1/history?funder=0x909d9318d602Cb4Ba84D2851Ab9BFf60DB7077C0", 200, nonEmpty],
+  ["B7b", `/api/task/1/history?funder=${AXON}`, 200, nonEmpty],
   ["B8",  "/api/task/1/manifest", 200, nonEmpty],
   ["B9",  "/api/task/1/datasheet", 200, (b, r) => [b.length > 40, `${(r.headers.get("content-type")||"").split(";")[0]} ${b.length}B`]],
   ["B10", "/api/task/1/notes",  200, nonEmpty],
@@ -52,7 +59,7 @@ const ITEMS = [
   // is the correct answer without a subscriber, not a fault. The single-episode
   // path is deliberately open, and that is the half that must return data.
   ["B18b", "/api/dataset?taskId=1",     402, J((j) => [/subscription/i.test(j.error ?? "") && !!j.contract, `gated by ${j.contract}`])],
-  ["B18c", "/api/dataset?traj=0x77f0cc8cd166ce38679fee669324dc3b898ed308dbf7aee8752c96490941a7a2", 200,
+  ["B18c", `/api/dataset?traj=${REAL_HASH}`, 200,
            J((j) => [JSON.stringify(j).length > 500, `open episode, ${JSON.stringify(j).length}B`])],
   ["B19a", "/api/dataset/summary",          400, J((j) => [/taskId/i.test(j.error ?? ""), `refuses: ${j.error}`])],
   ["B19b", "/api/dataset/summary?taskId=1", 200, nonEmpty],
@@ -74,10 +81,11 @@ const ITEMS = [
   ["B29", `/api/trajectory/${REAL_HASH}/similar`, 200, nonEmpty],
   ["B30", `/api/trajectory/${REAL_HASH}/annotation`, 200, nonEmpty],
   ["B31", `/api/physics/${REAL_HASH}`, 200, J((j) => [!!j.engine, `engine=${j.engine}`])],
-  // The one live third-party dependency: Glacier must answer, and the payload
-  // must say it came from Glacier rather than from anything of ours.
-  ["B32", "/api/glacier/0x909d9318d602Cb4Ba84D2851Ab9BFf60DB7077C0", 200,
-          J((j) => [j.source === "glacier", `source=${j.source}`])],
+  // The one live third-party dependency: Monadscan's index (Etherscan's V2
+  // API, chain 10143) must answer, and the payload must say it came from
+  // Monadscan rather than from anything of ours.
+  ["B32", `/api/calls/${AXON}`, 200,
+          J((j) => [j.source === "monadscan", `source=${j.source}`])],
   ["D4",  "/api/props/definitely-not-a-prop", 404, (b, r) => {
       const ct = r.headers.get("content-type") ?? "";
       return [ct.includes("json"), `content-type ${ct.split(";")[0]}`];

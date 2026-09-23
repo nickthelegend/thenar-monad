@@ -8,22 +8,21 @@ import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/cn";
 import { ThenarWordmark } from "@/components/brand";
 import { useSession } from "@/components/session";
-import { addressUrl, IS_DEPLOYED, CURRENCY, FAUCET_URL } from "@/lib/chain";
+import { addressUrl, IS_DEPLOYED, CURRENCY, appChain } from "@/lib/chain";
 import { fmtMon, shortHash } from "@/lib/format";
 
 const ROUTES = [
   { href: "/hub", label: "Hub" },
+  { href: "/agents", label: "Agents" },
+  { href: "/corpus-token", label: "Shares" },
+  { href: "/lab", label: "Labs" },
   { href: "/space", label: "Floor" },
   { href: "/inventory", label: "Inventory" },
   { href: "/portfolio", label: "Portfolio" },
   { href: "/leaderboard", label: "Leaderboard" },
   { href: "/foundry", label: "Foundry" },
   { href: "/contracts", label: "Contracts" },
-  { href: "/l1", label: "L1" },
 ];
-
-/** Enough of the native token to cover gas on a submit with headroom. */
-const LOW_BALANCE = 0.02;
 
 export function SiteNav() {
   const pathname = usePathname();
@@ -103,8 +102,6 @@ export function SiteNav() {
   if (pathname === "/") return null;
   if (pathname?.startsWith("/station/")) return null;
 
-  const lowOnGas = s.connected && !s.wrongNetwork && s.balance < LOW_BALANCE;
-
   return (
     <>
       <header className="sticky top-0 z-40 border-b border-rule bg-ink-1">
@@ -158,7 +155,7 @@ export function SiteNav() {
 
           <div className="flex shrink-0 items-center gap-3 sm:gap-4">
             <span className="hidden items-baseline gap-2 font-mono text-[12px] text-scribe-3 xl:flex">
-              Avalanche Fuji
+              {appChain.name}
               {block ? (
                 <span className="text-scribe-2 tabular-nums" title="Latest block">
                   #{block.toString()}
@@ -207,33 +204,6 @@ export function SiteNav() {
       {!IS_DEPLOYED ? (
         <Banner tone="reject">
           No contract address is configured. Set <code>NEXT_PUBLIC_AXON_ADDRESS</code> and restart.
-        </Banner>
-      ) : null}
-
-      {s.wrongNetwork ? (
-        <Banner tone="reject">
-          Your wallet is on the wrong network. Thenar settles on Avalanche Fuji.
-          <button
-            onClick={s.switchToChain}
-            disabled={s.switching}
-            className="ml-3 border border-current px-2.5 py-0.5 font-mono text-[12px] uppercase tracking-[0.12em] transition-colors hover:bg-reject hover:text-ink-0 disabled:opacity-60"
-          >
-            {s.switching ? "Switching…" : "Switch to Avalanche"}
-          </button>
-        </Banner>
-      ) : null}
-
-      {lowOnGas ? (
-        <Banner tone="signal">
-          Balance is {fmtMon(s.balance, 4)} {CURRENCY} — not much runway for gas.
-          <a
-            href={FAUCET_URL}
-            target="_blank"
-            rel="noreferrer"
-            className="ml-3 border border-current px-2.5 py-0.5 font-mono text-[12px] uppercase tracking-[0.12em] transition-colors hover:bg-signal hover:text-ink-0"
-          >
-            Open the faucet
-          </a>
         </Banner>
       ) : null}
 

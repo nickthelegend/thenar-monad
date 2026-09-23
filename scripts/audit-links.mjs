@@ -6,38 +6,61 @@
  * record of it. A hash that resolves to nothing, or a run that is on chain but
  * unlinked, is a data-integrity failure and this exits non-zero.
  *
- *   node scripts/audit-links.mjs <base-url>
+ *   node --import ./test/register.mjs scripts/audit-links.mjs <base-url>
  */
-import { readFileSync } from "node:fs";
-import { createPublicClient, http, parseAbiItem } from "viem";
+import { createPublicClient, parseAbiItem } from "viem";
+import { AXON_ABI } from "../lib/abi.ts";
+import { monadTestnet, transport, ADDR, need } from "./monad.mjs";
 
 const BASE = process.argv[2] ?? "http://localhost:3000";
-const env = Object.fromEntries(readFileSync(".env.deployer", "utf8").split("\n").filter(Boolean).map(l => { const i = l.indexOf("="); return [l.slice(0, i), l.slice(i + 1)]; }));
-const chain = { id: 10143, name: "Monad Testnet", nativeCurrency: { name: "Monad", symbol: "MON", decimals: 18 }, rpcUrls: { default: { http: ["https://testnet-rpc.monad.xyz"] } } };
-const pub = createPublicClient({ chain, transport: http() });
+const AXON = need(ADDR.axon, "AxonProtocolV2's address (lib/deployment.ts, or NEXT_PUBLIC_AXON_ADDRESS)");
+const pub = createPublicClient({ chain: monadTestnet, transport: transport() });
 
 const ACCEPTED = parseAbiItem(
   "event TrajectoryAccepted(uint256 indexed trajectoryId, uint256 indexed taskId, address indexed contributor, bytes32 trajHash, string cid, uint16 score, uint256 paid)"
 );
 
-/** The public RPC caps a getLogs range, so walk back in windows. */
-async function findOnChain(trajHash, windows = 200, size = 100n) {
-  const head = await pub.getBlockNumber();
-  for (let end = head; end > head - BigInt(windows) * size; end -= size) {
-    let logs = [];
-    try { logs = await pub.getLogs({ address: env.AXON_ADDRESS, event: ACCEPTED, fromBlock: end - size + 1n, toBlock: end }); }
-    catch { continue; }
-    const hit = logs.find(l => String(l.args.trajHash).toLowerCase() === trajHash.toLowerCase());
-    if (hit) return hit;
+/**
+ * Every trajectory the contract holds, keyed by hash, read from storage.
+ *
+ * This used to walk getLogs back from the head in hundred-block windows, which
+ * is the widest range Monad's public endpoints answer. Two hundred windows is
+ * twenty thousand blocks — a couple of hours on this chain — so a run recorded
+ * the day before would be reported "genuinely absent" while it sat on chain.
+ * The contract keeps every trajectory in an array, with the block it was
+ * accepted in, so the audit reads that instead and reaches the whole history
+ * however old it is.
+ */
+async function onChainTrajectories() {
+  const n = Number(await pub.readContract({ address: AXON, abi: AXON_ABI, functionName: "trajectoryCount" }));
+  const byHash = new Map();
+  for (let from = 0; from < n; from += 200) {
+    const ids = Array.from({ length: Math.min(200, n - from) }, (_, k) => BigInt(from + k));
+    const rows = await pub.multicall({
+      allowFailure: false,
+      contracts: ids.map((id) => ({ address: AXON, abi: AXON_ABI, functionName: "getTrajectory", args: [id] })),
+    });
+    rows.forEach((t, k) => byHash.set(String(t.trajHash).toLowerCase(), { id: ids[k], ...t }));
   }
-  return null;
+  return byHash;
+}
+
+/** The transaction that accepted a trajectory: storage names the block, so one
+ *  single-block getLogs finds it, well inside the endpoint's cap. */
+async function acceptedIn(t) {
+  const logs = await pub.getLogs({
+    address: AXON, event: ACCEPTED, args: { trajectoryId: t.id },
+    fromBlock: t.atBlock, toBlock: t.atBlock,
+  }).catch(() => []);
+  return logs[0]?.transactionHash ?? null;
 }
 
 let failed = 0;
 const check = (ok, m, x = "") => { if (!ok) failed++; console.log(`${ok ? "  ok  " : " FAIL "} ${m}${x ? ` — ${x}` : ""}`); };
 
 const feed = await (await fetch(`${BASE}/api/feed?limit=50`)).json();
-console.log(`\nTrajectory ledger integrity · ${BASE}\n${feed.total} stored\n`);
+const recorded = await onChainTrajectories();
+console.log(`\nTrajectory ledger integrity · ${BASE}\n${feed.total} stored, ${recorded.size} on chain\n`);
 
 for (const run of feed.runs) {
   const short = `${run.traj_hash.slice(0, 14)}… task ${run.task_id}`;
@@ -47,9 +70,12 @@ for (const run of feed.runs) {
     check(Boolean(receipt), `${short}: its transaction exists on chain`, run.tx_hash.slice(0, 20));
     if (receipt) check(receipt.status === "success", `${short}: that transaction succeeded`);
   } else {
-    const onChain = await findOnChain(run.traj_hash);
+    const onChain = recorded.get(run.traj_hash.toLowerCase());
+    const tx = onChain ? await acceptedIn(onChain) : null;
     check(!onChain, `${short}: unlinked, and genuinely absent from the chain`,
-      onChain ? `IT IS ON CHAIN at ${onChain.transactionHash} — link it` : "verified but never submitted");
+      onChain
+        ? `IT IS ON CHAIN as trajectory ${onChain.id}, block ${onChain.atBlock}${tx ? `, tx ${tx}` : ""} — link it`
+        : "verified but never submitted");
   }
 }
 

@@ -4,6 +4,18 @@
  * Every item captures console errors and failed network requests as well as its
  * own assertion, because the plan's definition of PASS requires all three.
  * A page that renders correctly and logs an error is a FAIL.
+ *
+ * Moved from Arc to Monad. Amounts are read as MON, the app's CURRENCY, and
+ * the explorer is Monadscan. Most of the items from A31 on were written
+ * against particular runs, operators and tasks on the Arc deployment, and
+ * pinned the exact figures those showed — 93.40 then 95.60, 18,900 behind,
+ * 0.0010 a day. Those figures belonged to that chain's history, so they are
+ * loosened here to the shape of the sentence, which is the part the interface
+ * owns. The run hashes, operator addresses, task numbers and the proposal and
+ * task names in those items are still the Arc ones: they cannot be loosened
+ * into patterns, and each needs re-pointing at a Monad equivalent once the new
+ * deployment has recorded one. Until then those items fail on "not found",
+ * which is the truth about them.
  */
 import { chromium } from "playwright";
 
@@ -83,9 +95,9 @@ const ITEMS = [
         const t = document.body.innerText;
         return {
           section: /RUN TO RUN/i.test(t),
-          sentence: /2 runs, 93\.40 to 95\.60 — up 2\.20/.test(t),
+          sentence: /\d+ runs, \d+\.\d\d to \d+\.\d\d — up \d+\.\d\d/.test(t),
           // Oldest first, so the delta is an improvement rather than a decline.
-          delta: /\+2\.20/.test(t),
+          delta: /\+\d+\.\d\d/.test(t),
           // Exactly one run is marked best, and it is the later one. Counted
           // inside the section only — "BEST SCORE" in the readings above it is
           // a different label about the whole record.
@@ -97,7 +109,7 @@ const ITEMS = [
             const to = rest.search(/ACCEPTED RUNS/i);
             return ((to > 0 ? rest.slice(0, to) : rest).match(/\bBEST\b/g) || []).length;
           })(),
-          bestOnLast: /95\.60\s*\n\s*\+2\.20/.test(t),
+          bestOnLast: /\d+\.\d\d\s*\n\s*\+\d+\.\d\d/.test(t),
         };
       });
       return [r.section && r.sentence && r.delta && r.bests === 1 && r.bestOnLast, JSON.stringify(r)];
@@ -107,26 +119,6 @@ const ITEMS = [
       // empty panel would claim a repeat that never happened.
       const t = await p.evaluate(() => document.body.innerText);
       return [!/RUN TO RUN/i.test(t) && t.trim().length > 200, `section=${/RUN TO RUN/i.test(t)}`];
-  }],
-  ["A30", "/licence/0",       async (p) => {
-      const r = await p.evaluate(() => {
-        const t = document.body.innerText;
-        const rows = Array.from(document.querySelectorAll("dd")).map((d) => d.innerText);
-        return {
-          // The decoded payload, one row per field the receipt encodes.
-          decoded: rows.filter((x) => /[✓✗·]/.test(x)).length,
-          crosses: rows.filter((x) => x.includes("✗")).length,
-          // The real Attested event, not the view that answers for any policy.
-          signedOnChain: /block\s[\d,]+/.test(t) && /MESSAGE ID/i.test(t),
-          allMatch: /all \d+ match what the protocol holds/.test(t),
-          bytes: /320 bytes signed/.test(t),
-          // Producing a message is not delivering one, and the page must not blur them.
-          honest: /only the first happens here/.test(t),
-        };
-      });
-      const ok = r.decoded === 10 && r.crosses === 0 && r.signedOnChain &&
-                 r.allMatch && r.bytes && r.honest;
-      return [ok, JSON.stringify(r)];
   }],
   ["A33", "/corpus",          async (p) => {
       // The buyer's most consequential screen is the empty one, and there are
@@ -142,11 +134,13 @@ const ITEMS = [
       const unworked = await chip("#5");
       const noneCleared = (await chip("#4"), await chip("Paid"));
       const r = {
-        unworked: /Nobody has driven task #5 yet\./i.test(unworked),
-        slots: /slots unfilled at [\d.]+ AVAX a run/i.test(unworked),
-        counted: /2 recordings on task #4/i.test(noneCleared),
-        floor: /not one of them cleared the 40\.00 a run has to reach to be paid/i.test(noneCleared),
-        breakdown: /0 paid · 2 below the floor · 0 never sent/.test(noneCleared),
+        unworked: /Nobody has driven task #\d+ yet\./i.test(unworked),
+        slots: /slots unfilled at [\d.]+ MON a run/i.test(unworked),
+        counted: /\d+ recordings on task #\d+/i.test(noneCleared),
+        floor: /not one of them cleared the \d+\.\d\d a run has to reach to be paid/i.test(noneCleared),
+        // None paid is the point of this state; how many fell short or were
+        // never sent is the deployment's history.
+        breakdown: /0 paid · \d+ below the floor · \d+ never sent/.test(noneCleared),
       };
       return [Object.values(r).every(Boolean), JSON.stringify(r)];
   }],
@@ -160,8 +154,8 @@ const ITEMS = [
         return {
           here: /BEFORE YOU SIGN/i.test(t),
           // The deployment's own record, not an illustration.
-          ceiling: /9 accepted runs on this deployment averaged 91\.\d\d/.test(t),
-          drawn: /would draw about 0\.0364 AVAX of the 0\.0400 escrowed/.test(t),
+          ceiling: /\d+ accepted runs? on this deployment averaged \d+\.\d\d/.test(t),
+          drawn: /would draw about [\d.,]+ MON of the [\d.,]+ escrowed/.test(t),
           // With no deadline set — this form's default and, until now, its only
           // behaviour — the escrow can never come back, and the page says which
           // call is responsible and what to do about it.
@@ -182,8 +176,8 @@ const ITEMS = [
       const r = {
         here: /WHERE IT WENT WRONG/i.test(t),
         kind: /\bDROPPED\b/.test(t),
-        detail: /Let go 54 mm above the table/.test(t),
-        seek: /go to sample 4885/i.test(t),
+        detail: /Let go \d+ mm above the table/.test(t),
+        seek: /go to sample \d+/i.test(t),
       };
       return [Object.values(r).every(Boolean), JSON.stringify(r)];
   }],
@@ -196,7 +190,7 @@ const ITEMS = [
       const t = await p.evaluate(() => document.body.innerText);
       const r = {
         disagrees: /These samples do not agree with the score/.test(t),
-        both: /scored against 4\.3 mm and the recording ends 61\.7 mm/.test(t),
+        both: /scored against [\d.]+ mm and the recording ends [\d.]+ mm/.test(t),
         kept: /left as recorded/.test(t),
       };
       return [Object.values(r).every(Boolean), JSON.stringify(r)];
@@ -208,9 +202,9 @@ const ITEMS = [
       const t = await p.evaluate(() => document.body.innerText);
       const r = {
         here: /WHAT WOULD HAVE PAID/i.test(t),
-        gap: /4\.90 points short of 40\.00/.test(t),
-        placement: /come to rest within 22\.8 mm of the seat/.test(t),
-        time: /finish inside 135 s/.test(t),
+        gap: /\d+\.\d\d points short of \d+\.\d\d/.test(t),
+        placement: /come to rest within [\d.]+ mm of the seat/.test(t),
+        time: /finish inside \d+ s/.test(t),
         // Smoothness is a quarter of the score and cannot carry a 40% floor on
         // its own, so it must not be offered as a target.
         noJerk: !/mean jerk under/.test(t),
@@ -226,9 +220,9 @@ const ITEMS = [
         const t = document.body.innerText;
         return {
           note: /Declared difficulty is not predicting anything/.test(t),
-          named: /Task #4 is declared easier than #0/.test(t),
+          named: /Task #\d+ is declared easier than #\d+/.test(t),
           // Counts, not only a rate: 0 of 2 and 0 of 200 are the same rate.
-          counts: /0\/2 paid/.test(t) && /2\/2 paid/.test(t),
+          counts: /\d+\/\d+ paid/.test(t),
           // A closed task is not offered as work. It used to be: the interface
           // decoded a nine-field Task against an eleven-field contract, so it
           // could not see `closed` and put a Run button on a task whose escrow
@@ -258,7 +252,7 @@ const ITEMS = [
       ];
   }],
   ["A39", "/contracts",       async (p) => {
-      // Every write this contract has taken, from Avalanche's index, named
+      // Every write this contract has taken, from Monadscan's index, named
       // against the deployed contract's own artifact rather than the pruned
       // ABI the interface calls.
       await p.waitForTimeout(3000);
@@ -266,7 +260,7 @@ const ITEMS = [
         const t = document.body.innerText;
         return {
           here: /EVERY WRITE, AND WHAT IT COST/i.test(t),
-          totals: /Calls\s*\n?\s*\d+/.test(t) && /Spent\s*\n?\s*[\d.]+ nAVAX/.test(t),
+          totals: /Calls\s*\n?\s*\d+/.test(t) && /Spent\s*\n?\s*[\d.,]+ n?MON/.test(t),
           // The three functions the frontend never calls, which read as
           // unrecognised selectors against the interface's own ABI.
           named: /createTaskUntil/.test(t) && /closeTask/.test(t) && /submitTrajectoryFor/.test(t),
@@ -284,10 +278,15 @@ const ITEMS = [
         return {
           here: /BULK ACCESS/i.test(t),
           // Price and bounds read from the contract, not written into the page.
-          price: /0\.0010 AVAX a day/.test(t),
+          // The price is whatever this deployment set, so it is read off the
+          // page and the seven-day total is checked against it, which keeps
+          // the assertion that the total is computed rather than stated.
+          price: /\d+\.\d{4} MON a day/.test(t),
           bounds: /1–365 days, enforced by the contract/.test(t),
-          // Seven days at that price, computed rather than stated.
-          total: /0\.0070 AVAX/.test(t),
+          total: (() => {
+            const perDay = Number((t.match(/(\d+\.\d{4}) MON a day/) || [])[1]);
+            return perDay > 0 && t.includes(`${(perDay * 7).toFixed(4)} MON`);
+          })(),
           // What it is and is not.
           honest: /sells time, not rights/.test(t) && /readable one at a time by hash without paying/.test(t),
         };
@@ -304,7 +303,7 @@ const ITEMS = [
         panel: /CERTIFICATE/.test(t),
         state: /not minted for this run/.test(t),
         // The id is resolved from the ledger by matching the hash.
-        button: /mint token #1/i.test(t),
+        button: /mint token #\d+/i.test(t),
         whose: /goes to whoever the protocol recorded as the contributor/i.test(t),
       };
       return [Object.values(r).every(Boolean), JSON.stringify(r)];
@@ -318,25 +317,25 @@ const ITEMS = [
       const t = await p.evaluate(() => document.body.innerText);
       const r = {
         panel: /CONTRIBUTION RECORD/i.test(t),
-        behind: /18,900 behind/.test(t),
-        button: /sync 189\.00 points of work/i.test(t),
+        behind: /[\d,]+ behind/.test(t),
+        button: /sync [\d,]+\.\d\d points of work/i.test(t),
         why: /anyone may call it for anyone/i.test(t),
       };
       return [Object.values(r).every(Boolean), JSON.stringify(r)];
   }],
   ["A44", "/foundry",         async (p) => {
-      // The treasury the contributors decide how to spend: deployed, funded
-      // with 0.01 AVAX, and reachable from no page — so proposal 0 passed
-      // 16,500 to nil, closed, and has sat unexecuted ever since.
+      // The treasury the contributors decide how to spend: deployed, funded,
+      // and reachable from no page — so proposal 0 passed 16,500 to nil,
+      // closed, and has sat unexecuted ever since.
       await p.waitForTimeout(8000);
       const r = await p.evaluate(() => {
         const t = document.body.innerText;
         return {
           here: /TREASURY/.test(t),
-          funded: /Treasury\s*\n?\s*0\.0100 AVAX/.test(t),
-          floor: /To propose\s*\n?\s*40\.00/.test(t),
+          funded: /Treasury\s*\n?\s*[\d.,]+ MON/.test(t),
+          floor: /To propose\s*\n?\s*\d+\.\d\d/.test(t),
           proposal: /Put the bowl on the rack/.test(t),
-          tally: /165\.00 for · 0\.00 against/.test(t),
+          tally: /[\d,]+\.\d\d for · [\d,]+\.\d\d against/.test(t),
           // The decision was made and never carried out.
           waiting: /passed, waiting to be executed/.test(t),
           // No vote button on a closed ballot: that is an offer to send a
@@ -347,13 +346,13 @@ const ITEMS = [
       return [Object.values(r).every(Boolean), JSON.stringify(r)];
   }],
   ["A45", "/operator/0x391a51f85e738188274df07c3dd9099dd6f2d42b", async (p) => {
-      // The page read gas from Avalanche's index and never put earnings beside
-      // it, leaving the interesting figure unstated: on this chain the work is
-      // worth about a million times what it costs to record.
+      // The page read gas from the explorer's index and never put earnings
+      // beside it, leaving the interesting figure unstated: what the work is
+      // worth against what it costs to record.
       await p.waitForTimeout(8000);
       const t = await p.evaluate(() => document.body.innerText);
       const r = {
-        earned: /EARNED ON CHAIN/i.test(t) && /0\.001512/.test(t),
+        earned: /EARNED ON CHAIN/i.test(t) && /\d+\.\d{6}\s*\n?\s*MON/.test(t),
         gas: /GAS PAID/i.test(t),
         // Read off the chain and the index, then divided — not written down.
         ratio: /the work is worth\s+[\d,]+×\s+what it cost to record/.test(t),
@@ -409,26 +408,6 @@ const ITEMS = [
                  r.seats.length === 2 && r.seats[0] === -38 && r.seats[1] === 38 &&
                  /wider than the band it is aiming at/.test(r.caption);
       return [Boolean(ok), JSON.stringify(r)];
-  }],
-  ["A29", "/l1",              async (p) => {
-      const r = await p.evaluate(() => {
-        const t = document.body.innerText;
-        return {
-          blocks: document.querySelectorAll("pre").length,
-          headings: Array.from(document.querySelectorAll("h2")).map((h) => h.innerText.trim()),
-          verdict: /32:\s*shown\s*\|\s*33:\s*shown\s*\|\s*36:\s*shown/.test(t),
-          // Figures that can only have come from the committed transcript, one
-          // per claim: the mint, the fee floor, and the delivered policy.
-          mint: /newcomer holds 25 THN/.test(t),
-          fee: /0\.000000021 THN/.test(t),
-          delivered: /the destination holds task 0n \| 2 trajectories \| fee 0\.5/.test(t),
-          // The page must say plainly that the chain is not reachable from here.
-          honest: /transcript, not a live panel/i.test(t),
-        };
-      });
-      const ok = r.blocks === 3 && r.headings.length === 3 && r.verdict &&
-                 r.mint && r.fee && r.delivered && r.honest;
-      return [ok, JSON.stringify(r)];
   }],
   ["A28", "/no-such-page-xyz", async (p) => {
       const t = await p.evaluate(() => document.body.innerText);

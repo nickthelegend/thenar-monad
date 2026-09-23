@@ -8,15 +8,19 @@
  * steps against chain state that already exists — which is the same evidence a
  * judge would check.
  *
- *   node scripts/demo-rehearse.mjs [base]
+ *   node --import ./test/register.mjs scripts/demo-rehearse.mjs [base]
+ *
+ * Ported from Fuji to Monad: the chain and the contract are the app's own, from
+ * scripts/monad.mjs, and the explorer a stranger would check is Monadscan.
  */
 import { chromium } from "playwright";
-import { createPublicClient, http, formatEther, parseAbi } from "viem";
+import { createPublicClient, formatEther } from "viem";
+import { AXON_ABI as abi } from "../lib/abi.ts";
+import { monadTestnet as chain, transport, ADDR, need, txUrl } from "./monad.mjs";
 
 const BASE = process.argv[2] ?? "https://thenar.io";
-const chain = { id: 43113, name: "Fuji", nativeCurrency: { name: "AVAX", symbol: "AVAX", decimals: 18 },
-  rpcUrls: { default: { http: ["https://api.avax-test.network/ext/bc/C/rpc"] } } };
-const node = createPublicClient({ chain, transport: http() });
+const node = createPublicClient({ chain, transport: transport() });
+const A = need(ADDR.axon, "AxonProtocolV2's address (lib/deployment.ts, or NEXT_PUBLIC_AXON_ADDRESS)");
 
 const browser = await chromium.launch({ args: ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader"] });
 // Cold: no cache, no storage, no wallet — the state a judge arrives in.
@@ -63,12 +67,11 @@ await step("3. enter a station without a wallet", async () => {
 });
 
 await step("4. a paid run exists and is on chain", async () => {
-  const abi = parseAbi(["function trajectoryCount() view returns (uint256)",
-    "function getTrajectory(uint256) view returns ((uint256 taskId, address contributor, bytes32 trajHash, string cid, uint16 score, uint128 paid, uint64 at))"]);
-  const A = "0x909d9318d602Cb4Ba84D2851Ab9BFf60DB7077C0";
   const n = Number(await node.readContract({ address: A, abi, functionName: "trajectoryCount" }));
+  if (n === 0) return "0 on chain — nothing has been paid on this deployment yet";
   const last = await node.readContract({ address: A, abi, functionName: "getTrajectory", args: [BigInt(n - 1)] });
-  return `${n} on chain, latest paid ${formatEther(last.paid)} AVAX to ${last.contributor.slice(0, 10)}…`;
+  return `${n} on chain, latest paid ${formatEther(last.paid)} ${chain.nativeCurrency.symbol} ` +
+    `to ${last.contributor.slice(0, 10)}… in block ${last.atBlock}`;
 });
 
 await step("5. the payout is verifiable by a stranger", async () => {
@@ -88,7 +91,7 @@ await step("5. the payout is verifiable by a stranger", async () => {
   if (!hashes.length) return "feed exposes no tx_hash";
   const tx = hashes[0];
   const r = await node.getTransactionReceipt({ hash: tx }).catch(() => null);
-  return r ? `receipt ${tx.slice(0, 12)}… status ${r.status}, block ${r.blockNumber}` : `no receipt for ${tx.slice(0, 12)}…`;
+  return r ? `receipt ${tx.slice(0, 12)}… status ${r.status}, block ${r.blockNumber} · ${txUrl(tx)}` : `no receipt for ${tx.slice(0, 12)}…`;
 });
 
 await step("6. every contract is inspectable", async () => {

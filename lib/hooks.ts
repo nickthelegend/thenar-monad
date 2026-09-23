@@ -9,7 +9,6 @@ import { AXON_ABI } from "./abi";
 import { AXON_ADDRESS, IS_DEPLOYED, scenarioName } from "./chain";
 import { DEPLOYED } from "./registry";
 import { parSecondsFor } from "./par";
-import { scanLogs } from "./scan-logs";
 
 export type ChainTask = {
   id: number;
@@ -277,99 +276,42 @@ export function useActivity(limit = 40) {
   return useQuery({
     queryKey: ["activity", limit],
     enabled: IS_DEPLOYED,
-    refetchInterval: 5_000,
+    // A run takes a minute to drive; a feed a few seconds behind it is not
+    // stale, and every tab polling a public endpoint is a tab it can throttle.
+    refetchInterval: 15_000,
     queryFn: async (): Promise<FeedEntry[]> => {
       if (!client) return [];
 
-      const head = await client.getBlockNumber();
-      const found: FeedEntry[] = [];
-
       /**
-       * One call over the whole history, not a walk back from the head.
+       * Every accepted run, read from the contract's storage.
        *
-       * This used to read forty windows of two thousand blocks — eighty
-       * thousand in all — on the assumption that the public endpoint would
-       * refuse a wider range. It does not: Fuji answers a million-block
-       * `getLogs` on this address in a single round trip, which is how the
-       * attestation and mean-score reads here already work.
-       *
-       * The assumption was not merely inefficient, it was a time bomb. A window
-       * measured back from the head only contains the history while the history
-       * is recent, and Fuji produces about forty-three thousand blocks a day.
-       * Eighty thousand blocks is under two days. Every run on this deployment
-       * passed out of that window a week after it was recorded, and the
-       * standings, the feed and everything derived from them went quietly empty
-       * — not with an error, with a legitimate-looking nothing.
-       *
-       * A range anchored to the deployment rather than to the clock cannot do
-       * that. The result is sliced to `limit` after ordering, which is what the
-       * early exit was really for.
+       * This read the TrajectoryAccepted log from the deployment block onward,
+       * which on Monad cannot work: the public endpoints answer a log query a
+       * hundred blocks wide, and a day of Monad is two hundred thousand blocks.
+       * The contract keeps every run in an array anyway, so the runs are read
+       * from there through Multicall3 — a hundred per call, each id read once
+       * and cached, because the array is only ever appended to.
        */
-      const LOOKBACK = 1_000_000n;
-      const event = {
-        type: "event",
-        name: "TrajectoryAccepted",
-        inputs: [
-          { name: "trajectoryId", type: "uint256", indexed: true },
-          { name: "taskId", type: "uint256", indexed: true },
-          { name: "contributor", type: "address", indexed: true },
-          { name: "trajHash", type: "bytes32", indexed: false },
-          { name: "cid", type: "string", indexed: false },
-          { name: "score", type: "uint16", indexed: false },
-          { name: "paid", type: "uint256", indexed: false },
-        ],
-      } as const;
+      const runs = await readRuns(client);
+      const newest = runs.slice().reverse().slice(0, Math.max(limit, 1));
 
-      type EventLog = Awaited<ReturnType<typeof client.getLogs<typeof event>>>[number];
-      const logs = await scanLogs(
-        (r) => client.getLogs({ address: AXON_ADDRESS, event, ...r }),
-        { fromBlock: head > LOOKBACK ? head - LOOKBACK : 0n, toBlock: head },
+      // A run's transaction is not in storage, but the block it settled in is,
+      // and a one-block log query is one every endpoint answers. Only for the
+      // rows a feed shows: the standings ask for hundreds and link none.
+      const hashes = await Promise.all(
+        newest.slice(0, FEED_TX_LOOKUPS).map((r) => txOfRun(client, r).catch(() => undefined)),
       );
-      const hits: { log: EventLog }[] = logs.map((log) => ({ log }));
 
-      // Ordered explicitly rather than by the order the requests happened to
-      // return in. Newest first, and within a block the later log first, which
-      // is what the feed and the standings both assume.
-      hits.sort((a, b) => {
-        const d = Number((b.log.blockNumber ?? 0n) - (a.log.blockNumber ?? 0n));
-        return d !== 0 ? d : (b.log.logIndex ?? 0) - (a.log.logIndex ?? 0);
-      });
-
-      for (const { log } of hits.slice(0, Math.max(limit, 1))) {
-        const a = log.args as {
-          trajectoryId?: bigint; taskId?: bigint; contributor?: `0x${string}`;
-          trajHash?: `0x${string}`; score?: number; paid?: bigint;
-        };
-        if (a.trajectoryId === undefined || a.trajHash === undefined) continue;
-        found.push({
-          trajectoryId: Number(a.trajectoryId),
-          taskId: Number(a.taskId ?? 0n),
-          contributor: a.contributor ?? "0x0000000000000000000000000000000000000000",
-          score: Number(a.score ?? 0),
-          paidMon: Number(formatEther(a.paid ?? 0n)),
-          trajHash: a.trajHash,
-          txHash: log.transactionHash ?? undefined,
-          at: Number(log.blockNumber),
-        } as FeedEntry);
-      }
-
-      // Timestamps, once, for the blocks actually shown — rather than a call
-      // per entry for blocks most of them share.
-      const blocks = [...new Set(found.map((e) => e.at))];
-      const times = new Map<number, number>();
-      await Promise.all(
-        blocks.slice(0, limit).map(async (n) => {
-          try {
-            const b = await client.getBlock({ blockNumber: BigInt(n) });
-            times.set(n, Number(b.timestamp) * 1000);
-          } catch {
-            // Left as the block number; the row still renders and still links.
-          }
-        }),
-      );
-      for (const e of found) e.at = times.get(e.at) ?? Date.now();
-
-      return found.slice(0, limit);
+      return newest.map((r, i) => ({
+        trajectoryId: r.id,
+        taskId: r.taskId,
+        contributor: r.contributor,
+        score: r.score,
+        paidMon: Number(formatEther(r.paid)),
+        trajHash: r.trajHash,
+        txHash: hashes[i],
+        at: r.at * 1000,
+      }) as FeedEntry);
     },
   });
 }
@@ -494,80 +436,6 @@ export function useCapTable(policyId: number | undefined) {
 }
 
 /**
- * The on-chain record that a policy was attested, if one exists.
- *
- * `payloadFor` says what a receipt *would* contain. It is a view, so it answers
- * for every policy whether or not anybody ever signed one — which is useful and
- * is not evidence. The evidence is the `Attested` event: a transaction that
- * actually went through the Warp precompile and came back with a message id
- * signed by Fuji's validators.
- *
- * One `getLogs` call, not the backwards window walk `useActivity` needs. That
- * walk exists because the trajectory feed wants the newest N of a busy event
- * and the endpoint caps a range; this wants every occurrence of a rare one, the
- * policy id is indexed so the node does the filtering, and Fuji's public
- * endpoint answers a million-block range for it in a single round trip. A
- * window walk here would be forty requests to find nothing thirty-nine times.
- */
-const LICENCE_RECEIPT_ADDRESS = DEPLOYED.find((d) => d.key === "licence")!.address;
-
-const ATTESTED_EVENT = {
-  type: "event",
-  name: "Attested",
-  inputs: [
-    { name: "policyId", type: "uint256", indexed: true },
-    { name: "messageID", type: "bytes32", indexed: true },
-    { name: "by", type: "address", indexed: true },
-  ],
-} as const;
-
-/** Comfortably wider than this deployment's whole history, and accepted in one call. */
-const ATTEST_LOOKBACK = 1_000_000n;
-
-export type Attestation = {
-  messageID: `0x${string}`;
-  by: `0x${string}`;
-  blockNumber: bigint;
-  txHash: `0x${string}`;
-};
-
-export function useAttestation(policyId: number | undefined) {
-  const client = usePublicClient();
-
-  return useQuery({
-    queryKey: ["attestation", policyId],
-    enabled: IS_DEPLOYED && policyId !== undefined,
-    // A signature already given does not change. Refetching it every few
-    // seconds would be a request per tick for an answer that is fixed.
-    staleTime: 60_000,
-    queryFn: async (): Promise<Attestation | null> => {
-      if (!client || policyId === undefined) return null;
-      const head = await client.getBlockNumber();
-      const logs = await scanLogs(
-        (r) => client.getLogs({
-          address: LICENCE_RECEIPT_ADDRESS,
-          event: ATTESTED_EVENT,
-          args: { policyId: BigInt(policyId) },
-          ...r,
-        }),
-        { fromBlock: head > ATTEST_LOOKBACK ? head - ATTEST_LOOKBACK : 0n, toBlock: head },
-      );
-      if (!logs.length) return null;
-      // The first one is the one that matters: re-attesting produces a second
-      // signature over the same claim, and the receipt is dated by when the
-      // claim was first signed rather than by the last time somebody re-signed it.
-      const first = logs.reduce((a, b) => ((a.blockNumber ?? 0n) <= (b.blockNumber ?? 0n) ? a : b));
-      return {
-        messageID: first.args.messageID as `0x${string}`,
-        by: first.args.by as `0x${string}`,
-        blockNumber: first.blockNumber ?? 0n,
-        txHash: first.transactionHash as `0x${string}`,
-      };
-    },
-  });
-}
-
-/**
  * What a call costs, measured rather than estimated.
  *
  * The station has always told an operator what a run pays and never what it
@@ -660,7 +528,6 @@ const CALLS = {
 
 export type CallKind = keyof typeof CALLS;
 
-const COST_LOOKBACK = 200_000n;
 const COST_SAMPLES = 6;
 
 export function useObservedCost(kind: CallKind) {
@@ -676,20 +543,17 @@ export function useObservedCost(kind: CallKind) {
     staleTime: 60_000,
     queryFn: async () => {
       if (!client) return null;
-      const [head, gasPriceWei] = await Promise.all([client.getBlockNumber(), client.getGasPrice()]);
+      const gasPriceWei = await client.getGasPrice();
 
-      const logs = await scanLogs(
-        (r) => client.getLogs({ address: AXON_ADDRESS, event: call.event, ...r }),
-        { fromBlock: head > COST_LOOKBACK ? head - COST_LOOKBACK : 0n, toBlock: head },
-      );
-
-      // Newest first, and only as many as are needed to have a median worth
-      // quoting. Each sample is two calls; twenty of them would be forty.
-      const recent = logs
-        .sort((a, b) => Number((b.blockNumber ?? 0n) - (a.blockNumber ?? 0n)))
-        .map((l) => l.transactionHash)
-        .filter((h, i, all): h is `0x${string}` => Boolean(h) && all.indexOf(h) === i)
-        .slice(0, COST_SAMPLES);
+      // The most recent calls of this kind, found from storage: a run or a
+      // task records the block it was made in, and the transaction is the one
+      // log in that block that names it. Twice the samples, because a submit
+      // with a passkey and one without share an event and are told apart by
+      // selector below.
+      const recent = (call.event === ACCEPTED_EVENT
+        ? await recentRunTxs(client, COST_SAMPLES * 2)
+        : await recentTaskTxs(client, COST_SAMPLES * 2)
+      ).slice(0, COST_SAMPLES * 2);
 
       const measured = await Promise.all(
         recent.map(async (hash) => {
@@ -785,16 +649,127 @@ export function useAcceptedScores() {
     staleTime: 60_000,
     queryFn: async (): Promise<{ n: number; meanScore: number } | null> => {
       if (!client) return null;
-      const head = await client.getBlockNumber();
-      // Wider than the cost scan on purpose: a median gas figure wants recent
-      // transactions, and a mean score wants all of them.
-      const logs = await scanLogs(
-        (r) => client.getLogs({ address: AXON_ADDRESS, event: ACCEPTED_EVENT, ...r }),
-        { fromBlock: head > 1_000_000n ? head - 1_000_000n : 0n, toBlock: head },
-      );
-      if (!logs.length) return { n: 0, meanScore: 0 };
-      const scores = logs.map((l) => Number(l.args.score ?? 0));
+      // Every accepted run since deployment: a mean score wants all of them,
+      // and the contract's own array has all of them.
+      const runs = await readRuns(client);
+      if (!runs.length) return { n: 0, meanScore: 0 };
+      const scores = runs.map((r) => r.score);
       return { n: scores.length, meanScore: scores.reduce((a, b) => a + b, 0) / scores.length };
     },
   });
+}
+
+// ------------------------------------------------------------------ storage reads
+
+type Client = NonNullable<ReturnType<typeof usePublicClient>>;
+
+/** One accepted run as the contract stores it. */
+type StoredRun = {
+  id: number;
+  taskId: number;
+  contributor: `0x${string}`;
+  trajHash: `0x${string}`;
+  score: number;
+  paid: bigint;
+  /** Unix seconds. */
+  at: number;
+  atBlock: bigint;
+};
+
+/** How many rows of a feed get a transaction link. Each is one small request. */
+const FEED_TX_LOOKUPS = 40;
+/** Runs per Multicall3 call. A getTrajectory return is a few hundred bytes. */
+const READ_BATCH = 100;
+
+const runCache: StoredRun[] = [];
+let runWalk: Promise<StoredRun[]> | null = null;
+
+/**
+ * Every run the contract has accepted, oldest first.
+ *
+ * The array is append-only on chain, so a run once read never needs reading
+ * again: later calls ask only for the ids past the last one cached. Concurrent
+ * callers share one walk, and a walk that fails keeps what it had read.
+ */
+function readRuns(client: Client): Promise<StoredRun[]> {
+  runWalk ??= (async () => {
+    const count = Number(
+      await client.readContract({ address: AXON_ADDRESS, abi: AXON_ABI, functionName: "trajectoryCount" }),
+    );
+    for (let from = runCache.length; from < count; from += READ_BATCH) {
+      const ids = Array.from({ length: Math.min(READ_BATCH, count - from) }, (_, k) => from + k);
+      const got = await client.multicall({
+        allowFailure: false,
+        contracts: ids.map((id) => ({
+          address: AXON_ADDRESS, abi: AXON_ABI, functionName: "getTrajectory", args: [BigInt(id)],
+        } as const)),
+      });
+      got.forEach((t, k) => {
+        runCache[ids[k]] = {
+          id: ids[k],
+          taskId: Number(t.taskId),
+          contributor: t.contributor,
+          trajHash: t.trajHash,
+          score: Number(t.score),
+          paid: t.paid,
+          at: Number(t.at),
+          atBlock: t.atBlock,
+        };
+      });
+    }
+    return runCache.slice();
+  })().finally(() => {
+    runWalk = null;
+  });
+  return runWalk;
+}
+
+const runTx = new Map<number, `0x${string}`>();
+
+/** The transaction a run settled in: the one TrajectoryAccepted log for it, in the block it recorded. */
+async function txOfRun(client: Client, run: StoredRun): Promise<`0x${string}` | undefined> {
+  const known = runTx.get(run.id);
+  if (known) return known;
+  const logs = await client.getLogs({
+    address: AXON_ADDRESS, event: ACCEPTED_EVENT, args: { trajectoryId: BigInt(run.id) },
+    fromBlock: run.atBlock, toBlock: run.atBlock,
+  });
+  const hash = logs[0]?.transactionHash ?? undefined;
+  if (hash) runTx.set(run.id, hash);
+  return hash;
+}
+
+async function recentRunTxs(client: Client, n: number): Promise<`0x${string}`[]> {
+  const runs = (await readRuns(client)).slice(-n).reverse();
+  const hashes = await Promise.all(runs.map((r) => txOfRun(client, r).catch(() => undefined)));
+  return hashes.filter((h): h is `0x${string}` => Boolean(h));
+}
+
+/** The transactions that posted the most recent tasks, found the same way as a run's. */
+async function recentTaskTxs(client: Client, n: number): Promise<`0x${string}`[]> {
+  const count = Number(
+    await client.readContract({ address: AXON_ADDRESS, abi: AXON_ABI, functionName: "taskCount" }),
+  );
+  const ids = Array.from({ length: Math.min(n, count) }, (_, k) => count - 1 - k);
+  if (!ids.length) return [];
+  const tasks = await client.multicall({
+    allowFailure: false,
+    contracts: ids.map((id) => ({
+      address: AXON_ADDRESS, abi: AXON_ABI, functionName: "getTask", args: [BigInt(id)],
+    } as const)),
+  });
+  const hashes = await Promise.all(
+    tasks.map(async (t, k) => {
+      try {
+        const logs = await client.getLogs({
+          address: AXON_ADDRESS, event: TASK_CREATED_EVENT, args: { taskId: BigInt(ids[k]) },
+          fromBlock: t.createdBlock, toBlock: t.createdBlock,
+        });
+        return logs[0]?.transactionHash ?? undefined;
+      } catch {
+        return undefined;
+      }
+    }),
+  );
+  return hashes.filter((h): h is `0x${string}` => Boolean(h));
 }

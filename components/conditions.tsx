@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import { useAccount, useSwitchChain } from "wagmi";
-import { appChain, RPC_ENDPOINTS, FAUCET_URL, CURRENCY } from "@/lib/chain";
+import { appChain, RPC_ENDPOINTS, FAUCET_URL, CURRENCY, LOW_GAS_BALANCE } from "@/lib/chain";
 import { useSession } from "@/components/session";
 
 /**
@@ -19,8 +20,47 @@ import { useSession } from "@/components/session";
  */
 export function Conditions() {
   const { isConnected } = useAccount();
-  const { switchChain, isPending } = useSwitchChain();
+  const { switchChainAsync, isPending } = useSwitchChain();
+  const [switchError, setSwitchError] = useState<string | null>(null);
+  const [adding, setAdding] = useState(false);
+
+  // The switch used to fail in silence: a wallet that has never seen this
+  // chain refuses wallet_switchEthereumChain, and nothing said so. Ask the
+  // wallet to add the chain, switch again, and say plainly if it still won't.
+  async function switchToApp() {
+    setSwitchError(null);
+    const params = {
+      chainName: appChain.name,
+      nativeCurrency: appChain.nativeCurrency,
+      rpcUrls: [...appChain.rpcUrls.default.http],
+      blockExplorerUrls: appChain.blockExplorers ? [appChain.blockExplorers.default.url] : undefined,
+    };
+    try {
+      await switchChainAsync({ chainId: appChain.id, addEthereumChainParameter: params });
+    } catch (first) {
+      const eth = (window as unknown as { ethereum?: { request: (a: { method: string; params?: unknown[] }) => Promise<unknown> } }).ethereum;
+      const hex = `0x${appChain.id.toString(16)}`;
+      try {
+        if (!eth) throw first;
+        setAdding(true);
+        await eth.request({ method: "wallet_addEthereumChain", params: [{ chainId: hex, ...params }] });
+        await eth.request({ method: "wallet_switchEthereumChain", params: [{ chainId: hex }] });
+      } catch (e) {
+        const err = e as { shortMessage?: string; message?: string };
+        const why = (err?.shortMessage ?? err?.message ?? String(e)).split("\n")[0];
+        setSwitchError(
+          `Your wallet did not switch (${why}). Add ${appChain.name} to it by hand — chain ID ${appChain.id}, RPC ${appChain.rpcUrls.default.http[0]} — then reload.`,
+        );
+      } finally {
+        setAdding(false);
+      }
+    }
+  }
   const s = useSession();
+  // The landing page draws its own fixed header over the top of the document,
+  // so a band in the normal flow sat underneath it there with both sets of text
+  // showing through. On that page it docks to the bottom of the viewport.
+  const onLanding = usePathname() === "/";
 
   const [offline, setOffline] = useState(false);
   const [rpcDown, setRpcDown] = useState(false);
@@ -116,7 +156,7 @@ export function Conditions() {
   }, []);
 
   const wrongNetwork = isConnected && s.wrongNetwork;
-  const lowGas = s.connected && !s.wrongNetwork && s.balance < 0.001;
+  const lowGas = s.connected && !s.wrongNetwork && s.balance < LOW_GAS_BALANCE;
   // Blocks land every couple of seconds, so anything past two minutes is the
   // machine, not the network.
   const skewed = skewMs !== null && Math.abs(skewMs) > 120_000;
@@ -124,7 +164,12 @@ export function Conditions() {
   if (!offline && !rpcDown && !wrongNetwork && !lowGas && !skewed) return null;
 
   return (
-    <div role="status" className="border-b border-rule-strong bg-ink-2">
+    <div
+      role="status"
+      className={onLanding
+        ? "fixed inset-x-0 bottom-0 z-[70] border-t border-rule-strong bg-ink-2"
+        : "border-b border-rule-strong bg-ink-2"}
+    >
       <div className="mx-auto flex max-w-[1400px] flex-wrap items-center gap-x-4 gap-y-2 px-5 py-2.5 font-mono text-[12px]">
         {offline ? (
           <Band tone="reject" label="Offline">
@@ -151,12 +196,15 @@ export function Conditions() {
             </span>
             <button
               type="button"
-              onClick={() => switchChain({ chainId: appChain.id })}
-              disabled={isPending}
+              onClick={() => void switchToApp()}
+              disabled={isPending || adding}
               className="ml-2 border border-scribe bg-scribe px-2.5 py-1 font-mono text-[12px] uppercase tracking-[0.14em] text-ink-0 transition-colors hover:border-signal-hi hover:bg-signal-hi disabled:opacity-60"
             >
-              {isPending ? "Switching…" : `Switch to ${appChain.name}`}
+              {isPending || adding ? "Asking your wallet…" : `Switch to ${appChain.name}`}
             </button>
+            {switchError ? (
+              <span role="alert" className="basis-full pt-1 text-reject">{switchError}</span>
+            ) : null}
           </Band>
         ) : (
           <Band tone="signal" label={`Low on ${CURRENCY}`}>

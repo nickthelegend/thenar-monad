@@ -7,9 +7,6 @@ import { Archivo, DM_Mono, Hanken_Grotesk, IBM_Plex_Mono } from "next/font/googl
 import { Providers } from "@/components/providers";
 import { SiteNav } from "@/components/site-nav";
 import { Conditions } from "@/components/conditions";
-// Before globals.css on purpose: RainbowKit ships resets that otherwise
-// outrank Tailwind and collapse the station viewport to 300x150.
-import "@rainbow-me/rainbowkit/styles.css";
 import "./globals.css";
 
 /**
@@ -72,11 +69,11 @@ export const metadata: Metadata = {
   metadataBase: new URL("https://thenar.io"),
   title: "Thenar — the data foundry for physical AI",
   description:
-    "Teleoperate a robot arm in the browser. Every accepted trajectory is measured, recorded, and paid in the same Avalanche transaction.",
+    "Teleoperate a robot arm in the browser. Every accepted trajectory is measured, recorded, and paid in the same Monad transaction.",
   openGraph: {
     title: "Thenar — the data foundry for physical AI",
     description:
-      "Drive a robot arm, get measured against the datum, and get paid on Avalanche in the transaction that records the run.",
+      "Drive a robot arm, get measured against the datum, and get paid on Monad in the transaction that records the run.",
     type: "website",
     // A static file rather than the opengraph-image route convention. That
     // convention built locally, appeared in the routes manifest and produced
@@ -93,7 +90,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Thenar — the data foundry for physical AI",
     description:
-      "Drive a robot arm, get measured against the datum, and get paid on Avalanche in the transaction that records the run.",
+      "Drive a robot arm, get measured against the datum, and get paid on Monad in the transaction that records the run.",
     images: ["/og.png"],
   },
 };

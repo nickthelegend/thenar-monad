@@ -2,7 +2,7 @@
 /**
  * Commit a task's corpus contents to the chain.
  *
- *     node scripts/commit-manifest.mjs <taskId> [baseUrl]
+ *     node --import ./test/register.mjs scripts/commit-manifest.mjs <taskId> [baseUrl]
  *
  * The protocol records each accepted run's hash as it happens, which proves
  * every episode is real and says nothing about the set. This commits one hash
@@ -14,22 +14,21 @@
  * else: the party that decides what an episode is worth is the party that says
  * which episodes there were.
  */
-import { readFileSync } from "node:fs";
-import { createPublicClient, createWalletClient, http, parseAbi } from "viem";
+import { createPublicClient, createWalletClient, parseAbi } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { rootOf, proofFor, verifyProof } from "../lib/merkle.ts";
+import { monadTestnet as chain, transport, ADDR, env, need, txUrl } from "./monad.mjs";
 
 const TASK = Number(process.argv[2] ?? 0);
-const BASE = process.argv[3] ?? "https://thenar.io";
+const BASE = process.argv[3] ?? "http://localhost:3222";
 
-const envOf = (f) =>
-  Object.fromEntries(
-    readFileSync(f, "utf8").split("\n").filter((l) => l.includes("=") && !l.trim().startsWith("#"))
-      .map((l) => { const i = l.indexOf("="); return [l.slice(0, i).trim(), l.slice(i + 1).trim()]; }),
-  );
-
-const MANIFEST = process.env.MANIFEST_ADDRESS
-  ?? "0x318e5faf04c9db5d844aaa93850e71406012dd62";
+// The manifest the app reads, from lib/deployment.ts unless .env.local or the
+// environment says otherwise. MANIFEST_ADDRESS stays as an override for
+// committing against a contract the app is not pointed at yet.
+const MANIFEST = need(
+  process.env.MANIFEST_ADDRESS ?? ADDR.corpusManifest,
+  "CorpusManifest's address (lib/deployment.ts, NEXT_PUBLIC_CORPUS_MANIFEST or MANIFEST_ADDRESS)",
+);
 const abi = parseAbi([
   "function commit(uint256 taskId, bytes32 root, uint32 episodes)",
   "function latest(uint256 taskId) view returns ((bytes32 root, uint32 episodes, uint64 at))",
@@ -37,16 +36,11 @@ const abi = parseAbi([
   "function contains(uint256 taskId, bytes32 episode, bytes32[] proof) view returns (bool)",
 ]);
 
-const chain = {
-  id: 43113, name: "Avalanche Fuji",
-  nativeCurrency: { name: "AVAX", symbol: "AVAX", decimals: 18 },
-  rpcUrls: { default: { http: ["https://api.avax-test.network/ext/bc/C/rpc"] } },
-};
-const pub = createPublicClient({ chain, transport: http() });
+const pub = createPublicClient({ chain, transport: transport() });
 const verifier = privateKeyToAccount(
-  envOf(".env.local").VERIFIER_PRIVATE_KEY.replace(/^"|"$/g, ""),
+  need(env("VERIFIER_PRIVATE_KEY"), "VERIFIER_PRIVATE_KEY").replace(/^"|"$/g, ""),
 );
-const w = createWalletClient({ account: verifier, chain, transport: http() });
+const w = createWalletClient({ account: verifier, chain, transport: transport() });
 
 // The accepted corpus, read from the same surface a buyer downloads.
 const runs = (await (await fetch(`${BASE}/api/task/${TASK}/runs`)).json()).runs ?? [];
@@ -69,12 +63,14 @@ if (already > 0n) {
   }
 }
 
-const hash = await w.writeContract({
-  address: MANIFEST, abi, functionName: "commit",
-  args: [BigInt(TASK), root, hashes.length], gas: 200_000n,
-});
+// Monad charges for the gas limit, not the gas used, so a flat ceiling picked
+// to be safe is paid in full every time. Ask what this commit costs and leave
+// a fifth over for the state to move between the estimate and the block.
+const call = { address: MANIFEST, abi, functionName: "commit", args: [BigInt(TASK), root, hashes.length] };
+const estimate = await pub.estimateContractGas({ ...call, account: verifier });
+const hash = await w.writeContract({ ...call, gas: (estimate * 12n) / 10n });
 const rec = await pub.waitForTransactionReceipt({ hash, timeout: 180_000 });
-console.log(`  committed: ${rec.status} | tx ${hash}`);
+console.log(`  committed: ${rec.status} | ${txUrl(hash)}`);
 
 // The cross-check that matters: a proof built by lib/merkle.ts, verified by the
 // contract's own walk. Two implementations of the same tree in two languages

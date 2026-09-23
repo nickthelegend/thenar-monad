@@ -21,7 +21,7 @@ test("a generous endpoint is asked once", async () => {
 });
 
 test("a tight endpoint still returns every log in the range", async () => {
-  // drpc refuses above ~10,000 blocks; the deployment's history is 1,000,000.
+  // An endpoint that refuses above ~10,000 blocks, over a 1,000,000-block history.
   const logs = [5n, 12_345n, 400_000n, 999_999n];
   const { fetchRange } = endpoint(10_000n, logs);
   const got = await scanLogs(fetchRange, { fromBlock: 0n, toBlock: 1_000_000n });
@@ -41,7 +41,7 @@ test("a failure that is not about the range is raised, not split forever", async
   let calls = 0;
   const fetchRange = async () => { calls += 1; throw new Error("connection refused"); };
   await assert.rejects(
-    () => scanLogs(fetchRange, { fromBlock: 0n, toBlock: 4_000n }),
+    () => scanLogs(fetchRange, { fromBlock: 0n, toBlock: 400n }),
     /connection refused/,
   );
   // The whole range, then two halves at the floor, and it stops.

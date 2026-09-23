@@ -1,3 +1,4 @@
+// Records the Avalanche Fuji-era QA run as it was; its item wording predates the move to Monad and is kept as history.
 /** Assemble the itemised plan result from every runner's captured output. */
 import { readFileSync } from "node:fs";
 const OUT = process.argv[2];
@@ -30,7 +31,7 @@ const MEANS = {
   B27:"Web service holds no signing key (503) — isolation intact",
   B28:"200 for a real trajectory hash", B28b:"404 for a bogus hash, in JSON",
   B29:"200 similar", B30:"200 annotation", B31:"200 physics naming the engine",
-  B32:"200 from the real Glacier API", B33:"200 reconcile", B34:"401 without the migrate token",
+  B32:"200 from the real Arcscan API", B33:"200 reconcile", B34:"401 without the migrate token",
   B35a:"DNT honoured, not counted", B35b:"GPC honoured, not counted",
   B36:"4xx naming the invalid field", B37:"Every advertised OpenAPI path answers",
   C1:"chain taskCount equals the figure on /hub", C2:"chain trajectoryCount equals the figure on /",

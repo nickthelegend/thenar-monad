@@ -47,12 +47,14 @@ function spec() {
         `serving it: each episode's hash is on ${appChain.name}, and the set is ` +
         "committed as a Merkle root that a single episode proves into.",
     },
-    servers: [{ url: "https://thenar.io", description: "Production" }],
+    // Relative, so the document describes whichever host served it. It named
+    // thenar.io, which this deployment is not and which no longer answers.
+    servers: [{ url: "/", description: "This deployment" }],
     "x-deployment": {
       chain: appChain.name,
       chainId: appChain.id,
       protocol: AXON_ADDRESS,
-      corpusManifest: CORPUS_MANIFEST,
+      corpusManifest: CORPUS_MANIFEST || null,
       acceptanceFloor: ACCEPT_FLOOR,
       placementToleranceMm: TOLERANCE_MM,
     },
@@ -108,7 +110,7 @@ function spec() {
       "/api/task/{id}/notes": { get: { summary: "Signed operator notes for a task.", parameters: [taskId], responses: { "200": ok("Notes, each with the signature that proves its author.") } } },
       "/api/task/{id}/team": { get: { summary: "Who has contributed to this task.", parameters: [taskId], responses: { "200": ok("Contributors.") } } },
       "/api/task/{id}/history": {
-        get: { summary: "A funder's protocol calls, from Avalanche's own index.", parameters: [taskId, { name: "funder", in: "query", required: true, schema: { type: "string", pattern: "^0x[0-9a-fA-F]{40}$" } }], responses: { "200": ok("Settlements."), "400": ok("funder must be an address.") } },
+        get: { summary: "A funder's protocol calls, from Monadscan's index.", parameters: [taskId, { name: "funder", in: "query", required: true, schema: { type: "string", pattern: "^0x[0-9a-fA-F]{40}$" } }], responses: { "200": ok("Settlements."), "400": ok("funder must be an address.") } },
       },
       "/api/trajectory/{hash}": { get: { summary: "One stored trajectory, with its samples and the hash re-derived.", parameters: [hash], responses: { "200": ok("The trajectory."), "404": ok("No trajectory with that hash.") } } },
       "/api/trajectory/{hash}/similar": { get: { summary: "The paid runs closest to this one, by path distance.", parameters: [hash], responses: { "200": ok("Neighbours, nearest first."), "400": ok("Malformed hash."), "404": ok("Unknown hash.") } } },
@@ -130,10 +132,16 @@ function spec() {
         },
       },
       "/api/dataset/summary": { get: { summary: "What a corpus contains, without downloading it.", parameters: [{ name: "taskId", in: "query", required: true, schema: { type: "integer", minimum: 0 } }], responses: { "200": ok("Summary."), "400": ok("Missing taskId.") } } },
-      "/api/glacier/{address}": { get: { summary: "One address's protocol calls, from Avalanche's index.", parameters: [{ name: "address", in: "path", required: true, schema: { type: "string", pattern: "^0x[0-9a-fA-F]{40}$" } }], responses: { "200": ok("Settlements."), "400": ok("Not an address.") } } },
+      "/api/calls/{address}": { get: { summary: "One address's protocol calls, from Monadscan's index.", parameters: [{ name: "address", in: "path", required: true, schema: { type: "string", pattern: "^0x[0-9a-fA-F]{40}$" } }], responses: { "200": ok("Settlements."), "400": ok("Not an address.") } } },
       "/api/props": { get: { summary: "Models funders have uploaded.", responses: { "200": ok("Props.") } } },
       "/api/space": { get: { summary: "Open rooms and who is in them.", responses: { "200": ok("Rooms.") } } },
-      "/api/snapshot": { get: { summary: "The most recent corpus snapshot written to object storage.", responses: { "200": ok("Snapshot metadata.") } } },
+      "/api/snapshot": { get: { summary: "The most recent corpus snapshot written to object storage.", responses: {
+        "200": ok("Snapshot metadata; the snapshot was stored."),
+        "401": ok("CRON_SECRET is set and the request did not carry it."),
+        // Documented because it is what this deployment answers: the snapshot
+        // is taken and hashed, and there is no bucket to put it in.
+        "502": ok("The snapshot was taken and verified, but no bucket is configured to store it."),
+      } } },
     },
   };
 }

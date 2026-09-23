@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useBalance, useReadContract, useReadContracts } from "wagmi";
 import { formatEther } from "viem";
 import { useSession } from "@/components/session";
@@ -28,10 +29,10 @@ type Proposal = {
  * What it governs is one thing — which task gets funded next — because a
  * treasury that can only do one thing cannot be voted into doing another.
  *
- * All of which was deployed, funded with 0.01 AVAX, and reachable from no page.
- * Proposal 0 passed 16,500 to nil, closed, and has sat unexecuted since —
- * a decision made by the people entitled to make it and never carried out,
- * because nothing in this interface could call `execute`.
+ * All of which was deployed, funded, and reachable from no page. On the
+ * previous deployment, proposal 0 passed 16,500 to nil, closed, and sat
+ * unexecuted — a decision made by the people entitled to make it and never
+ * carried out, because nothing in this interface could call `execute`.
  *
  * The three actions appear exactly where the contract would accept them. A vote
  * button on a closed ballot or an execute on a live one is an offer to send a
@@ -120,7 +121,17 @@ function Row({
   weight: number;
 }) {
   const closesAt = Number(p.closesAt) * 1000;
-  const open = Date.now() < closesAt;
+  // The clock is read after mount and every half minute, not during render:
+  // a render that reads Date.now() gives two different answers to the server
+  // and the browser, and never notices the vote closing while the page is open.
+  const [now, setNow] = useState<number | null>(null);
+  useEffect(() => {
+    const tick = () => setNow(Date.now());
+    const first = setTimeout(tick, 0);
+    const every = setInterval(tick, 30_000);
+    return () => { clearTimeout(first); clearInterval(every); };
+  }, []);
+  const open = now !== null && now < closesAt;
   const forW = Number(p.forWeight);
   const againstW = Number(p.againstWeight);
   const passed = forW > againstW;

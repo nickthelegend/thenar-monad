@@ -2,20 +2,20 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { formatEther } from "viem";
 import { chainClient } from "@/lib/rpc";
-import { appChain, addressUrl, AXON_ADDRESS, CURRENCY, txUrl } from "@/lib/chain";
-import { DEPLOYED, SUPERSEDED, type Deployed } from "@/lib/registry";
+import { appChain, addressUrl, AXON_ADDRESS, CURRENCY, IS_DEPLOYED, txUrl, chainMeta } from "@/lib/chain";
+import { DEPLOYED, LIVE_CONTRACTS, SUPERSEDED, type Deployed } from "@/lib/registry";
 import {
   CONTRIBUTION_RECORD_ABI, REFERRALS_ABI, PRIZE_POOL_ABI,
-  FOUNDRY_ABI, LICENCE_RECEIPT_ABI,
+  FOUNDRY_ABI,
 } from "@/lib/registry-abi";
 import { DimRule } from "@/components/primitives";
-import { settlementsFor, type Settlement } from "@/lib/glacier";
+import { IndexUnavailable, settlementsFor, type Settlement } from "@/lib/monadscan";
 import { fmtGasCost } from "@/lib/format";
 
 export const metadata: Metadata = {
   title: "Contracts — Thenar",
   description:
-    "Every contract this protocol has deployed on Avalanche Fuji, its address, what it does, and the surface that uses it. Read live from chain.",
+    `Every contract this protocol has deployed on ${appChain.name}, its address, what it does, and the surface that uses it. Read live from chain.`,
 };
 
 // Read at request time. A registry that caches is a registry that can be wrong.
@@ -73,7 +73,7 @@ async function readings(): Promise<Record<string, [string, string][]>> {
       ]);
       return [
         ["Bounty per referral", `${formatEther(bounty as bigint)} ${CURRENCY}`],
-        ["Remaining in pot", `${formatEther(remaining as bigint)} ${CURRENCY}`],
+        ["Claims the pot can still pay", String(remaining)],
         ["Paid out", `${formatEther(paidOut as bigint)} ${CURRENCY}`],
         ["Cap per referrer", String(cap)],
       ];
@@ -106,23 +106,13 @@ async function readings(): Promise<Record<string, [string, string][]>> {
         ["Weight to propose", String(minWeight)],
       ];
     }),
-    safe("licence", async () => {
-      const [format, source] = await Promise.all([
-        client.readContract({ address: at("licence"), abi: LICENCE_RECEIPT_ABI, functionName: "FORMAT" }),
-        client.readContract({ address: at("licence"), abi: LICENCE_RECEIPT_ABI, functionName: "sourceChain" }),
-      ]);
-      return [
-        ["Warp payload format", String(format)],
-        ["Source chain", String(source)],
-      ];
-    }),
   ]);
   return out;
 }
 
 export default async function ContractsPage() {
   const [live, prior, reads] = await Promise.all([
-    presence(DEPLOYED), presence(SUPERSEDED), readings(),
+    presence(LIVE_CONTRACTS), SUPERSEDED, IS_DEPLOYED ? readings() : Promise.resolve({} as Record<string, [string, string][]>),
   ]);
   const held = live.reduce((n, r) => n + Number(formatEther(r.balance)), 0);
   const dark = live.filter((r) => r.surface === "/contracts").length;
@@ -161,10 +151,10 @@ export default async function ContractsPage() {
 
             <p className="mt-2 max-w-[74ch] text-[14px] leading-relaxed text-scribe-2">{r.does}</p>
 
-            {r.avalanche ? (
+            {r.monad ? (
               <p className="mt-2 max-w-[74ch] border-l-2 border-signal pl-3 text-[13px] leading-relaxed text-scribe-2">
-                <span className="font-mono text-[12px] uppercase tracking-[0.12em] text-signal">Avalanche</span>{" "}
-                {r.avalanche}
+                <span className="font-mono text-[12px] uppercase tracking-[0.12em] text-signal">Monad</span>{" "}
+                {r.monad}
               </p>
             ) : null}
 
@@ -196,7 +186,7 @@ export default async function ContractsPage() {
 
       <DimRule className="mt-10" note="Every write, and what it cost" />
       <p className="mt-3 max-w-[74ch] text-[14px] leading-relaxed text-scribe-2">
-        Every transaction sent to the protocol contract, from Avalanche&rsquo;s own
+        Every transaction sent to the protocol contract, from Monadscan&rsquo;s
         index rather than from anything we store &mdash; including the ones that
         reverted, which a ledger of accepted runs by definition cannot show.
         The method is resolved from the selector against the deployed
@@ -209,7 +199,9 @@ export default async function ContractsPage() {
         calls, and against the interface&rsquo;s ABI a third of this history read
         as unrecognised selectors.
       </p>
-      <CallLog />
+      {IS_DEPLOYED ? <CallLog /> : (
+        <p className="mt-4 font-mono text-[13px] text-scribe-3">Nothing is deployed on {appChain.name} yet, so there are no calls to list.</p>
+      )}
 
       <DimRule className="mt-10" note="Superseded" />
 
@@ -217,17 +209,17 @@ export default async function ContractsPage() {
         <section key={r.key} className="border-t border-rule py-5">
           <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1">
             <h2 className="font-display text-lg font-600 text-scribe-2">{r.name}</h2>
-            <a href={addressUrl(r.address)} target="_blank" rel="noreferrer"
+            <a href={`${chainMeta(r.chainId ?? appChain.id)?.explorer ?? appChain.blockExplorers.default.url}/address/${r.address}`}
+               target="_blank" rel="noreferrer"
                className="font-mono text-[12px] text-scribe-3 transition-colors hover:text-scribe">
               {r.address} &rarr;
             </a>
           </div>
           <p className="mt-2 max-w-[74ch] text-[14px] leading-relaxed text-scribe-2">{r.does}</p>
           <div className="mt-3 flex flex-wrap gap-x-7 gap-y-1 font-mono text-[12px] text-scribe-3">
-            <span>{r.bytes.toLocaleString("en-GB")} bytes</span>
-            <span className={Number(formatEther(r.balance)) > 0 ? "text-reject" : undefined}>
-              {formatEther(r.balance)} {CURRENCY} stranded
-            </span>
+            {/* Read on its own chain or not at all: this page's node is Monad's, and a
+                Monad reading of an address on another chain says 0 bytes and 0 held. */}
+            <span>on {chainMeta(r.chainId ?? appChain.id)?.name ?? appChain.name}</span>
             <span>{r.source}</span>
           </div>
         </section>
@@ -264,17 +256,17 @@ export default async function ContractsPage() {
  */
 async function CallLog() {
   let calls: Settlement[] = [];
-  let failed = false;
+  let failed: string | null = null;
   try {
     calls = await settlementsFor(AXON_ADDRESS);
-  } catch {
-    failed = true;
+  } catch (e) {
+    failed = e instanceof IndexUnavailable ? e.message : "Monadscan did not answer.";
   }
 
   if (failed) {
     return (
       <p className="mt-4 font-mono text-[13px] text-scribe-3">
-        Avalanche&rsquo;s index did not answer. Everything above is read straight
+        {failed} Everything above is read straight
         from the node and is unaffected.
       </p>
     );
@@ -287,7 +279,7 @@ async function CallLog() {
     );
   }
 
-  const spent = calls.reduce((n, c) => n + c.feeAvax, 0);
+  const spent = calls.reduce((n, c) => n + c.fee, 0);
   const reverted = calls.filter((c) => !c.succeeded).length;
   const gas = calls.reduce((n, c) => n + c.gasUsed, 0);
 
@@ -314,7 +306,7 @@ async function CallLog() {
               {c.gasUsed.toLocaleString("en-GB")} gas
             </span>
             <span className="hidden text-right font-mono text-[12px] tabular-nums text-scribe-2 sm:block">
-              {fmtGasCost(c.feeAvax, CURRENCY)}
+              {fmtGasCost(c.fee, CURRENCY)}
             </span>
             <a
               href={txUrl(c.txHash)}

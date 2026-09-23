@@ -1,6 +1,11 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  experimental: {
+    // Off on this machine: the dev cache's writes and compactions ran for a
+    // minute at a time on a nearly full disk and stalled every request behind them.
+    turbopackFileSystemCacheForDev: false,
+  },
   // Both are native or WebAssembly and must not be bundled: better-sqlite3 is
   // a compiled addon, and mujoco ships an eight-megabyte .wasm its own loader
   // resolves beside itself.
@@ -20,9 +25,10 @@ const nextConfig: NextConfig = {
   /**
    * Headers a browser should get whatever else happens.
    *
-   * The app loads WebGL, fonts and models from itself and talks to exactly two
-   * origins it does not own: the Avalanche RPC and Glacier. Naming them means a
-   * script injected into a page cannot quietly ship data somewhere else.
+   * The app loads WebGL, fonts and models from itself and talks only to the
+   * origins named in connect-src below: Monad's RPC endpoints, the Monad x402
+   * facilitator for the corpus paywall, Privy, World ID, and WalletConnect. Naming them
+   * means a script injected into a page cannot quietly ship data somewhere else.
    * `unsafe-eval` is required by the WASM/three toolchain and `unsafe-inline`
    * by Next's own inline bootstrap, so the policy is honest about what it does
    * and does not buy rather than pretending to be stricter than it is.
@@ -30,11 +36,16 @@ const nextConfig: NextConfig = {
   async headers() {
     const csp = [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-eval' 'unsafe-inline'",
+      "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://challenges.cloudflare.com",
       "style-src 'self' 'unsafe-inline'",
-      "img-src 'self' data: blob:",
+      // World ID's widget draws its icons from World's asset host.
+      "img-src 'self' data: blob: https://world-id-assets.com",
       "font-src 'self' data:",
       "worker-src 'self' blob:",
+      // Privy draws its sign-in and the embedded wallet in frames from its own
+      // origin, behind a Cloudflare challenge; WalletConnect verifies from its.
+      "frame-src https://auth.privy.io https://verify.walletconnect.com https://verify.walletconnect.org https://challenges.cloudflare.com",
+      "child-src https://auth.privy.io https://verify.walletconnect.com https://verify.walletconnect.org",
       /**
        * Every origin this app is allowed to talk to, named.
        *
@@ -49,11 +60,22 @@ const nextConfig: NextConfig = {
        * against each other.
        */
       "connect-src 'self' " +
-        "https://api.avax-test.network " +
-        "https://avalanche-fuji-c-chain-rpc.publicnode.com " +
-        "https://avalanche-fuji.drpc.org " +
-        "https://glacier-api.avax.network " +
-        "wss://relay.walletconnect.com https://explorer-api.walletconnect.com",
+        // Monad testnet, in the same order as RPC_ENDPOINTS in lib/chain.ts,
+        // with the canonical host first. A host missing from this line is a
+        // host the browser refuses, and the failover that was meant to survive
+        // an outage fails on every page load instead.
+        "https://testnet-rpc.monad.xyz " +
+        "https://rpc.ankr.com " +
+        "https://10143.rpc.thirdweb.com " +
+        // The corpus paywall: x402 on Monad settles through this facilitator.
+        "https://x402-facilitator.molandak.org " +
+        // Privy: sign-in, and the relay its embedded wallets reach RPCs through.
+        "https://auth.privy.io https://*.rpc.privy.systems " +
+        // World ID: the widget reaches the phone through World's bridge. Without
+        // this the Selfie Check failed in the browser before any request left it.
+        "https://bridge.worldcoin.org " +
+        "wss://relay.walletconnect.com wss://relay.walletconnect.org wss://www.walletlink.org " +
+        "https://explorer-api.walletconnect.com",
       "frame-ancestors 'none'",
       "base-uri 'self'",
       "form-action 'self'",

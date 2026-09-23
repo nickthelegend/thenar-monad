@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { DimRule } from "@/components/primitives";
 import { fmtInt, fmtScore, shortHash } from "@/lib/format";
+import { addressUrl, txUrl } from "@/lib/chain";
 
 type Run = {
   traj_hash: string; task_id: number; contributor: string; score: number;
@@ -15,17 +16,26 @@ type Contract = { address: string; chainId: number; label: string; why: string; 
 export default function ArchivePage() {
   const [chains, setChains] = useState<Chain[] | null>(null);
   const [contracts, setContracts] = useState<Contract[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let live = true;
     fetch("/api/archive")
-      .then((r) => r.json())
-      .then((d: { chains?: Chain[]; contracts?: Contract[] }) => {
+      .then(async (r) => {
+        const d: { chains?: Chain[]; contracts?: Contract[]; error?: string } = await r.json().catch(() => ({}));
+        if (!r.ok) throw new Error(d.error ?? `the archive answered ${r.status}`);
+        return d;
+      })
+      .then((d) => {
         if (!live) return;
         setChains(d.chains ?? []);
         setContracts(d.contracts ?? []);
       })
-      .catch(() => { if (live) setChains([]); });
+      .catch((e: unknown) => {
+        if (!live) return;
+        setError(e instanceof Error ? e.message : String(e));
+        setChains([]);
+      });
     return () => { live = false; };
   }, []);
 
@@ -36,13 +46,11 @@ export default function ArchivePage() {
     <div className="mx-auto max-w-[1000px] px-5 py-8">
       <h1 className="font-display text-4xl font-600 leading-none tracking-[-0.01em]">Archive</h1>
       <p className="mt-3 max-w-[62ch] text-[15px] leading-relaxed text-scribe-2">
-        Runs this deployment no longer answers for. Some were settled on Monad
-        Testnet, before the move to Avalanche Fuji; others were settled on Fuji
-        against a contract that has since been superseded. All of them are real
-        and their operators were really paid &mdash; they are kept out of the
-        feed, the standings and the task pages because a payout is only
-        verifiable against the deployment that made it, and the live contract
-        has never heard of these.
+        Runs this deployment no longer answers for: anything settled on an
+        earlier chain, or against a contract the app has since replaced. They
+        are kept out of the feed, the standings and the task pages because a
+        payout is only verifiable against the deployment that made it, and the
+        live contract has never heard of them.
       </p>
 
       <DimRule className="mt-6" />
@@ -51,6 +59,8 @@ export default function ArchivePage() {
         <ul className="mt-4 flex flex-col gap-2" aria-busy="true">
           {Array.from({ length: 5 }, (_, i) => <li key={i} className="hatch h-8" />)}
         </ul>
+      ) : error ? (
+        <p className="mt-6 text-[14px] text-reject">Could not read the archive: {error}</p>
       ) : list.length === 0 && contracts.length === 0 ? (
         <div className="mt-6 border border-rule px-6 py-16 text-center">
           <p className="text-[15px] text-scribe-2">Nothing archived.</p>
@@ -86,7 +96,7 @@ export default function ArchivePage() {
                   className="grid grid-cols-[1fr_auto] items-center gap-4 border-b border-rule py-3.5 opacity-70 transition-opacity duration-300 hover:opacity-100 sm:grid-cols-[1fr_repeat(3,minmax(64px,auto))_auto]"
                 >
                   {/* To the chain the run is actually on. Sending these to the
-                      operator page would show a Fuji history for a Monad run
+                      operator page would show the live chain's history for a run on an earlier one
                       and imply the two are the same ledger. */}
                   <a
                     href={`${c.explorer}/address/${r.contributor}`}
@@ -136,7 +146,7 @@ export default function ArchivePage() {
               <span className="font-mono text-[15px] tabular-nums">{fmtInt(c.runs.length)}</span>
             </span>
             <a
-              href={`https://testnet.snowtrace.io/address/${c.address}`}
+              href={addressUrl(c.address)}
               target="_blank"
               rel="noreferrer"
               className="font-mono text-[12px] text-scribe-3 hover:text-probe sm:ml-auto"
@@ -163,7 +173,7 @@ export default function ArchivePage() {
                   {r.deviation_mm.toFixed(1)} mm
                 </span>
                 {r.tx_hash ? (
-                  <a href={`https://testnet.snowtrace.io/tx/${r.tx_hash}`} target="_blank" rel="noreferrer"
+                  <a href={txUrl(r.tx_hash)} target="_blank" rel="noreferrer"
                      className="font-mono text-[12px] text-scribe-3 hover:text-probe">
                     {shortHash(r.tx_hash)} &rarr;
                   </a>

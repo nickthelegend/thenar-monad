@@ -1,17 +1,16 @@
 /**
  * Every contract this protocol has deployed, and where in the app it is used.
  *
- * Six of these were deployed, source-verified, and then referenced by no part
- * of the interface at all — including the two most chain-specific things the
- * project has built: a Warp message attesting a policy, signed by Fuji's own
- * validators, and payouts that add up on chain under ElGamal without the chain
- * holding a number. A contract nobody can reach scores nothing and reads as
- * abandoned work, so this list exists to make the whole set reachable and to
- * say plainly which surface uses each one.
+ * Contracts were once deployed, source-verified, and then referenced by no
+ * part of the interface at all. A contract nobody can reach scores nothing and
+ * reads as abandoned work, so this list exists to make the whole set reachable
+ * and to say plainly which surface uses each one.
  *
  * `surface` is the honest answer, not the aspirational one. Where it says
  * "/contracts only", that contract has no other home in the interface yet.
  */
+
+import { DEPLOYMENT } from "./deployment";
 
 export type Deployed = {
   key: string;
@@ -22,27 +21,48 @@ export type Deployed = {
   source: string;
   /** Where a visitor meets it, or "/contracts only" if nowhere else yet. */
   surface: string;
-  /** Set when the contract is a deliberate use of something Avalanche-specific. */
-  avalanche?: string;
+  /** Set when the contract leans on something Monad gives it that a generic chain would not. */
+  monad?: string;
+  /** The chain the contract is on, when it is not the one this app settles on. */
+  chainId?: number;
 };
 
+const C = DEPLOYMENT.contracts;
+const at = (a: string) => a as `0x${string}`;
+
+/**
+ * Every Thenar contract on Monad testnet, read from lib/deployment.ts.
+ *
+ * The ones that hold or move value do it in MON, the chain's native value, so
+ * a bounty, a payout, a pot and a treasury are one currency. Corpus sales to
+ * agents are the exception: they are paid per pull in USDC over x402, and
+ * SalesLog records each one.
+ *
+ * LicenceReceipt, PolicyAnnouncer and PolicyRegistry are not here. They attest
+ * a policy through Avalanche's Warp and Teleporter, which Monad does not have,
+ * and a registry row for a contract whose one function cannot succeed would be
+ * the aspirational answer this list exists to avoid.
+ */
 export const DEPLOYED: Deployed[] = [
   {
     key: "axon",
     name: "AxonProtocolV2",
-    address: "0x909d9318d602Cb4Ba84D2851Ab9BFf60DB7077C0",
+    address: at(C.axon),
     does:
-      "Tasks, escrow, trajectories, policies and cap tables. Records a run and pays for it in one call. " +
+      "Tasks, escrow, trajectories, policies and cap tables. Records a run and pays for it in one call, in MON. " +
       "submitTrajectoryFor is permissionless: anyone may pay the gas for someone else's run, because the " +
       "verifier signature binds the task, the contributor, the hash and the score, so relaying moves who " +
-      "pays and forges nothing. No relayer service is running — the path exists on chain and nothing calls it.",
+      "pays and forges nothing.",
     source: "contracts/src/AxonProtocolV2.sol",
     surface: "/hub, /station, /task, /run, /leaderboard, /portfolio",
+    monad:
+      "Written for parallel execution: each operator's submit writes only its own shard of the slot counter, " +
+      "so two runs on one task do not touch the same storage and settle side by side in one block.",
   },
   {
     key: "certificate",
     name: "TrajectoryCertificate",
-    address: "0x7a060129A3730852A606Bbe985207952AC25c4f6",
+    address: at(C.trajectoryCertificate),
     does: "Soulbound token naming a run's recorder. Conveys no rights over the data.",
     source: "contracts/src/TrajectoryCertificate.sol",
     surface: "/contracts, /run",
@@ -50,65 +70,76 @@ export const DEPLOYED: Deployed[] = [
   {
     key: "contribution",
     name: "ContributionRecord",
-    address: "0xa3b2dd739be34D13ca51a92ADDD0Ce2022E23247",
+    address: at(C.contributionRecord),
     does: "A running total of work recorded, in a shape wallets already read. Cannot be transferred, sold or redeemed.",
     source: "contracts/src/ContributionRecord.sol",
-    surface: "/contracts",
+    surface: "/contracts, /operator, /portfolio",
+  },
+  {
+    key: "shares",
+    name: "CorpusShares",
+    address: at(C.corpusShares),
+    does:
+      "The corpus as shares. Only a World ID-verified human can hold one; each paid run issues its share by score, " +
+      "and dividends from corpus sales pay whoever held at a record date fixed in advance.",
+    source: "contracts/src/CorpusShares.sol",
+    surface: "/corpus-token, /station",
+  },
+  {
+    key: "sales",
+    name: "SalesLog",
+    address: at(C.salesLog),
+    does: "Every corpus sale to an agent, with the sha256 of the bytes served, so a buyer can check its copy on chain.",
+    source: "contracts/src/SalesLog.sol",
+    surface: "/agents, /api/agent/sales",
+    monad:
+      "Kept in storage as well as emitted: Monad's public endpoints answer a log query only a hundred blocks wide, " +
+      "so a log that lived only in events could not be read back.",
   },
   {
     key: "referrals",
     name: "Referrals",
-    address: "0x50414b04e39434Fc66527Fc7c816d835C766AC32",
-    does: "Pays for bringing someone who then does the work, not for signing up.",
+    address: at(C.referrals),
+    does: "Pays MON for bringing someone who then does the work, not for signing up.",
     source: "contracts/src/Referrals.sol",
-    surface: "/contracts",
+    surface: "/portfolio, /contracts",
   },
   {
     key: "prize",
     name: "PrizePool",
-    address: "0x42912F9a437C8EcF2a90Cb18F49D8a54DDe3F84f",
-    does: "A funded pot for one task. Contributors enter themselves and it splits by work the protocol recorded.",
+    address: at(C.prizePool),
+    does: "A funded pot for task 1. Contributors enter themselves and it splits by work the protocol recorded.",
     source: "contracts/src/PrizePool.sol",
     surface: "/contracts",
   },
   {
     key: "foundry",
     name: "Foundry",
-    address: "0xFf4007B14d3bb18a409EF9eF1ac6DD21e601783E",
-    does: "A treasury the protocol's contributors vote to spend on new tasks, weighted by work recorded.",
+    address: at(C.foundry),
+    does: "A MON treasury the protocol's contributors vote to spend on new tasks, weighted by work recorded.",
     source: "contracts/src/Foundry.sol",
-    surface: "/contracts",
+    surface: "/foundry, /contracts",
   },
   {
     key: "confidential",
     name: "ConfidentialPayouts",
-    address: "0x8CD8A9211CE32184a89F9ab9DC26224D08B775c2",
+    address: at(C.confidentialPayouts),
     does: "ElGamal on secp256k1. Earnings add up on chain without the chain holding the number.",
     source: "contracts/src/ConfidentialPayouts.sol",
     surface: "/contracts",
-    avalanche: "Homomorphic addition on chain, the primitive behind Avalanche's encrypted ERC work.",
-  },
-  {
-    key: "licence",
-    name: "LicenceReceipt",
-    address: "0xbA65eC5479C9E131d158Af1947452C989eF7D143",
-    does: "Attests a policy as an Avalanche Warp message, signed by this subnet's validators.",
-    source: "contracts/src/LicenceReceipt.sol",
-    surface: "/contracts, /licence",
-    avalanche: "Warp — validator-signed interchain attestation. There is no equivalent on a generic EVM chain.",
   },
   {
     key: "corpusAccess",
     name: "CorpusAccess",
-    address: "0xD6dE823EE979c4aAD3ba8eDe05f6E363DE65E165",
-    does: "Time-boxed read access to the corpus. Sells time, not rights.",
+    address: at(C.corpusAccess),
+    does: "Time-boxed read access to the corpus, paid in MON by the day. Sells time, not rights.",
     source: "contracts/src/CorpusAccess.sol",
-    surface: "/api/dataset (402 gate)",
+    surface: "/corpus, /api/dataset",
   },
   {
     key: "corpusManifest",
     name: "CorpusManifest",
-    address: "0x318e5faf04c9db5d844aaa93850e71406012dd62",
+    address: at(C.corpusManifest),
     does: "The published shape of the corpus a licence buys.",
     source: "contracts/src/CorpusManifest.sol",
     surface: "/corpus",
@@ -116,25 +147,38 @@ export const DEPLOYED: Deployed[] = [
   {
     key: "passkey",
     name: "PasskeyRegistry",
-    address: "0x82aE3011CE1dE3fce4fCf0F1A683b5d3826BCE9F",
+    address: at(C.passkeyRegistry),
     does: "Binds a secp256r1 public key to an address and verifies signatures through the P-256 precompile at 0x0100.",
     source: "contracts/src/PasskeyRegistry.sol",
     surface: "/passkey",
-    avalanche: "RIP-7212 P-256 precompile, so a passkey's own curve is verified by the chain itself.",
+    monad: "Monad's P-256 precompile (EIP-7951) at 0x0100 checks a browser passkey's signature on chain.",
   },
 ];
 
-/** Superseded, and kept only so its runs stay explicable. */
+/**
+ * The entries that have an address yet. Before the deploy every address is
+ * empty; a page that lists contracts lists these, and a component that reads
+ * one contract finds it in DEPLOYED and waits for its address.
+ */
+export const LIVE_CONTRACTS: Deployed[] = DEPLOYED.filter((d) => /^0x[0-9a-fA-F]{40}$/.test(d.address));
+
+/** Deployments this protocol ran on before, kept so their runs stay explicable. */
 export const SUPERSEDED: Deployed[] = [
   {
-    key: "axon-v1",
-    name: "AxonProtocol v1",
-    address: "0x025dB4A545FDe9d5Ba61a03f2f7776187645F3b3",
-    does:
-      "The first deployment. Its runs are in the archive. It has a pull-payment claim(), " +
-      "but claimable is zero for every address this deployment has ever paid or been funded by — " +
-      "the balance it holds is unfilled task escrow, and refunds only arrived in V2, so it is stuck.",
+    key: "axon-blitz",
+    name: "AxonProtocol v1 on Monad Testnet",
+    address: "0x89384f46e430F37DB61Afb98810eba995C0d6Ed4",
+    does: "The Monad Blitz Hyderabad deployment. Its runs are real, paid in MON, and verifiable on Monadscan.",
     source: "contracts/src/AxonProtocol.sol",
+    surface: "/archive",
+  },
+  {
+    key: "axon-fuji",
+    chainId: 43113,
+    name: "AxonProtocolV2 on Avalanche Fuji",
+    address: "0x909d9318d602Cb4Ba84D2851Ab9BFf60DB7077C0",
+    does: "Where the product was built out between Blitz and the move back. Its runs are real, paid in AVAX, and verifiable on Snowtrace.",
+    source: "contracts/src/AxonProtocolV2.sol",
     surface: "/archive",
   },
 ];

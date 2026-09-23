@@ -5,25 +5,36 @@
  * it holds, and that the readings beside it are live. This confirms each of
  * those independently: the address is called directly, and the figure the page
  * printed has to match what the node returns.
+ *
+ *   node --import ./test/register.mjs scripts/qa-contracts.mjs [base]
+ *
+ * Ported from Fuji to Monad. The registry is imported rather than scraped: it
+ * used to hold literal addresses a regex could lift out of the source, and now
+ * reads them from lib/deployment.ts, so importing it is the only way to see the
+ * addresses the page sees.
  */
 import { chromium } from "playwright";
-import { createPublicClient, http, formatEther } from "viem";
-import { readFileSync } from "node:fs";
+import { createPublicClient, formatEther } from "viem";
+import { DEPLOYED } from "../lib/registry.ts";
+import { DEPLOYMENT } from "../lib/deployment.ts";
+import { monadTestnet, transport } from "./monad.mjs";
 
 const BASE = process.argv[2] ?? "https://thenar.io";
-const chain = { id: 43113, name: "Fuji", nativeCurrency: { name: "AVAX", symbol: "AVAX", decimals: 18 },
-  rpcUrls: { default: { http: ["https://api.avax-test.network/ext/bc/C/rpc"] } } };
-const node = createPublicClient({ chain, transport: http() });
+const node = createPublicClient({ chain: monadTestnet, transport: transport() });
+const SYMBOL = monadTestnet.nativeCurrency.symbol;
 
 // Addresses come from the registry the app itself ships, not from a copy here.
-const src = readFileSync("lib/registry.ts", "utf8");
-const entries = [...src.matchAll(/name:\s*"([^"]+)",\s*\n\s*address:\s*"(0x[0-9a-fA-F]{40})"/g)]
-  .map((m) => ({ name: m[1], address: m[2] }));
+const entries = DEPLOYED.map((d) => ({ name: d.name, address: d.address, monad: d.monad }));
 
 let pass = 0, total = 0;
 const check = (id, ok, detail) => { total++; if (ok) pass++; console.log(`${ok ? "PASS" : "FAIL"}  ${id.padEnd(5)} ${detail}`); };
 
-check("F1", entries.length >= 12, `registry parses ${entries.length} contracts`);
+// The registry drops any contract without an address, so a partial deploy
+// would shrink the list silently. It has to list every contract the deployment
+// record says was created, and at least one.
+const written = Object.values(DEPLOYMENT.contracts).filter(Boolean).length;
+check("F1", entries.length > 0 && entries.length === written,
+  `registry lists ${entries.length} contracts, deployment record has ${written}`);
 
 // F2 — every address in the registry has code on chain.
 const noCode = [];
@@ -49,14 +60,21 @@ check("F4", absent.length === 0, `every registry address rendered${absent.length
 
 // F5 — the balance the page prints for the protocol contract matches the node.
 const axon = entries.find((e) => /AxonProtocolV2/.test(e.name));
-const bal = await node.getBalance({ address: axon.address });
-check("F5", text.includes(formatEther(bal)), `escrow on page matches node: ${formatEther(bal)} AVAX`);
+const bal = axon ? await node.getBalance({ address: axon.address }) : 0n;
+check("F5", Boolean(axon) && text.includes(`${formatEther(bal)} ${SYMBOL}`),
+  `escrow on page matches node: ${formatEther(bal)} ${SYMBOL}`);
 
 // F6 — nothing on the page failed to read.
 check("F6", !/unreadable/.test(text), `no unreadable readings`);
 
-// F7 — the two Avalanche-specific contracts are named as such.
-check("F7", /Warp/.test(text) && /ElGamal/.test(text), `Warp and ElGamal both surfaced`);
+// F7 — what each contract leans on Monad for is said beside it. This was the
+// Avalanche check (Warp and ElGamal named); on Monad the registry carries the
+// claim per contract, so each one is looked for on the page, whitespace and
+// all collapsed the way the page text is.
+const monadNotes = entries.filter((e) => e.monad);
+const unsaid = monadNotes.filter((e) => !text.includes(e.monad.replace(/\s+/g, " ")));
+check("F7", monadNotes.length > 0 && unsaid.length === 0,
+  `${monadNotes.length} Monad-specific notes surfaced${unsaid.length ? ` — missing for: ${unsaid.map((e) => e.name).join(", ")}` : ""}`);
 
 // F8 — console and network clean, same bar as every other page.
 check("F8", errs.length === 0 && net.length === 0, `console ${errs.length}, network ${net.length}`);
