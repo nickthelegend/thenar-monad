@@ -1011,7 +1011,11 @@ function Rig({
     }
   });
 
-  const shoulderY = 0.192;
+  // Where the callouts pin to: each arm's own shoulder and base, in metres.
+  // The SO-101's shoulder axis is its CAD's shoulder datum, 62 mm up plus the
+  // upper-arm datum; the THENAR-6's is its J2 height.
+  const shoulderY = arm === "so101" ? 0.117 : 0.192;
+  const baseY = arm === "so101" ? 0.05 : 0.06;
 
   return (
     <>
@@ -1105,7 +1109,7 @@ function Rig({
             value={`${((jointsView.j2 * 180) / Math.PI).toFixed(1)}°`}
           />
           <JointCallout
-            position={[0, 0.06, 0]}
+            position={[0, baseY, 0]}
             label="J1"
             value={`${((jointsView.j1 * 180) / Math.PI).toFixed(1)}°`}
           />

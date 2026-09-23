@@ -73,7 +73,7 @@ export default function PostTaskPage() {
    * contributor can build on their own desk — which is what makes a scanned
    * task something they can do for real, on the table that was scanned.
    */
-  const [arm, setArm] = useState<ArmKind>("thenar6");
+  const [arm, setArm] = useState<ArmKind>("so101");
   const onScene = (r: ScanResult | null) => {
     setScan(r);
     if (!r) return;
@@ -183,7 +183,7 @@ export default function PostTaskPage() {
         <div className="flex flex-col gap-1.5">
           <span className="label">Arm</span>
           <div role="radiogroup" aria-label="Arm" className="grid gap-2 sm:grid-cols-2">
-            {(["thenar6", "so101"] as const).map((k) => (
+            {(["so101", "thenar6"] as const).map((k) => (
               <button
                 key={k}
                 type="button"

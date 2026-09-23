@@ -53,6 +53,13 @@ test("the arm travels in the name too, beside the scan, and either can be absent
   assert.equal(armOf(n), "so101");
   assert.equal(instructionOf(n), "Put the glass on the plate");
   assert.deepEqual(parseScan(n), { pick: [0.199, 0.035], place: [0.309, -0.052] });
-  assert.equal(armOf("Put the pen on the closed laptop"), "thenar6");
-  assert.equal(formatName(n, { arm: "thenar6" }), "Put the glass on the plate");
+  assert.equal(formatName(n, { arm: "thenar6" }), "Put the glass on the plate [arm thenar6]");
+  assert.equal(armOf(formatName(n, { arm: "thenar6" })), "thenar6");
+});
+
+test("an untagged task runs on the SO-101, unless it needs two arms", async () => {
+  const { armOf } = await import("../lib/scan.ts");
+  assert.equal(armOf("Put the pen on the closed laptop"), "so101");
+  assert.equal(armOf("Steady the crate with both arms and place the battery inside"), "thenar6");
+  assert.equal(armOf("Steady the crate with both arms [arm so101]"), "so101", "a tag always wins");
 });

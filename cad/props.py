@@ -359,8 +359,20 @@ PROPS = {
 
 def main() -> None:
     os.makedirs(OUT, exist_ok=True)
+    # Props replaced by real photoscans (scripts/real-props.mjs) keep their
+    # model and their entry: regenerating the procedural set must not quietly
+    # put the grey stand-ins back.
+    try:
+        with open(os.path.join(OUT, "index.json")) as f:
+            real = [p for p in json.load(f)["props"] if "source" in p]
+    except FileNotFoundError:
+        real = []
+    real_ids = {p["id"] for p in real}
     index = []
     for pid, (fn, label, scenario, role, width) in PROPS.items():
+        if pid in real_ids:
+            index.append(next(p for p in real if p["id"] == pid))
+            continue
         root = Node("root")
         root.add(fn())
         path = os.path.join(OUT, f"{pid}.glb")
@@ -370,6 +382,7 @@ def main() -> None:
                       "url": f"/props/{pid}.glb",
                       "bytes": os.path.getsize(path)})
         print(f"  {pid:12} {label:12} {role:8} {os.path.getsize(path):>7} B")
+    index += [p for p in real if p["id"] not in PROPS]
     with open(os.path.join(OUT, "index.json"), "w") as f:
         json.dump({"props": index}, f, indent=2)
     print(f"\n{len(index)} props -> public/props/")

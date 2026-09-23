@@ -82,8 +82,8 @@ export function sampleColour(canvas: HTMLCanvasElement, b: { x: number; y: numbe
  */
 const COCO_TO_PROP: Record<string, string> = {
   cup: "cup", "wine glass": "cup", bottle: "bottle", bowl: "bowl", spoon: "spoon", fork: "spoon", knife: "spoon",
-  banana: "banana", apple: "apricot", orange: "apricot", book: "book", "cell phone": "phone", remote: "phone",
-  "sports ball": "ball", scissors: "screwdriver", toothbrush: "toothpaste", laptop: "laptop", sink: "sink",
+  banana: "banana", apple: "apple", orange: "lemon", book: "book", "cell phone": "phone", remote: "phone",
+  "sports ball": "ball", scissors: "pliers", toothbrush: "toothpaste", laptop: "laptop", sink: "sink",
   keyboard: "tray", "teddy bear": "block", clock: "plate", vase: "pen_cup",
 };
 export const propFor = (label: string): string | null => COCO_TO_PROP[label.toLowerCase()] ?? null;

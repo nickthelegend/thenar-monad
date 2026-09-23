@@ -15,6 +15,7 @@
  * table millimetres, exactly, for anything standing on the table plane.
  */
 import { REACH_MAX, REACH_MIN } from "./kinematics";
+import { armsForTask } from "./skills";
 
 export type ScannedScene = {
   /** Where the object to move starts, metres, arm frame. */
@@ -24,16 +25,23 @@ export type ScannedScene = {
 };
 
 const TAG = /\[scan (-?\d{1,4}),(-?\d{1,4}) > (-?\d{1,4}),(-?\d{1,4})\]/;
-const ARM_TAG = /\[arm (so101)\]/;
+const ARM_TAG = /\[arm (so101|thenar6)\]/;
 const ANY_TAG = /\s*\[(?:scan|arm) [^\]]*\]/g;
 
 /**
- * Which arm a task is for. THENAR-6 unless the name asks for the SO-101
- * ("[arm so101]"): the MG996R-built arm a contributor can own and put on
- * their own bench. Read from the name for the same reason the scan is.
+ * Which arm a task is for, read from the name for the same reason the scan is.
+ *
+ * The SO-101 — the MG996R-built arm the team has on its own bench, and one a
+ * contributor can own — unless the name says "[arm thenar6]", or the task
+ * needs two arms: a pair of SO-101s is not a bench this station models, so a
+ * two-arm task stays on the THENAR-6 pair it was written for.
  */
 export type ArmKind = "thenar6" | "so101";
-export const armOf = (name: string): ArmKind => (ARM_TAG.test(name) ? "so101" : "thenar6");
+export function armOf(name: string): ArmKind {
+  const tag = ARM_TAG.exec(name)?.[1] as ArmKind | undefined;
+  if (tag) return tag;
+  return armsForTask(instructionOf(name)) > 1 ? "thenar6" : "so101";
+}
 export const ARM_LABEL: Record<ArmKind, string> = { thenar6: "THENAR-6", so101: "SO-101 · MG996R" };
 
 /** The scene a task's name carries, or null for a task that was not scanned. */
@@ -48,18 +56,22 @@ export function parseScan(name: string): ScannedScene | null {
 /** The instruction without its measurement, for surfaces that show a sentence. */
 export const instructionOf = (name: string) => name.replace(ANY_TAG, "").trim();
 
-/** A task's name as it goes on chain: the instruction, then its arm, then its scan. */
+/** A task's name as it goes on chain: the instruction, then its arm, then its
+ *  scan. The arm is always written when one was chosen, so what a task is for
+ *  never depends on a default that could change. */
 export function formatName(instruction: string, opts: { arm?: ArmKind; scan?: ScannedScene | null } = {}): string {
   const mm = (v: number) => Math.round(v * 1000);
   const s = opts.scan;
   return [
     instructionOf(instruction),
-    opts.arm === "so101" ? "[arm so101]" : "",
+    opts.arm ? `[arm ${opts.arm}]` : "",
     s ? `[scan ${mm(s.pick[0])},${mm(s.pick[1])} > ${mm(s.place[0])},${mm(s.place[1])}]` : "",
   ].filter(Boolean).join(" ");
 }
 
-export const formatScan = (instruction: string, s: ScannedScene) => formatName(instruction, { arm: armOf(instruction), scan: s });
+/** Add a scan to a name, keeping an arm tag it already had (and adding none). */
+export const formatScan = (instruction: string, s: ScannedScene) =>
+  formatName(instruction, { arm: ARM_TAG.exec(instruction)?.[1] as ArmKind | undefined, scan: s });
 
 /** Why a scanned scene cannot be a task, or null when it can. */
 export function checkScan(s: ScannedScene): string | null {

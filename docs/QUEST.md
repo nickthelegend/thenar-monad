@@ -69,9 +69,10 @@ The measured positions go into the task's name on chain:
 
 ## The SO-101 (MG996R) as a second arm
 
-A task can be for the open SO-101, built with MG996R servos, as well as the
-station's THENAR-6. Choose **Arm** on `/post`. The name goes on chain with an
-`[arm so101]` tag, beside any scan:
+The SO-101, built with MG996R servos, is the default arm: every single-arm
+task runs on it. A name tagged `[arm thenar6]`, or a task that needs two arms,
+runs on the THENAR-6. `/post` writes the tag either way, so a task's arm never
+depends on the default. The tag sits next to any scan tag:
 
 `Put the glass on the plate [arm so101] [scan 199,35 > 309,-52]`
 
@@ -113,3 +114,14 @@ It sends STOP when the page stops streaming. `test/arm-relay.test.mjs` checks
 all of this against a pseudo-terminal that answers like the firmware
 (`test/fake-follower.py`). `test/live-so101.mjs` drives `/spec/so101` in a real
 browser through the relay.
+
+## Real props
+
+Seventeen props are photoscans from [Poly Haven](https://polyhaven.com), all
+CC0. Their entries in `public/props/index.json` carry a `source` field;
+`cad/props.py` leaves those alone when it regenerates the procedural set.
+`scripts/real-props.mjs` converts a scan into the props' convention: metres,
+Z up, standing on z = 0, centred on its footprint, with 512 px JPEG textures.
+The previews on `/post` and `/inventory` are stills drawn by one shared
+offscreen renderer (`components/model-stage.tsx`), so the library can grow
+without running into the browser's WebGL context limit.

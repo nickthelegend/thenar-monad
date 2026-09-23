@@ -63,6 +63,10 @@ const nextConfig: NextConfig = {
        * against each other.
        */
       "connect-src 'self' " +
+        // A GLB's embedded textures are handed to the image decoder as blob:
+        // URLs that GLTFLoader fetches. Same-document only, and without it
+        // every textured model on the site loads grey or not at all.
+        "blob: " +
         // Monad testnet, in the same order as RPC_ENDPOINTS in lib/chain.ts,
         // with the canonical host first. A host missing from this line is a
         // host the browser refuses, and the failover that was meant to survive
