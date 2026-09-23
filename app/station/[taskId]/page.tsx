@@ -16,13 +16,15 @@ import { SKILL_LABEL } from "@/lib/skills";
 import { useRunsOnTask, useSubmitCost } from "@/lib/hooks";
 import { useTaskCatalogue, useCatalogueTask } from "@/components/tasks-provider";
 import { useSubmitRun } from "@/lib/submit";
+import { HumanGate } from "@/components/human-gate";
+import { SHARES_SYMBOL } from "@/lib/corpus-shares";
 import { ACCEPT_FLOOR, evaluate, GRIP_CLOSED_MM, ORDER_PENALTY, TOLERANCE_MM } from "@/lib/score";
 import { shortfalls, belowFloorBy, wouldHavePaid, wouldHavePaidSentence } from "@/lib/shortfall";
 import { saveDraft, loadDraft, clearDraft } from "@/lib/run-draft";
 import { webglAvailable } from "@/lib/webgl";
 import { readTally, noteMeasured, notePaid, meanScore, minutes, type Tally } from "@/lib/session-tally";
 import { soundOn, setSound } from "@/lib/click";
-import { txUrl, CURRENCY, FAUCET_URL } from "@/lib/chain";
+import { txUrl, CURRENCY, FAUCET_URL, LOW_GAS_BALANCE, appChain } from "@/lib/chain";
 import { sceneForTask } from "@/lib/props";
 import { cn } from "@/lib/cn";
 import { fmtGasCost, fmtMon, fmtScore, fmtSeconds, shortHash } from "@/lib/format";
@@ -239,8 +241,13 @@ export default function StationPage() {
 
   // A measured run is real work that has not been paid yet, and the wallet
   // prompt between here and the chain is where runs were being lost.
+  //
+  // Not a practice run. A run the policy drove, or one the operator chose to
+  // practise, was saved like any other and offered back after a reload as "an
+  // unsent run" — where, with the practice switch now off, it could be picked
+  // up and submitted as the operator's own demonstration.
   useEffect(() => {
-    if (phase !== "measured" || !verdict || !task) return;
+    if (phase !== "measured" || !verdict || !task || policyOn || chosePractice) return;
     saveDraft({
       taskId: task.id,
       samples: samples.current,
@@ -248,7 +255,7 @@ export default function StationPage() {
       durationSeconds: verdict.raw.seconds,
       at: Date.now(),
     });
-  }, [phase, verdict, task]);
+  }, [phase, verdict, task, policyOn, chosePractice]);
 
   // Once the chain has it, the draft is not an unsent run any more.
   useEffect(() => {
@@ -459,10 +466,11 @@ export default function StationPage() {
   // Practice is forced when there is nothing to pay for, and chosen when a
   // first-time operator would rather not spend a slot learning the controls.
   const practice = !task.open || capped || chosePractice || policyOn;
-  // Measured on this chain: a submit reserves roughly 0.03 AVAX against the gas
-  // limit regardless of what it spends, and the chain rejects the transaction
-  // outright below that. Warn before the wallet does.
-  const RESERVE_FLOOR = 0.05;
+  // Monad charges a submit its whole gas limit at the offered fee, whatever it
+  // spends, and rejects the transaction outright when the balance cannot cover
+  // that. The floor is LOW_GAS_BALANCE, the same one every banner uses, so the
+  // station and the header cannot disagree about the same wallet.
+  const RESERVE_FLOOR = LOW_GAS_BALANCE;
   const thinOnGas = s.connected && !s.wrongNetwork && s.balance < RESERVE_FLOOR;
 
   return (
@@ -559,10 +567,12 @@ export default function StationPage() {
             </button>
             {policyOn ? (
               <p className="mt-1.5 text-[12px] leading-relaxed text-scribe-3">
-                3,076 parameters, trained on 220 scripted demonstrations &mdash; not on
-                this corpus, which is not yet coherent enough to learn from. It
-                grasps from every start tested and reaches the datum; it releases
-                in five of eight. Nothing it does is submitted.
+                3,076 parameters, trained on 220 scripted demonstrations of a single
+                object &mdash; not on this corpus, which is not yet coherent enough to
+                learn from. On that scene it grasps from every start tested and
+                reaches the datum, and releases in five of eight. It has learned
+                nothing else: on a task with other objects, or two of them, it can
+                hover without ever grasping. Nothing it does is submitted.
               </p>
             ) : null}
             <dl className="flex flex-col gap-1.5">
@@ -593,7 +603,7 @@ export default function StationPage() {
           <Section title="Settlement">
             <p className="text-[13px] leading-relaxed text-scribe-2">
               One transaction records the trajectory hash, its task, your address
-              and the verified score — and transfers the AVAX. There is no separate
+              and the verified score — and transfers the {CURRENCY}. There is no separate
               signing step.
             </p>
           </Section>
@@ -633,7 +643,11 @@ export default function StationPage() {
               {/* Without this the operator is hunting for the payload blind:
                   the capture volume is invisible, so nothing says whether
                   closing the jaws will do anything. */}
-              {!tel.held ? (
+              {/* The key hints are for a person driving. While the policy has
+                  the arm they told the viewer to press keys that do nothing. */}
+              {policyOn ? (
+                <span className="text-probe">POLICY DRIVING — NOTHING TO PRESS</span>
+              ) : !tel.held ? (
                 tel.inRange ? (
                   <span className="text-go">IN RANGE — PRESS SPACE</span>
                 ) : tel.overPayload ? (
@@ -698,10 +712,12 @@ export default function StationPage() {
             </button>
             {policyOn ? (
               <p className="mt-1.5 text-[12px] leading-relaxed text-scribe-3">
-                3,076 parameters, trained on 220 scripted demonstrations &mdash; not on
-                this corpus, which is not yet coherent enough to learn from. It
-                grasps from every start tested and reaches the datum; it releases
-                in five of eight. Nothing it does is submitted.
+                3,076 parameters, trained on 220 scripted demonstrations of a single
+                object &mdash; not on this corpus, which is not yet coherent enough to
+                learn from. On that scene it grasps from every start tested and
+                reaches the datum, and releases in five of eight. It has learned
+                nothing else: on a task with other objects, or two of them, it can
+                hover without ever grasping. Nothing it does is submitted.
               </p>
             ) : null}
             <dl className="flex flex-col gap-1.5">
@@ -726,9 +742,15 @@ export default function StationPage() {
           ) : null}
 
           {phase === "brief" ? (
-            <div className="absolute inset-0 flex items-center justify-center bg-ink-0/78 px-6">
+            // Auto margins rather than items-center: on a phone the brief is taller
+            // than the workspace, and a centred child overflows upward under the
+            // header where it cannot be scrolled to. This centres while it fits
+            // and scrolls from the top when it does not.
+            <div className="absolute inset-0 flex flex-col items-center overflow-y-auto bg-ink-0/78 px-6 py-6">
               {recovered ? (
-                <div className="mb-4 border border-signal bg-signal-dim px-4 py-3 text-left">
+                // Stacked above the brief. Side by side in a row they overlapped
+                // it on anything narrower than a desktop.
+                <div className="mt-auto mb-4 max-w-sm border border-signal bg-signal-dim px-4 py-3 text-left">
                   <p className="font-mono text-[12px] uppercase tracking-[0.14em] text-signal">
                     An unsent run is waiting
                   </p>
@@ -759,7 +781,7 @@ export default function StationPage() {
                   </div>
                 </div>
               ) : null}
-              <div className="max-w-sm text-center">
+              <div className={cn("max-w-sm text-center", recovered ? "mb-auto" : "my-auto")}>
                 <h2 className="font-display text-2xl font-600">Ready to record</h2>
                 <p className="mt-2 text-[14px] leading-relaxed text-scribe-2">
                   The timer starts on your first frame. Pick the payload up, bring
@@ -772,9 +794,15 @@ export default function StationPage() {
                       Practice run
                     </p>
                     <p className="mt-1 text-[13px] leading-relaxed text-scribe-3">
+                      {/* Every practice run used to be explained as a used-up
+                          quota, including one the policy drives from 0 / 5. */}
                       {!task.open
                         ? "This task has no slots left, so nothing here will be paid."
-                        : "You have used all 5 of your runs on this task, so the chain will not pay another."}
+                        : capped
+                          ? "You have used all 5 of your runs on this task, so the chain will not pay another."
+                          : policyOn
+                            ? "The policy is driving, and a run it drives is not yours to be paid for."
+                            : "You chose to practise, so nothing here will be paid or submitted."}
                       {" "}
                       The scene, the controls and the measurement are exactly the
                       same &mdash; you just will not be asked to sign at the end.
@@ -798,6 +826,17 @@ export default function StationPage() {
                       </li>
                     ))}
                   </ol>
+                ) : null}
+
+                {/* Asked before the run, not after it: a paid run needs a live
+                    human behind the address, and finding that out once the arm
+                    has already placed the payload wastes the operator's run. */}
+                {/* On any chain: the check is a message signature and a phone
+                    scan, and a wallet that cannot add Monad must still reach it. */}
+                {!practice && s.connected ? (
+                  <div className="mt-6">
+                    <HumanGate />
+                  </div>
                 ) : null}
 
                 <Button variant="primary" className="mt-6" onClick={start}>
@@ -962,7 +1001,7 @@ function MeasurementSnap({
   /** The chain will not pay this one, and said so before it started. */
   practice: boolean;
   passkey?: { on: boolean; set: (v: boolean) => void };
-  /** This task's rate, so a lost point can be priced in AVAX. */
+  /** This task's rate, so a lost point can be priced. */
   rewardMon: number;
   /** Par for this task, so a rejected run can be told what time would have paid. */
   parSeconds: number;
@@ -982,7 +1021,7 @@ function MeasurementSnap({
     : tx.phase === "signing" ? "Confirm in your wallet…"
     : tx.phase === "pending" ? "Waiting for the block…"
     : practice ? "Practice run — nothing to submit"
-    : s.wrongNetwork ? "Switch to Avalanche Fuji"
+    : s.wrongNetwork ? `Switch to ${appChain.name}`
     : !s.connected ? "Connect a wallet to get paid"
     : "Submit and get paid";
 
@@ -1127,10 +1166,41 @@ function MeasurementSnap({
             </p>
           ) : null}
 
+          {/* The payout is the protocol's; the run's share of the corpus is issued
+              by CorpusShares from the same record call, and it can fail on its own. Said
+              either way, so a missing share is never mistaken for a pending one. */}
+          {done && (tx.sharesPending || tx.shares) ? (
+            <div className="flex flex-col gap-1 border-t border-rule pt-3 font-mono text-[12px] text-scribe-3">
+              {tx.sharesPending ? (
+                <span>Issuing this run&rsquo;s share of the corpus&hellip;</span>
+              ) : tx.shares?.issued ? (
+                <span>
+                  {tx.shares.units ? `${tx.shares.units} ${SHARES_SYMBOL}` : "Corpus shares"} issued on Monad ·{" "}
+                  <a
+                    href={txUrl(tx.shares.tx)}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-probe hover:underline"
+                  >
+                    {shortHash(tx.shares.tx)}
+                  </a>
+                </span>
+              ) : tx.shares ? (
+                <span>No corpus shares for this run: {tx.shares.reason}</span>
+              ) : null}
+            </div>
+          ) : null}
+
           {tx.phase === "error" && tx.error ? (
             <p role="alert" className="border border-reject bg-reject-dim px-3 py-2 text-[13px] text-reject">
               {tx.error}
             </p>
+          ) : null}
+
+          {/* Before the first submit rather than after a refusal: a verified
+              operator sees a one-line badge, anyone else the Selfie Check. */}
+          {accepted && !done && !practice && s.connected && !s.wrongNetwork ? (
+            <HumanGate onVerified={tx.reset} />
           ) : null}
         </div>
 
