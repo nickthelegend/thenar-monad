@@ -1,5 +1,23 @@
 [
   {
+    "hash": "9521c85",
+    "date": "2026-09-24T00:29:36+05:30",
+    "subject": "Refuse to sign runs whose arm did not move the payload",
+    "body": "A scripted recording could leave the joints at zero while gliding the\npayload onto the goal. It scored 100.00 and would have been paid in full.\nThe coherence check that caught it only ran at export time.\n\nThe signer now checks physicality before scoring:\n- Every frame where a payload moves across the table must have a closed\n  tool of some arm in the scene on it. The tool comes from that arm's own\n  forward kinematics (THENAR-6, the second THENAR-6, or the SO-101).\n- The payloads must begin where the task puts them. The start is read\n  from the task on chain, and a scanned task's start is used when it has\n  one.\n\nA recording driven in the station passes by construction. A real run\nrecorded through the headset emulator passes; the scripted one is refused\nwith 422.\n\nThe signer also checks the human itself now. /api/sign refuses any\ncontributor that is not on the CorpusShares whitelist, which only a World\nID Selfie Check can put them on. Before this, anyone who could reach the\nsigner directly skipped the check that /api/verify makes.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+  },
+  {
+    "hash": "b295e7b",
+    "date": "2026-09-23T17:51:35+05:30",
+    "subject": "Add a short demo: ten beats, plain captions, one real transaction",
+    "body": "demo/v2 records the full walkthrough in 25 beats. demo/simple is the\nversion a first-time viewer can follow in under a minute and a half:\nwhat Thenar is, the live hub, a practice drive at the station, a lab\nfunding a task from its Privy wallet (a real bounty, confirmed from its\nMonad receipt before the narration says so), Privy refusing any other\nspend, agents buying data, the share whitelist refusing an unverified\naddress, and the twelve verified contracts.\n\nCaptions are drawn in the page, so they are in the recorded frames;\nmake.mjs trims silent waits to the last 2.5 seconds before the next line\nand lays each Kokoro line at its mark.\n\nThe station beat is a keyboard practice drive, not the built-in policy.\nprobe-policy.mjs ran the policy on tasks 0, 1, 2 and 4: it barely moves\nand never grasps on those scenes, as the station itself warns, and a demo\nof it failing, or of a success it did not earn, says the wrong thing.\n\n  python3 demo/simple/tts.py\n  BASE=http://localhost:3333 node demo/simple/driver.mjs\n  node demo/simple/make.mjs\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+  },
+  {
+    "hash": "eee3a36",
+    "date": "2026-09-23T17:02:40+05:30",
+    "subject": "Regenerate the changelog from git",
+    "body": "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+  },
+  {
     "hash": "057162f",
     "date": "2026-09-23T16:46:19+05:30",
     "subject": "Add the SO-101 (MG996R) as a second arm, and mirror it onto a real one",
@@ -340,23 +358,5 @@
     "date": "2026-09-05T18:16:22+05:30",
     "subject": "feat(deploy): live on Railway with a persistent trajectory store",
     "body": "https://web-production-2d1d0.up.railway.app\n\nAll five health checks pass in production and the end-to-end proof runs green\nagainst the deployed app, not just localhost — a real transaction settled in\n747 ms with the escrow and the operator's balance both moving by exactly the\npayout.\n\nThe trajectory store sits on a mounted volume, so runs survive a redeploy.\nbetter-sqlite3 needed naming under pnpm.onlyBuiltDependencies for its native\nbinding to build, and the port had to be pinned since Railway injects its own.\n\nAlso surfaces Monad's reserve rule where an operator will actually hit it: the\nstation warns below the floor before the wallet can, and the wallet's own\nwording for it ('Signer had insufficient balance') is translated into something\nan operator can act on.\n\nCo-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
-  },
-  {
-    "hash": "042b6ae",
-    "date": "2026-09-05T17:41:35+05:30",
-    "subject": "chore: production build config for Railway",
-    "body": "better-sqlite3 is a native module and pnpm 10 will not run its install script\nunless the package is named, so it is listed under pnpm.onlyBuiltDependencies\nand marked external to the server bundle.\n\nCo-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
-  },
-  {
-    "hash": "9486b65",
-    "date": "2026-09-05T17:06:49+05:30",
-    "subject": "test: exercise the whole task lifecycle on chain",
-    "body": "createTask -> fill every slot -> mintPolicy -> licensePolicy, asserting the\ncap table sums to 100% and that a licence pays the contributor exactly its\nshare plus, here, the protocol fee, since this deployment's treasury is the\nsame address.\n\nTwo Monad behaviours cost real debugging time and are now handled explicitly:\n\n- The reserve check is far stricter than value + gas. The same licence call\n  reverted with \"Signer had insufficient balance\" at 0.3 MON and settled at 2.\n- Consensus and execution are pipelined, so a receipt means a transaction was\n  ordered, not that its state change has landed. A freshly funded account still\n  failed the next transaction until the script waited for the balance to\n  actually appear.\n\nOn chain now: 15 tasks, 18 trajectories, 7 policies minted, 2 licences sold.\n\nCo-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
-  },
-  {
-    "hash": "a43bd43",
-    "date": "2026-09-05T16:32:03+05:30",
-    "subject": "fix(station): the run measured itself before the operator had moved",
-    "body": "The settle detector was true from the first frame: the payload starts at rest\nand ungrasped, so 700 ms into every run it measured the payload at its starting\nposition and returned OUT OF TOLERANCE / 0.00. Driving the arm correctly made\nno difference — the verdict was already in. The headless end-to-end test never\ncaught it because it constructs samples directly and never touches the UI.\n\nA run can now only be measured once the payload has actually been picked up and\nlet go, and an operator who cannot finish has an End run escape instead of\nbeing stuck.\n\nAlso recalibrates the smoothness term. The jerk reference was 3.0, taken from a\nsynthetic path; real runs driven through the station measure 25.9 m/s^3 when\ndriven carefully and 51.3 when snatched, so the term scored zero for everybody\nand a quarter of the score was dead weight. The band is now 18..60 from those\nmeasurements, and check-loop asserts both endpoints stay inside it.\n\nThe score breakdown now shows the raw measurement beside each percentage —\ndeviation in mm, jerk in m/s^3, elapsed against par — which is the product's\nown rule and what made the miscalibration visible in the first place.\n\nCo-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
   }
 ]
