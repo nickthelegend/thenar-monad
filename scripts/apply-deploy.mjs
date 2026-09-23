@@ -3,16 +3,33 @@
  *
  *   node scripts/apply-deploy.mjs
  *
- * Reads contracts/broadcast/DeployMonad.s.sol/10143/run-latest.json, which
- * forge writes only after the transactions it lists were mined, and takes each
- * address from the CREATE that made it. Nothing is typed in by hand, so an
- * address in the app is an address a transaction created — the registry was
- * wrong once when it was copied from a terminal, and that is the guard.
+ * Reads the newest record under contracts/broadcast/DeployMonad.s.sol/10143
+ * whose every transaction has a successful receipt, and takes each address
+ * from the CREATE that made it. Nothing is typed in by hand, so an address in
+ * the app is an address a transaction created — the registry was wrong once
+ * when it was copied from a terminal, and that is the guard.
+ *
+ * Not run-latest.json. On Monad, forge wrote a second record a minute after a
+ * confirmed broadcast, simulated against an endpoint that had not caught up:
+ * nonces five behind, predicted addresses that hold other contracts, and no
+ * hashes or receipts at all — and it overwrote run-latest with it.
  */
-import { readFileSync, writeFileSync } from "node:fs";
+import { readdirSync, readFileSync, writeFileSync } from "node:fs";
+import { getAddress } from "viem";
 
-const RUN = "contracts/broadcast/DeployMonad.s.sol/10143/run-latest.json";
-const run = JSON.parse(readFileSync(RUN, "utf8"));
+const DIR = "contracts/broadcast/DeployMonad.s.sol/10143";
+const confirmed = (r) =>
+  r.transactions.length > 0 &&
+  r.receipts.length === r.transactions.length &&
+  r.transactions.every((t) => t.hash && r.receipts.some((x) => x.transactionHash === t.hash && x.status === "0x1"));
+const records = readdirSync(DIR)
+  .filter((f) => /^run-\d+\.json$/.test(f))
+  .map((f) => ({ f, r: JSON.parse(readFileSync(`${DIR}/${f}`, "utf8")) }))
+  .filter(({ r }) => confirmed(r))
+  .sort((a, b) => b.r.timestamp - a.r.timestamp);
+if (!records.length) throw new Error(`no fully confirmed broadcast in ${DIR}`);
+const RUN = `${DIR}/${records[0].f}`;
+const run = records[0].r;
 
 const KEYS = {
   PasskeyRegistry: "passkeyRegistry",
@@ -33,7 +50,7 @@ const contracts = Object.fromEntries(Object.values(KEYS).map((k) => [k, ""]));
 let axonHash = null;
 for (const t of run.transactions) {
   if (t.transactionType !== "CREATE" || !KEYS[t.contractName]) continue;
-  contracts[KEYS[t.contractName]] = t.contractAddress;
+  contracts[KEYS[t.contractName]] = getAddress(t.contractAddress);
   if (t.contractName === "AxonProtocolV2") axonHash = t.hash;
 }
 
@@ -46,8 +63,8 @@ if (receipt.status !== "0x1") throw new Error("the AxonProtocolV2 CREATE reverte
 const deployBlock = Number(BigInt(receipt.blockNumber));
 
 const axonCreate = run.transactions.find((t) => t.hash === axonHash);
-const deployer = axonCreate.transaction.from;
-const verifier = axonCreate.arguments?.[0] ?? "";
+const deployer = getAddress(axonCreate.transaction.from);
+const verifier = axonCreate.arguments?.[0] ? getAddress(axonCreate.arguments[0]) : "";
 const deployedAt = new Date(Number(run.timestamp) * (run.timestamp > 1e12 ? 1 : 1000)).toISOString();
 
 const body = `/**
