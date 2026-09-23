@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#0d1017" />
+    <title>THENAR Quest · SO-101 teleop</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M6 26h20M10 24l4-12 10-6M14 12l10 9' stroke='%23f2b845' stroke-width='2.5' stroke-linecap='round' fill='none'/%3E%3Ccircle cx='14' cy='12' r='3' fill='%23f2b845'/%3E%3C/svg%3E" />
+  </head>
+  <body>
+    <div id="app">
+      <div id="loading"><span>Loading the arm…</span><progress id="load-bar" max="100" value="0"></progress></div>
+      <aside class="panel">
+        <header>
+          <div class="brand">THENAR <small>QUEST</small></div>
+          <span id="mode" class="mode"></span>
+        </header>
+        <p class="lede">SO-101 · MG996R follower R3, assembled from the thenar-arms CAD. Take hold of it with a Quest 3S controller or your hand.</p>
+
+        <section class="xr">
+          <button id="enter-mr" class="primary">Enter mixed reality</button>
+          <button id="enter-vr">Enter VR</button>
+          <p id="xr-note" class="note"></p>
+          <p id="xr-state" class="note"></p>
+        </section>
+
+        <section>
+          <h2>Episode</h2>
+          <div class="buttons">
+            <button id="rec">Record</button>
+            <button id="replay">Replay last</button>
+            <button id="download">Download</button>
+          </div>
+          <p class="note">Recorded: <span id="episodes">none yet</span> · <span id="task-state"></span></p>
+        </section>
+
+        <section>
+          <h2>Arm <span class="tag" id="source">idle</span></h2>
+          <div id="joints" class="joints"></div>
+          <p class="note">Reach error <b id="reach">0.0 mm</b></p>
+          <div class="buttons">
+            <button id="demo">Pick-and-place demo</button>
+            <button id="home">Home</button>
+          </div>
+          <label class="check"><input type="checkbox" id="show-leader" /> Show the AS5600 leader beside it</label>
+        </section>
+
+        <section>
+          <h2><span id="relay-dot" class="dot"></span> Mac relay</h2>
+          <p id="relay-state" class="note"></p>
+        </section>
+
+        <details>
+          <summary>Controls</summary>
+          <table class="keys">
+            <tr><th colspan="2">Quest controllers</th></tr>
+            <tr><td>Right grip (hold)</td><td>take hold of the arm; it follows your hand</td></tr>
+            <tr><td>Right trigger</td><td>close the gripper</td></tr>
+            <tr><td>A</td><td>rest the controller on your table, press: the arm stands there</td></tr>
+            <tr><td>Right stick</td><td>turn the arm · raise/lower it</td></tr>
+            <tr><td>B</td><td>record / stop</td></tr>
+            <tr><td>X · Y</td><td>replay last · home</td></tr>
+            <tr><td>Left grip</td><td>show / hide the leader</td></tr>
+            <tr><td>Left stick ↕</td><td>motion scale (fine ↔ coarse)</td></tr>
+            <tr><th colspan="2">Hands</th></tr>
+            <tr><td>Left pinch</td><td>hold the arm, it follows your right hand</td></tr>
+            <tr><td>Right thumb–index</td><td>gripper opening</td></tr>
+            <tr><th colspan="2">Desktop</th></tr>
+            <tr><td>Drag gizmo</td><td>move the target · W move · E rotate</td></tr>
+            <tr><td>Space · P · H · D</td><td>record · replay · home · demo</td></tr>
+            <tr><td>[ ]</td><td>gripper</td></tr>
+          </table>
+        </details>
+      </aside>
+      <div id="toast" hidden></div>
+    </div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

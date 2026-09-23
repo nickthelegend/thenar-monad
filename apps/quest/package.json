@@ -1,0 +1,28 @@
+{
+  "name": "thenar-quest",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "models": "node scripts/build-models.mjs ../../../thenar-arms/robot-studio/public/models/so101",
+    "dev": "vite",
+    "relay": "node server/relay.mjs",
+    "build": "vite build",
+    "test": "node --test test/*.test.mjs",
+    "e2e": "node test/e2e.mjs"
+  },
+  "dependencies": {
+    "three": "0.186.0"
+  },
+  "devDependencies": {
+    "@gltf-transform/core": "^4.5.0",
+    "@iwer/devui": "^2.4.0",
+    "@iwer/sem": "^2.4.0",
+    "@vitejs/plugin-basic-ssl": "^2.3.0",
+    "iwer": "^2.4.0",
+    "meshoptimizer": "^1.2.0",
+    "playwright": "1.63.0",
+    "serialport": "^13.0.0",
+    "vite": "^8.3.0",
+    "ws": "^8.21.3"
+  }
+}
