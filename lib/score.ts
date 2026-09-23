@@ -133,7 +133,7 @@ function clamp01(x: number) {
  * its position does not change, so the end of the recording is where it came
  * to rest, and no search for that moment is needed.
  */
-export function deviationFromSamples(samples: Placeable[]): number {
+export function deviationFromSamples(samples: Placeable[], goal: readonly [number, number] = GOAL): number {
   const last = samples[samples.length - 1];
   if (!last) return Infinity;
 
@@ -143,7 +143,7 @@ export function deviationFromSamples(samples: Placeable[]): number {
 
   let worst = 0;
   for (let i = 0; i < resting.length; i += 1) {
-    const seat = seatFor(GOAL, i, resting.length);
+    const seat = seatFor(goal, i, resting.length);
     worst = Math.max(worst, Math.hypot(resting[i][0] - seat[0], resting[i][1] - seat[1]) * 1000);
   }
   return worst;
@@ -185,8 +185,8 @@ export function durationFromSamples(samples: Sample[]): number {
  * flag in the request, and a flag that gates every term of the score is worth
  * more to a liar than the placement figure it sat next to.
  */
-export function placedInRing(samples: Placeable[]): boolean {
-  return deviationFromSamples(samples) <= GOAL_R * 1000;
+export function placedInRing(samples: Placeable[], goal: readonly [number, number] = GOAL): boolean {
+  return deviationFromSamples(samples, goal) <= GOAL_R * 1000;
 }
 
 /** Mean magnitude of the third derivative of the tool path, in m/s^3. */
@@ -212,12 +212,14 @@ export function evaluate(
   traj: Trajectory,
   parSeconds: number,
   rewardPerTrajectory: number,
+  /** The task's own datum (bench.goalFor); the shared bench GOAL unless it was scanned. */
+  goal: readonly [number, number] = GOAL,
 ): Verdict {
   // Measured, not accepted. `traj.deviationMm` is what the submitter said and
   // is kept only to be reported back beside this; every term below is computed
   // from the recording, which is the same recording the trajectory hash is
   // derived from, so the score and the artefact cannot disagree.
-  const deviationMm = deviationFromSamples(traj.samples);
+  const deviationMm = deviationFromSamples(traj.samples, goal);
 
   // Both have to hold. The caller can still say a run failed — an operator who
   // abandons a run should not be scored on where the payload happened to be —

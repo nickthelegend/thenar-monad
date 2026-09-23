@@ -5,9 +5,10 @@ import { sceneColor } from "@/lib/theme-color";
 import { Html, useGLTF } from "@react-three/drei";
 import { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
-import { EnterXR, XRControls } from "@/components/station/xr";
+import { EnterXR, XRControls, xrInput, xrState } from "@/components/station/xr";
 import { click } from "@/lib/click";
 import { act as policyAct } from "@/lib/policy";
+import { poseAt } from "@/lib/teach";
 import { REACH_MAX, solve, solveAt, toolPositionAt } from "@/lib/kinematics";
 import type { Sample } from "@/lib/types";
 import { GOAL_R, TOLERANCE_M, SEAT_OFFSET, seatFor } from "@/lib/bench";
@@ -122,6 +123,9 @@ type ViewportProps = {
    * about what an operator's recording is worth.
    */
   policy?: import("@/lib/policy").Policy | null;
+  /** A taught skill (lib/teach.ts) doing the task on its own, bent to this
+   *  scene's start and goal. Drives the same target and jaws the keys do. */
+  skill?: import("@/lib/teach").Skill | null;
   /** Incremented by the station on every new run. The rig is keyed on it, so a
    *  new run remounts the scene rather than trying to reset it in place. */
   runId: number;
@@ -629,6 +633,7 @@ function Rig({
   onTelemetry,
   onSample,
   policy,
+  skill,
 }: Omit<ViewportProps, "runId">) {
   const { camera } = useThree();
 
@@ -782,6 +787,12 @@ function Rig({
       grip.current = a.close ? 6 : GRIP_OPEN_MM;
     }
 
+    if (skill && running) {
+      const r = poseAt(skill, elapsed.current, start, goal);
+      t[0] = r.target[0]; t[1] = r.target[1]; t[2] = r.target[2];
+      grip.current = r.grip;
+    }
+
     // Motion is in the camera's ground plane so "up" always means away.
     // WASD and the arrows are the same control. Reaching for one and getting
     // nothing is the most common way an operator concludes the rig is broken.
@@ -799,6 +810,16 @@ function Rig({
       t[1] += DRAG_RIGHT[1] * dx + DRAG_AWAY[1] * dy;
       drag.current = [0, 0];
     }
+
+    // The headset: while the operator holds the arm, the tool moves as their
+    // hand moved since the last frame, and the jaws open as far as the trigger
+    // (or their thumb and index finger) says. Same target, same jaws.
+    const xd = xrInput.delta;
+    if (xd[0] !== 0 || xd[1] !== 0 || xd[2] !== 0) {
+      t[0] += xd[0]; t[1] += xd[1]; t[2] += xd[2];
+      xd[0] = 0; xd[1] = 0; xd[2] = 0;
+    }
+    if (xrInput.grip !== null) (A === 0 ? grip : gripB).current = xrInput.grip;
 
     t[2] = Math.max(TABLE_Z + 0.012, Math.min(0.46, t[2]));
     // Reach is measured from this arm's own base, not from the origin. A
@@ -1013,7 +1034,7 @@ function Rig({
         intensity={lighting?.fill.intensity ?? 0.45}
       />
 
-      {environmentUrl ? <Room url={environmentUrl} /> : null}
+      {environmentUrl ? <HideInPassthrough><Room url={environmentUrl} /></HideInPassthrough> : null}
       <SurfacePlate />
       <ReachEnvelope visible={outOfReach} target={target} />
       <GhostTrail points={trail} />
@@ -1113,6 +1134,15 @@ function Ghosts({ ghosts }: { ghosts: { id: string; tool: [number, number, numbe
       ))}
     </group>
   );
+}
+
+/** In mixed reality the operator's own room is the room: the modelled one is hidden. */
+function HideInPassthrough({ children }: { children: React.ReactNode }) {
+  const group = useRef<THREE.Group>(null);
+  useFrame(() => {
+    if (group.current) group.current.visible = xrState.mode !== "mr";
+  });
+  return <group ref={group}>{children}</group>;
 }
 
 export function StationViewport(props: ViewportProps) {

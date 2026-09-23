@@ -20,7 +20,21 @@
  * furniture rather than of the instruction — the tasks differ in what is moved
  * and where it starts, not in where it lands.
  */
+import { parseScan } from "./scan";
+
 export const GOAL: readonly [number, number] = [0.16, -0.18];
+
+/** Where a payload starts on this bench, unless the task was scanned. */
+export const START: readonly [number, number] = [0.22, 0.14];
+
+/**
+ * A task's own datum. Every task on the bench shares GOAL and START, except
+ * one scanned from a real table, whose name on chain carries the measured
+ * positions (lib/scan.ts). Read from the name, so the station, the replay and
+ * the verifier all derive the same point from the same chain state.
+ */
+export const goalFor = (name?: string): readonly [number, number] => (name ? parseScan(name)?.place : undefined) ?? GOAL;
+export const startFor = (name?: string): readonly [number, number] => (name ? parseScan(name)?.pick : undefined) ?? START;
 
 /** The goal ring drawn on the table. Outside this the payload was not placed
  *  at all, which is a different statement from placed badly. */

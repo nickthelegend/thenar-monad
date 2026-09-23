@@ -117,6 +117,8 @@ export async function verifyAndSign(args: {
   contractAddress: `0x${string}`;
   chainId: number;
   payloadIds?: string[];
+  /** Read from the task's name on chain by the caller, never from the request. */
+  goal?: readonly [number, number];
 }): Promise<VerifyResult> {
   const pk = process.env.VERIFIER_PRIVATE_KEY;
   if (!pk) throw new VerifyError("verifier key is not configured", 500);
@@ -131,7 +133,7 @@ export async function verifyAndSign(args: {
 
   // rewardPerTrajectory is passed as 1 so `payoutMon` comes back as a fraction;
   // the contract does the real multiplication against its own escrowed rate.
-  const verdict = evaluate(traj, args.parSeconds, 1);
+  const verdict = evaluate(traj, args.parSeconds, 1, args.goal);
 
   const payload = canonicalise(args.taskId, args.contributor, args.samples, args.payloadIds);
   const trajHash = keccak256(toHex(payload));

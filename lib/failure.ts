@@ -38,7 +38,7 @@ export type Failure = {
  *  Matches the phase segmenter, because they are answering the same question. */
 const SETTLED_M = 0.03;
 
-export function classifyFailure(samples: Segmentable[]): Failure {
+export function classifyFailure(samples: Segmentable[], goal?: readonly [number, number]): Failure {
   if (samples.length < 2) {
     return { kind: "none", detail: "Too short to say anything about." };
   }
@@ -68,7 +68,7 @@ export function classifyFailure(samples: Segmentable[]): Failure {
     }
   }
 
-  const deviation = deviationFromSamples(samples);
+  const deviation = deviationFromSamples(samples, goal);
   if (deviation > GOAL_R * 1000) {
     return {
       kind: "never-reached-the-ring",

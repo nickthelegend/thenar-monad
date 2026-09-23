@@ -17,6 +17,8 @@ import { RoomPicker } from "@/components/room-picker";
 import { useTaskCatalogue } from "@/components/tasks-provider";
 import { SCENARIOS } from "@/lib/chain";
 import { payloads, targets, propById, type Prop } from "@/lib/props";
+import { ScanPanel, type ScanResult } from "@/components/scan/scan-panel";
+import { formatScan, instructionOf, parseScan } from "@/lib/scan";
 
 /** Anyone can open work here: the escrow is what makes the bounty real. */
 export default function PostTaskPage() {
@@ -55,6 +57,26 @@ export default function PostTaskPage() {
 
   const [payloadId, setPayloadId] = useState("toothpaste");
   const [targetId, setTargetId] = useState("drawer");
+  /**
+   * A scene measured from the real table, when the funder scanned one.
+   *
+   * It lives in the instruction itself — "[scan x,y > x,y]" in millimetres —
+   * because the name is what goes on chain, and the station and the verifier
+   * both read the start and the goal back from there. Re-picking a prop keeps
+   * the measurement: the model drawn changes, where it stands does not.
+   */
+  const [scanning, setScanning] = useState(false);
+  const [scan, setScan] = useState<ScanResult | null>(null);
+  const withScan = (text: string, r: ScanResult | null = scan) => (r ? formatScan(instructionOf(text), r.scene) : instructionOf(text));
+  const onScene = (r: ScanResult | null) => {
+    setScan(r);
+    if (!r) return setName((n) => instructionOf(n));
+    const payload = r.pick.prop && propById(r.pick.prop)?.role === "payload" ? r.pick.prop : payloadId;
+    const target = r.place.prop && propById(r.place.prop)?.role === "target" ? r.place.prop : "plate";
+    setPayloadId(payload);
+    setTargetId(target);
+    setName(withScan(compose(payload, target, uploaded), r));
+  };
   /**
    * How long before the funder may take back what was never paid out.
    *
@@ -122,12 +144,36 @@ export default function PostTaskPage() {
       <DimRule className="mt-8" note="Definition" />
 
       <div className="mt-5 flex flex-col gap-5">
+        <div className="flex flex-col gap-1.5">
+          <span className="label">Scan the real table</span>
+          <span className="max-w-[62ch] text-[13px] leading-relaxed text-scribe-3">
+            Optional. Photograph the bench with a sheet of A4 on it and the task is
+            measured from reality: the object starts where it really stands, and a
+            run is scored against where its target really is. The positions go on
+            chain in the instruction, so anyone can check them.
+          </span>
+          {scanning ? (
+            <div className="mt-2 border border-rule p-3">
+              <ScanPanel onScene={onScene} />
+            </div>
+          ) : (
+            <button type="button" onClick={() => setScanning(true)} className="mt-1 self-start border border-rule-strong px-3 py-1.5 font-mono text-[12px] uppercase tracking-[0.14em] text-scribe transition-colors hover:border-signal hover:text-signal">
+              Scan with a camera
+            </button>
+          )}
+          {parseScan(name) ? (
+            <span className="font-mono text-[12px] text-go">
+              Scanned: starts at {Math.round(parseScan(name)!.pick[0] * 1000)}, {Math.round(parseScan(name)!.pick[1] * 1000)} mm; goal at {Math.round(parseScan(name)!.place[0] * 1000)}, {Math.round(parseScan(name)!.place[1] * 1000)} mm from the base.
+            </span>
+          ) : null}
+        </div>
+
         <PropPicker
           label="Object to move"
           hint="The payload the operator picks up. This is the model the station loads — the preview is the asset itself, not a picture of it."
           options={allPayloads}
           value={payloadId}
-          onChange={(id) => { setPayloadId(id); setName(compose(id, targetId, uploaded)); }}
+          onChange={(id) => { setPayloadId(id); setName(withScan(compose(id, targetId, uploaded))); }}
         />
 
         <PropPicker
@@ -135,7 +181,7 @@ export default function PostTaskPage() {
           hint="Where it has to end up. The datum circle is placed on this, and the operator sees it in the scene."
           options={allTargets}
           value={targetId}
-          onChange={(id) => { setTargetId(id); setName(compose(payloadId, id, uploaded)); }}
+          onChange={(id) => { setTargetId(id); setName(withScan(compose(payloadId, id, uploaded))); }}
         />
 
         <Field label="Instruction" hint="Written from the two objects above. Edit the wording if it matters, but keep both names in it — the station reads them back to build the scene.">

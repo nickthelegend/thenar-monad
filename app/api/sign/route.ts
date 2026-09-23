@@ -1,3 +1,4 @@
+import { goalFor } from "@/lib/bench";
 import { logged } from "@/lib/server/log";
 import { NextResponse } from "next/server";
 
@@ -76,7 +77,7 @@ async function handlePOST(req: Request) {
       abi: AXON_ABI,
       functionName: "getTask",
       args: [BigInt(taskId)],
-    })) as { difficulty: number; rewardPerTrajectory: bigint; slotsFilled: number; slotsTotal: number };
+    })) as { name: string; difficulty: number; rewardPerTrajectory: bigint; slotsFilled: number; slotsTotal: number };
 
     if (task.slotsFilled >= task.slotsTotal) {
       return NextResponse.json({ error: "This task has no slots left." }, { status: 409 });
@@ -95,6 +96,8 @@ async function handlePOST(req: Request) {
       contractAddress: AXON_ADDRESS,
       chainId: appChain.id,
       payloadIds,
+      // A scanned task's goal is in its name on chain; everything else keeps the bench's.
+      goal: goalFor(task.name),
     });
 
     return NextResponse.json({

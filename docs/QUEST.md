@@ -1,0 +1,68 @@
+# The station in a headset, and tasks scanned from a real table
+
+## A Quest 3 / 3S on the station
+
+Open any task's station in the Quest browser. Two buttons appear in the corner
+of the scene when the browser has WebXR:
+
+- **Enter on your table** — mixed reality. The bench sits on your real table, in passthrough.
+- **Enter in VR** — the modelled room.
+
+The bench is placed a forearm ahead of you on entry. Rest the right controller on
+your real table and press **B** to stand the arm exactly there.
+
+| Controller | |
+|---|---|
+| **Grip** (hold) | take hold of the arm: the tool follows your hand, millimetre for millimetre |
+| **Trigger** | close the jaws, as far as it is pulled |
+| **A** (or **X**) | begin a run, or end the one in progress |
+| **B** | put the bench where this controller rests |
+| **Stick** | nudge the tool one axis at a time |
+
+| Hands | |
+|---|---|
+| **Left pinch** (hold) | take hold of the arm; it follows your right hand |
+| **Right thumb to index** | the jaws |
+
+The panel above the bench shows the task, the run and what to press. Take the headset
+off to submit: a run is paid from your wallet like any other, after the same
+World ID check, and recorded in the same shape as one driven from a keyboard.
+
+### Reaching the dev server from the headset
+
+WebXR needs a secure origin. Over USB, with developer mode on the headset:
+
+```bash
+adb reverse tcp:3334 tcp:3334
+pnpm exec next dev --port 3334
+```
+
+Then open `http://localhost:3334/station/0` in the Quest browser. A deployed site
+(HTTPS) needs nothing.
+
+## Scanning a task from a real table (`/post`)
+
+1. Lay a sheet of A4 flat in front of the arm, long side pointing away, near edge
+   centred 9 cm ahead of the base.
+2. **Scan with a camera**: start the camera and freeze a frame, or upload a photo.
+3. Click the sheet's corners (near left, near right, far right, far left). Every
+   object on the table now has a position in millimetres in the arm's frame.
+4. The on-device detector (MediaPipe EfficientDet-Lite0, served from this site)
+   names what it recognises; click the picture to add anything it missed.
+5. Choose **Move** and **Onto**.
+
+The measured positions go into the task's name on chain:
+
+`Put the glass on the plate [scan 199,35 > 309,-52]`
+
+- `lib/scan.ts` parses that tag.
+- `lib/bench.ts` `goalFor` / `startFor` read it.
+- The station draws the payload where it really stood.
+- `/api/sign` scores the run against where its target really is, read from the task on chain, never from the request.
+- A task without the tag keeps the bench's shared start and goal, and scores exactly as before.
+
+## Teach and repeat (station sidebar)
+
+- **Teach** learns from the best paid run on the task, fetched through `/api/dataset`: the same export a buyer downloads.
+- **Repeat alone** runs the arm by itself. The demonstration is bent to this scene's start and goal (`lib/teach.ts`).
+- A repeat is practice only: it is never submitted and never paid.

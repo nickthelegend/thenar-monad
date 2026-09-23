@@ -67,3 +67,6 @@ cad/exports/
 demo/out/work*/
 demo/out/*.webm
 demo/out/check/
+
+# The object detector's runtime, copied from @mediapipe/tasks-vision on install.
+/public/vision/wasm/

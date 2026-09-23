@@ -17,6 +17,7 @@ import { wouldHavePaid, wouldHavePaidSentence } from "@/lib/shortfall";
 import { classifyRead } from "@/lib/store-failure";
 import { ACCEPT_FLOOR } from "@/lib/score";
 import { deviationFromSamples } from "@/lib/score";
+import { goalFor } from "@/lib/bench";
 import { txUrlOn, addressUrl, appChain, chainMeta } from "@/lib/chain";
 import { cn } from "@/lib/cn";
 import { fmtScore, fmtSeconds, shortHash } from "@/lib/format";
@@ -48,7 +49,6 @@ type RunDoc = {
 /** The datum every run on every task is measured against. Kept beside the
  *  station's own constant rather than imported, so a replay cannot silently
  *  drift from where the run was actually scored. */
-const GOAL: [number, number] = [0.16, -0.18];
 
 /** Anyone can open this and check what a payout was actually for. */
 export default function RunView() {
@@ -391,6 +391,7 @@ export default function RunView() {
         samples={data.samples ?? []}
         scoredDeviationMm={data.deviationMm}
         onSeek={setCursor}
+        goal={goalFor(task?.name)}
       />
 
       {/* What would have paid. A run under the floor is told how far under, in
@@ -426,7 +427,7 @@ export default function RunView() {
               targetUrl={task.scene.target.url}
               targetWidthMm={task.scene.target.widthMm}
               environmentUrl={task.scene.room.url}
-              goal={GOAL}
+              goal={[...goalFor(task.name)] as [number, number]}
             />
           </div>
         </>
@@ -637,20 +638,22 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
  * appears only when there is bad news and so reads as an accusation.
  */
 function FailureNote({
-  samples, scoredDeviationMm, onSeek,
+  samples, scoredDeviationMm, onSeek, goal,
 }: {
   samples: ReplaySample[];
+  /** The task's own datum; a scanned task's comes from its name on chain. */
+  goal: readonly [number, number];
   /** The distance this run was actually scored against, as the ledger holds it. */
   scoredDeviationMm: number;
   onSeek: (v: number) => void;
 }) {
   const failure = useMemo(
-    () => (samples.length >= 2 ? classifyFailure(samples) : null),
-    [samples],
+    () => (samples.length >= 2 ? classifyFailure(samples, goal) : null),
+    [samples, goal],
   );
   const measured = useMemo(
-    () => (samples.length >= 2 ? deviationFromSamples(samples) : null),
-    [samples],
+    () => (samples.length >= 2 ? deviationFromSamples(samples, goal) : null),
+    [samples, goal],
   );
   if (!failure || measured === null) return null;
 

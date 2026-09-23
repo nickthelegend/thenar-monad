@@ -7,7 +7,7 @@ import { useParams, useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Telemetry } from "@/components/station/viewport";
-import { GOAL, GOAL_R } from "@/lib/bench";
+import { GOAL_R, goalFor, startFor } from "@/lib/bench";
 import { Announce, Button, CountUp, Difficulty, ScoreDial, ToleranceBand } from "@/components/primitives";
 import { useSession } from "@/components/session";
 import { useSpace } from "@/lib/space";
@@ -15,6 +15,10 @@ import { environmentForScenario, lightingFor } from "@/lib/environments";
 import { SKILL_LABEL } from "@/lib/skills";
 import { useRunsOnTask, useSubmitCost } from "@/lib/hooks";
 import { useTaskCatalogue, useCatalogueTask } from "@/components/tasks-provider";
+import { XR_ACTION, xrState } from "@/components/station/xr";
+import { TeachPanel } from "@/components/station/teach-panel";
+import type { Skill } from "@/lib/teach";
+import { instructionOf } from "@/lib/scan";
 import { useSubmitRun } from "@/lib/submit";
 import { HumanGate } from "@/components/human-gate";
 import { SHARES_SYMBOL } from "@/lib/corpus-shares";
@@ -50,9 +54,9 @@ type Phase = "brief" | "running" | "measured";
 // tool a long way. The pair are still 0.33 m apart, so the task is a real
 // transfer rather than a nudge, and both objects sit inside the camera frame
 // with the arm rather than out at the edges of the table.
-// GOAL is imported: the scorer measures against it too, so it is defined in
-// lib/bench.ts where both can reach it rather than once here and once there.
-const START: [number, number] = [0.22, 0.14];
+// START and GOAL live in lib/bench.ts, where the scorer reaches them too; a
+// task scanned from a real table carries its own pair in its name on chain,
+// and goalFor/startFor read them from there.
 
 /**
  * What the viewport draws for the one frame before the catalogue answers.
@@ -162,6 +166,10 @@ export default function StationPage() {
    * they say they are — so choosing this makes the run a practice run.
    */
   const [policyOn, setPolicyOn] = useState(false);
+  // Teach and repeat: a skill learned from the best paid run, run by the arm
+  // itself. Like the policy, a repeat is only ever practice.
+  const [skill, setSkill] = useState<Skill | null>(null);
+  const [repeatOn, setRepeatOn] = useState(false);
   const [policy, setPolicy] = useState<import("@/lib/policy").Policy | null>(null);
   useEffect(() => {
     if (!policyOn || policy) return;
@@ -232,6 +240,7 @@ export default function StationPage() {
           },
           task.parSeconds,
           task.rewardMon,
+          goalFor(task.name),
         ),
       );
       setPhase("measured");
@@ -247,7 +256,7 @@ export default function StationPage() {
   // unsent run" — where, with the practice switch now off, it could be picked
   // up and submitted as the operator's own demonstration.
   useEffect(() => {
-    if (phase !== "measured" || !verdict || !task || policyOn || chosePractice) return;
+    if (phase !== "measured" || !verdict || !task || policyOn || repeatOn || chosePractice) return;
     saveDraft({
       taskId: task.id,
       samples: samples.current,
@@ -255,7 +264,7 @@ export default function StationPage() {
       durationSeconds: verdict.raw.seconds,
       at: Date.now(),
     });
-  }, [phase, verdict, task, policyOn, chosePractice]);
+  }, [phase, verdict, task, policyOn, repeatOn, chosePractice]);
 
   // Once the chain has it, the draft is not an unsent run any more.
   useEffect(() => {
@@ -374,6 +383,29 @@ export default function StationPage() {
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
+  // The headset has no pointer on this page: its A button begins a run, or
+  // ends the one in progress, and its panel reads what this page would show.
+  const startRef = useRef<() => void>(() => {});
+  useEffect(() => {
+    const onXR = () => {
+      if (phase === "running") { if (tel) finish(tel); }
+      else startRef.current();
+    };
+    window.addEventListener(XR_ACTION, onXR);
+    return () => window.removeEventListener(XR_ACTION, onXR);
+  }, [phase, tel, finish]);
+  useEffect(() => {
+    if (!task) return;
+    xrState.hud = [
+      instructionOf(task.name),
+      phase === "running"
+        ? `Running ${elapsed.toFixed(1)} s · ${tel?.held ? "holding" : tel?.inRange ? "in range — close the jaws" : "reach the payload"} · ${tel ? Math.round(tel.deviationMm) : "—"} mm from the goal`
+        : phase === "measured" && verdict
+          ? `${verdict.success ? "Measured" : "Not placed"} · score ${(verdict.score / 100).toFixed(0)} · ${Math.round(verdict.deviationMm)} mm off · take the headset off to submit`
+          : "Press A to begin a run",
+    ];
+  }, [task, phase, tel, elapsed, verdict]);
+
   const start = () => {
     // Whatever happens next, they have now seen the station.
     try { localStorage.setItem(STATION_SEEN, "1"); } catch { /* storage blocked */ }
@@ -391,6 +423,7 @@ export default function StationPage() {
     setRunId((n) => n + 1);
     setPhase("running");
   };
+  useEffect(() => { startRef.current = start; });
 
   if (!valid || isError) {
     return (
@@ -465,7 +498,7 @@ export default function StationPage() {
    */
   // Practice is forced when there is nothing to pay for, and chosen when a
   // first-time operator would rather not spend a slot learning the controls.
-  const practice = !task.open || capped || chosePractice || policyOn;
+  const practice = !task.open || capped || chosePractice || policyOn || repeatOn;
   // Monad charges a submit its whole gas limit at the offered fee, whatever it
   // spends, and rejects the transaction outright when the balance cannot cover
   // that. The floor is LOW_GAS_BALANCE, the same one every banner uses, so the
@@ -575,6 +608,7 @@ export default function StationPage() {
                 hover without ever grasping. Nothing it does is submitted.
               </p>
             ) : null}
+            <TeachPanel taskId={task.id} skill={skill} onSkill={setSkill} repeating={repeatOn} onRepeat={(on) => { setRepeatOn(on); if (on) setPolicyOn(false); }} />
             <dl className="flex flex-col gap-1.5">
               <div className="flex items-center gap-2 pt-1">
                 <button
@@ -615,11 +649,12 @@ export default function StationPage() {
           ) : canDraw === null ? null : (
           <StationViewport
             running={phase === "running"}
-            goal={GOAL}
-            start={START}
+            goal={goalFor(task.name)}
+            start={[...startFor(task.name)] as [number, number]}
             payloads={scene.payloads.map((p) => ({ url: p.url, widthMm: p.widthMm }))}
             arms={scene.arms}
             policy={policyOn ? policy : null}
+            skill={repeatOn ? skill : null}
             targetUrl={scene.target.url}
             targetWidthMm={scene.target.widthMm}
             runId={runId}
