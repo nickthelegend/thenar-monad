@@ -37,9 +37,10 @@ export function TaskEscrow({ task }: { task: ChainTask }) {
   if (task.expiresAt === null && !task.closed) {
     return (
       <p className="mt-4 max-w-[64ch] font-mono text-[12px] leading-relaxed text-scribe-3">
-        No deadline. This task was posted with{" "}
-        <code className="text-scribe-2">createTask</code>, which leaves{" "}
-        <code className="text-scribe-2">expiresAt</code> at zero — so it can never
+        {/* Said from the task's own state, not a guess at the call: createTask and
+            createTaskUntil with a zero deadline both leave expiresAt at zero. */}
+        No deadline. This task&rsquo;s{" "}
+        <code className="text-scribe-2">expiresAt</code> is zero — so it can never
         be closed and the {fmtMon(left, 4)} {CURRENCY} still escrowed can only
         leave as a payout to an operator.
       </p>

@@ -1,6 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Whether the server can reach Monadscan's index, so pages do not ask a
+  // question whose answer is fixed at build time. The key stays server-side.
+  env: { NEXT_PUBLIC_INDEX_CONFIGURED: process.env.ETHERSCAN_API_KEY ? "1" : "" },
   experimental: {
     // Off on this machine: the dev cache's writes and compactions ran for a
     // minute at a time on a nearly full disk and stalled every request behind them.

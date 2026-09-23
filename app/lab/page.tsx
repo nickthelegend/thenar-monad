@@ -124,6 +124,28 @@ export default function LabPage() {
     }
   }
 
+  /**
+   * Read the catalogue again until it has the task this page just posted.
+   *
+   * One refetch on the receipt is not enough on Monad: execution runs behind
+   * consensus, and the endpoint answering the read can be a block behind the
+   * one that confirmed the transaction, so the list came back without the task
+   * the line above it had just announced. Asked again each second, for at most
+   * fifteen, and stopped the moment it is there.
+   */
+  const postedTaskId = posted?.kind === "posted" ? posted.taskId : null;
+  const listed = postedTaskId !== null && tasks.some((t) => t.id === postedTaskId);
+  useEffect(() => {
+    if (postedTaskId === null || listed) return;
+    let n = 0;
+    const timer = setInterval(() => {
+      n += 1;
+      refetch();
+      if (n >= 15) clearInterval(timer);
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [postedTaskId, listed, refetch]);
+
   async function testPolicy() {
     setProbing(true);
     setProbe(null);

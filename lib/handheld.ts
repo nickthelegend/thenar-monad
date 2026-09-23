@@ -34,7 +34,7 @@ export type Anchor = { x: number; y: number; z: number };
 /**
  * How far a hand movement scales into the workspace.
  *
- * The arm reaches 408 mm and a person demonstrating at arm's length moves
+ * The solver places the wrist at most REACH_MAX (408 mm) from the base, and a person demonstrating at arm's length moves
  * through roughly a metre, so a hand metre is compressed into the bench. Any
  * other choice makes the workspace either unreachable or twitchy.
  */

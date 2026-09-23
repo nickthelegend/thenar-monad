@@ -323,9 +323,14 @@ export default function PostTaskPage() {
         </div>
         <div className="flex flex-col items-end gap-1">
           <span className="label">Your balance</span>
-          <span className={cn("font-mono text-[15px] tabular-nums", affordable || total === 0 ? "text-scribe" : "text-reject")}>
-            {fmtMon(s.balance, 4)} {CURRENCY}
-          </span>
+          {/* Not "0" before a wallet is connected: there is no balance to report yet. */}
+          {s.connected ? (
+            <span className={cn("font-mono text-[15px] tabular-nums", affordable || total === 0 ? "text-scribe" : "text-reject")}>
+              {fmtMon(s.balance, 4)} {CURRENCY}
+            </span>
+          ) : (
+            <span className="font-mono text-[13px] text-scribe-3">no wallet connected</span>
+          )}
         </div>
       </div>
 

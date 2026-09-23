@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import { INDEX_CONFIGURED, INDEX_MISSING, fetchIndex } from "@/lib/index-config";
 import { formatEther, isAddress } from "viem";
 import { useReadContract } from "wagmi";
 import { DimRule } from "@/components/primitives";
@@ -37,7 +38,11 @@ export default function OperatorPage() {
   const valid = typeof address === "string" && isAddress(address);
 
   const [runs, setRuns] = useState<Run[] | null>(null);
+  const [runsFailed, setRunsFailed] = useState<string | null>(null);
   const [calls, setCalls] = useState<Settlement[] | null>(null);
+  // Why the calls could not be listed. Kept apart from an empty list: "no
+  // calls" is a measurement, and an index that did not answer is not one.
+  const [callsFailed, setCallsFailed] = useState<string | null>(INDEX_CONFIGURED ? null : INDEX_MISSING);
 
   /**
    * How many runs the contract paid this address for.
@@ -94,16 +99,23 @@ export default function OperatorPage() {
     if (!valid) return;
     let live = true;
     fetch(`/api/feed?limit=50`)
-      .then((r) => r.json())
-      .then((d: { runs: (Run & { contributor: string })[] }) => {
+      .then(async (r) => {
+        const d = await r.json().catch(() => null);
+        if (!r.ok) throw new Error(d?.error ?? `The ledger answered ${r.status}.`);
+        return d as { runs: (Run & { contributor: string })[] };
+      })
+      .then((d) => {
         if (live) setRuns(d.runs.filter((r) => r.contributor.toLowerCase() === address.toLowerCase()));
       })
-      .catch(() => { if (live) setRuns([]); });
+      // Not an empty list: "no runs" is a measurement, and a ledger that did
+      // not answer is not one.
+      .catch((e: Error) => { if (live) setRunsFailed(e.message); });
 
-    fetch(`/api/calls/${address}`)
-      .then((r) => (r.ok ? r.json() : Promise.reject(new Error())))
-      .then((d: { settlements: Settlement[] }) => { if (live) setCalls(d.settlements); })
-      .catch(() => { if (live) setCalls([]); });
+    if (INDEX_CONFIGURED) {
+      fetchIndex<{ settlements: Settlement[] }>(`/api/calls/${address}`)
+        .then((d) => { if (live) setCalls(d.settlements); })
+        .catch((e: Error) => { if (live) setCallsFailed(e.message); });
+    }
 
     return () => { live = false; };
   }, [address, valid]);
@@ -251,7 +263,9 @@ export default function OperatorPage() {
       ) : null}
 
       <DimRule className="mt-8" note="Accepted runs" />
-      {runs === null ? (
+      {runsFailed ? (
+        <p className="mt-4 text-[14px] text-scribe-3">The run ledger could not be read: {runsFailed}</p>
+      ) : runs === null ? (
         <ul className="mt-4 flex flex-col gap-2" aria-busy="true">
           {Array.from({ length: 3 }, (_, i) => <li key={i} className="hatch h-8" />)}
         </ul>
@@ -295,7 +309,9 @@ export default function OperatorPage() {
         Including the ones that reverted, which a ledger of accepted runs by
         definition cannot show.
       </p>
-      {calls === null ? (
+      {callsFailed ? (
+        <p className="mt-4 text-[14px] text-scribe-3">{callsFailed}</p>
+      ) : calls === null ? (
         <ul className="mt-4 flex flex-col gap-2" aria-busy="true">
           {Array.from({ length: 3 }, (_, i) => <li key={i} className="hatch h-8" />)}
         </ul>

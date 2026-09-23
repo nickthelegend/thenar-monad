@@ -80,7 +80,10 @@ async function handleGET(req: Request, ctx: { params: Promise<{ id: string }> })
     episodes: hashes.length,
     computed,
     committed,
-    matches: Boolean(committed && computed && committed.root.toLowerCase() === computed.toLowerCase()),
+    // Null when there is nothing to compare — no episodes, or no root committed
+    // yet. false is reserved for a committed root the corpus disagrees with,
+    // which is a finding; an absence is not.
+    matches: committed && computed ? committed.root.toLowerCase() === computed.toLowerCase() : null,
     ...(episode
       ? {
           episode,

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { DimRule } from "@/components/primitives";
 import { txUrlOn, appChain } from "@/lib/chain";
 import { cn } from "@/lib/cn";
+import { INDEX_CONFIGURED, INDEX_MISSING, fetchIndex } from "@/lib/index-config";
 
 type Call = { txHash: string; method: string; succeeded: boolean; at: number; fee: number };
 
@@ -21,14 +22,14 @@ type Call = { txHash: string; method: string; succeeded: boolean; at: number; fe
  */
 export function FunderHistory({ taskId, funder }: { taskId: number; funder: string }) {
   const [calls, setCalls] = useState<Call[] | null>(null);
-  const [failed, setFailed] = useState(false);
+  const [failed, setFailed] = useState<string | null>(INDEX_CONFIGURED ? null : INDEX_MISSING);
 
   useEffect(() => {
+    if (!INDEX_CONFIGURED) return;
     let live = true;
-    fetch(`/api/task/${taskId}/history?funder=${funder}`)
-      .then((r) => (r.ok ? r.json() : Promise.reject(new Error())))
-      .then((d: { history: Call[] }) => { if (live) setCalls(d.history); })
-      .catch(() => { if (live) setFailed(true); });
+    fetchIndex<{ history: Call[] }>(`/api/task/${taskId}/history?funder=${funder}`)
+      .then((d) => { if (live) setCalls(d.history); })
+      .catch((e: Error) => { if (live) setFailed(e.message); });
     return () => { live = false; };
   }, [taskId, funder]);
 
@@ -37,8 +38,7 @@ export function FunderHistory({ taskId, funder }: { taskId: number; funder: stri
       <>
         <DimRule className="mt-10" note="Funder activity" />
         <p className="mt-3 text-[14px] text-scribe-3">
-          Monadscan would not answer just now. Everything above is read
-          from the contract directly and is unaffected.
+          {failed} Everything above is read from the contract directly and is unaffected.
         </p>
       </>
     );

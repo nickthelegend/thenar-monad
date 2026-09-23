@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { DimRule } from "@/components/primitives";
 import { anchorFrom, frameFrom, toolAt, HAND_TO_BENCH, type Anchor } from "@/lib/handheld";
+import { REACH_MAX } from "@/lib/kinematics";
 import { fmtInt, fmtSeconds } from "@/lib/format";
 import { cn } from "@/lib/cn";
 import type { Sample } from "@/lib/types";
@@ -167,7 +168,10 @@ export default function HandheldPage() {
         measurement and a motion sensor could not.
       </p>
       <p className="mt-3 max-w-[64ch] text-[14px] leading-relaxed text-scribe-3">
-        A hand metre becomes {Math.round(HAND_TO_BENCH * 100)} cm of bench, because the arm reaches 408 mm and
+        {/* The solver's reach, not the spec sheet's 512 mm: the spec measures to the
+            tool flange, the solver places the wrist, and the workspace is the solver's. */}
+        A hand metre becomes {Math.round(HAND_TO_BENCH * 100)} cm of bench, because the station&rsquo;s solver
+        places the wrist at most {Math.round(REACH_MAX * 1000)} mm from the base and
         a person demonstrating at arm&rsquo;s length moves through about a metre.
         Tap to close the jaws, tap again to let go. What comes out is a
         trajectory in the same format as every other run.

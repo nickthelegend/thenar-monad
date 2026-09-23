@@ -68,7 +68,8 @@ let policyId = local.PRIVY_LAB_POLICY_ID;
 if (!policyId) {
   const r = await privy("/policies", {
     version: "1.0",
-    name: "Thenar lab budget: fund tasks on Monad, 0.1 MON max",
+    // Privy refuses a policy name of 50 characters or more.
+    name: "Thenar lab: fund Monad tasks, 0.1 MON max",
     chain_type: "ethereum",
     rules: [allowFunding("eth_sendTransaction"), allowFunding("eth_signTransaction")],
   });

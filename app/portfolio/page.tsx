@@ -14,6 +14,7 @@ import { addressUrl, CURRENCY, txUrl } from "@/lib/chain";
 import { cn } from "@/lib/cn";
 import { fmtMon, fmtScore } from "@/lib/format";
 import { useTaskCatalogue } from "@/components/tasks-provider";
+import { INDEX_CONFIGURED, INDEX_MISSING, fetchIndex } from "@/lib/index-config";
 
 export default function PortfolioPage() {
   const s = useSession();
@@ -168,15 +169,14 @@ type Settlement = {
  */
 function Settlements({ address }: { address?: string | null }) {
   const [rows, setRows] = useState<Settlement[] | null>(null);
-  const [failed, setFailed] = useState(false);
+  const [failed, setFailed] = useState<string | null>(INDEX_CONFIGURED ? null : INDEX_MISSING);
 
   useEffect(() => {
-    if (!address) return;
+    if (!address || !INDEX_CONFIGURED) return;
     let live = true;
-    fetch(`/api/calls/${address}`)
-      .then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
-      .then((d: { settlements: Settlement[] }) => { if (live) setRows(d.settlements); })
-      .catch(() => { if (live) setFailed(true); });
+    fetchIndex<{ settlements: Settlement[] }>(`/api/calls/${address}`)
+      .then((d) => { if (live) setRows(d.settlements); })
+      .catch((e: Error) => { if (live) setFailed(e.message); });
     return () => { live = false; };
   }, [address]);
 
@@ -185,8 +185,7 @@ function Settlements({ address }: { address?: string | null }) {
       <>
         <DimRule className="mt-10" note="On-chain activity" />
         <p className="mt-4 text-[14px] text-scribe-3">
-          Monadscan would not answer just now. The run history above is
-          read from the contract directly and is unaffected.
+          {failed} The run history above is read from the contract directly and is unaffected.
         </p>
       </>
     );

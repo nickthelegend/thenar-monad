@@ -35,13 +35,20 @@ export function PostPreflight({
   days: number;
 }) {
   const cost = useObservedCost(days > 0 ? "createTaskUntil" : "createTask");
+  // The other entry point, so the note below can say what was measured
+  // instead of asserting it: a sentence that named "the six tasks here" went
+  // on saying six after a seventh was posted.
+  const otherKind = days > 0 ? "createTask" : "createTaskUntil";
+  const other = useObservedCost(otherKind);
   const { data: accepted } = useAcceptedScores();
 
   const escrow = slots * rewardMon;
   if (escrow <= 0) return null;
 
   // Score is 0..10000 on chain, and a payout is reward × score / 10000.
-  const mean = accepted?.meanScore ?? null;
+  // Only from runs that exist: with none scored there is no rate to project,
+  // and a mean of zero read as one made the whole escrow the "shortfall".
+  const mean = accepted && accepted.n > 0 ? accepted.meanScore : null;
   const drawn = mean === null ? null : (escrow * mean) / 10_000;
   const left = drawn === null ? null : escrow - drawn;
 
@@ -122,22 +129,22 @@ export function PostPreflight({
           <Link href="/contracts" className="text-signal hover:text-signal-hi">/contracts</Link>.
         </li>
 
-        {/* Nothing has gone through this entry point yet.
-            The six tasks on this deployment were seeded by script, and their
-            transactions carry a different selector from the one this button
-            sends — 0x5038a0a8 against the 0xdb2399d0 the interface encodes.
-            Both are in the deployed bytecode and the interface's one simulates
-            cleanly, returning task 6, so the button is sound; what does not
-            exist is a real transaction through it to measure. Quoting the other
-            function's gas would be quoting a number for a call nobody made. */}
+        {/* Nothing has gone through this entry point yet. The other one may
+            have been used, and that is said only when its receipts show it:
+            quoting the other function's gas would be quoting a number for a
+            call nobody made. */}
         {cost && cost.samples === 0 ? (
           <li>
             <span className="text-scribe">Posting it costs gas too</span>, and
             there is no measured figure for it: no task has yet been created
-            through the call this button makes with these settings. The six here
-            were all posted with{" "}
-            <code className="font-mono text-[12px] text-scribe">createTaskUntil</code>,
-            and one function&rsquo;s gas is not another&rsquo;s.
+            through the call this button makes with these settings.
+            {other && other.samples > 0 ? (
+              <>
+                {" "}The tasks measured here were posted with{" "}
+                <code className="font-mono text-[12px] text-scribe">{otherKind}</code>,
+                and one function&rsquo;s gas is not another&rsquo;s.
+              </>
+            ) : null}
           </li>
         ) : null}
 
