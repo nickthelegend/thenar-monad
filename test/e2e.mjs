@@ -143,9 +143,22 @@ console.log(`\n  thenar e2e — ${BASE}\n`);
 const PAGES = [
   "/", "/hub", "/space", "/inventory", "/post", "/leaderboard", "/portfolio",
   "/foundry", "/spec", "/archive", "/passkey", "/status", "/changelog", "/corpus", "/policies",
-  "/licence/0", "/task/0", "/station/4",
+  "/task/0", "/station/4",
 ];
 for (const p of PAGES) check(`page ${p}`, (await status(p)) === 200);
+
+// A licence page exists only for a minted policy: /licence/0 is a page while
+// policy 0 exists and a 404 before it does, asked of the contract.
+{
+  // policyCount(), selector 0xde54d429.
+  const answer = await fetch(RPC, {
+    method: "POST", headers: { "content-type": "application/json" },
+    body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "eth_call", params: [{ to: AXON, data: "0xde54d429" }, "latest"] }),
+  }).then((r) => r.json());
+  const policies = Number(BigInt(answer.result ?? "0x0"));
+  const want = policies > 0 ? 200 : 404;
+  check(`page /licence/0 -> ${want} (${policies} policies)`, (await status("/licence/0")) === want);
+}
 
 // This list used to name /task/7, which is not a task and never has been —
 // there are six. It passed because a missing task still answered 200 and drew

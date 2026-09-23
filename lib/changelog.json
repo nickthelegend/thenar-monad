@@ -1,5 +1,11 @@
 [
   {
+    "hash": "d82e5ff",
+    "date": "2026-09-23T16:26:54+05:30",
+    "subject": "Skip a tour stop that has nothing to show yet, instead of ending the tour there",
+    "body": "Step 4 opens a paid run, and a deployment with no paid run has none to\nopen. Next was disabled there, which is right about step 4 and wrong about\neverything after it: the foundry and the status page always exist, and a\nreader could not reach them until somebody had been paid.\n\nNext and Back now move to the nearest step whose subject exists, and the\npanel says which step it passes over and why. A step with nothing to show\nis still never a destination. The README no longer says /archive shows the\nBlitz contract; /contracts lists it under Superseded, and /archive holds\nstored runs.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+  },
+  {
     "hash": "db7a267",
     "date": "2026-09-23T16:21:55+05:30",
     "subject": "Let the issuer reclaim a dividend nobody can hold, and redeploy CorpusShares",
@@ -352,11 +358,5 @@
     "date": "2026-09-05T14:12:57+05:30",
     "subject": "docs: PRODUCT, DESIGN, README, and the ranked feature list",
     "body": "Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
-  },
-  {
-    "hash": "00adbd4",
-    "date": "2026-09-05T13:38:11+05:30",
-    "subject": "test: headless checks and the live on-chain end-to-end proof",
-    "body": "check-loop.ts verifies the IK round-trips to machine precision and that\nscoring is deterministic and correctly ordered.\n\ne2e.mjs is the one that matters: it records a run, has the server score and\nsign it, submits it on chain, then asserts the escrow fell by exactly the\npayout, the operator's balance rose by exactly the payout net of gas, that\nreplaying the same trajectory is refused, and that a forged score is refused.\n\nCo-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
   }
 ]
