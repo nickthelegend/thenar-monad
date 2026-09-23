@@ -59,6 +59,10 @@ contract AxonProtocolV2 {
         /// Zero means the task never expires, which is v1's behaviour.
         uint64 expiresAt;
         bool closed;
+        /// The block the task was posted in. Monad's public endpoints answer a
+        /// log query only a hundred blocks wide, so a reader that wants the
+        /// posting transaction asks for this one block instead of scanning.
+        uint64 createdBlock;
     }
 
     struct Trajectory {
@@ -69,6 +73,10 @@ contract AxonProtocolV2 {
         uint16 score;       // 0..10000
         uint128 paid;
         uint64 at;
+        /// The block the run settled in, for the same reason as `createdBlock`:
+        /// the feed reads runs from storage and finds each one's transaction
+        /// with a one-block log query that every endpoint will answer.
+        uint64 atBlock;
     }
 
     struct Policy {
@@ -330,7 +338,8 @@ contract AxonProtocolV2 {
                 difficulty: difficulty,
                 policyMinted: false,
                 expiresAt: expiresAt,
-                closed: false
+                closed: false,
+                createdBlock: uint64(block.number)
             })
         );
         taskId = _tasks.length - 1;
@@ -496,7 +505,8 @@ contract AxonProtocolV2 {
                 cid: cid,
                 score: score,
                 paid: uint128(payout),
-                at: uint64(block.timestamp)
+                at: uint64(block.timestamp),
+                atBlock: uint64(block.number)
             })
         );
         trajectoryId = _trajectories.length - 1;

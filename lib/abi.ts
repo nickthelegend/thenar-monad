@@ -446,6 +446,11 @@ export const AXON_ABI = [
             "name": "closed",
             "type": "bool",
             "internalType": "bool"
+          },
+          {
+            "name": "createdBlock",
+            "type": "uint64",
+            "internalType": "uint64"
           }
         ]
       }
@@ -527,6 +532,11 @@ export const AXON_ABI = [
             "name": "closed",
             "type": "bool",
             "internalType": "bool"
+          },
+          {
+            "name": "createdBlock",
+            "type": "uint64",
+            "internalType": "uint64"
           }
         ]
       }
@@ -581,6 +591,11 @@ export const AXON_ABI = [
           },
           {
             "name": "at",
+            "type": "uint64",
+            "internalType": "uint64"
+          },
+          {
+            "name": "atBlock",
             "type": "uint64",
             "internalType": "uint64"
           }
