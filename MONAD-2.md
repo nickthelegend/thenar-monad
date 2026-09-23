@@ -1,9 +1,9 @@
 # Monad audit, round two
 
 > **Historical.** This audit describes the Monad deployment the project was
-> built on at Monad Blitz Hyderabad V3. thenar.io now settles on Avalanche
-> Fuji, so the claims below are a record of that build rather than a
-> description of what runs today.
+> built on at Monad Blitz Hyderabad V3, `AxonProtocol` v1. Thenar has since
+> moved back to Monad with a new deployment; see the README for what runs
+> today. The claims below are a record of the Blitz build.
 
 
 Written after the v2 deploy. Everything below was verified against the live

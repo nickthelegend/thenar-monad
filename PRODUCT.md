@@ -8,7 +8,7 @@ web
 
 ## Stack
 
-Delegated. Next.js 16 (App Router) + React 19 + TypeScript + Tailwind v4, chosen because the surface is a data-dense web app with a realtime 3D viewport and an on-chain write path. Three.js via react-three-fiber for the teleoperation station. Foundry + Solidity for contracts on Avalanche. Python (numpy + shapely, no CSG booleans) for the parametric robot-arm CAD kernel that exports the GLB the station renders — the same code-generated-geometry approach used in this author's `orchestrator-pad` project.
+Delegated. Next.js 16 (App Router) + React 19 + TypeScript + Tailwind v4, chosen because the surface is a data-dense web app with a realtime 3D viewport and an on-chain write path. Three.js via react-three-fiber for the teleoperation station. Foundry + Solidity for contracts on Monad. Python (numpy + shapely, no CSG booleans) for the parametric robot-arm CAD kernel that exports the GLB the station renders — the same code-generated-geometry approach used in this author's `orchestrator-pad` project.
 
 ## Users
 
@@ -52,7 +52,7 @@ Confirmed and shipping:
 - `PasskeyRegistry` — binds a secp256r1 public key to an address and verifies
   signatures through the P-256 precompile at `0x0100` (EIP-7951 / RIP-7212).
   Register, prove and revoke work end to end at `/passkey`, verified against the
-  deployed contract on Fuji: a real WebCrypto signature returns true, a tampered
+  deployed contract: a real WebCrypto signature returns true, a tampered
   one returns false.
 
   **Authorising a *run* with it does not work as deployed, and must not be
@@ -87,7 +87,7 @@ Constraints and explicit non-capabilities. These are roadmap and must never be p
 - No mobile ego-centric capture.
 
 
-Networks: Avalanche Fuji, chain 43113, `https://api.avax-test.network/ext/bc/C/rpc`. Avalanche C-Chain mainnet, chain 43114, `https://api.avax.network/ext/bc/C/rpc`.
+Networks: Monad testnet, chain 10143, `https://testnet-rpc.monad.xyz`. Monad mainnet, chain 143, `https://rpc.monad.xyz`.
 
 ## Brand Commitments
 
@@ -114,7 +114,7 @@ Binding anti-references. This product must not look like any of these, which are
 Real and citable:
 
 - The incumbent network's public figures: 153,157 contributors, 3,954,581 trajectories, 3,569,236 on-chain records, 1,200-slot tasks, 81.54% pass rate on a representative task, 2:05 average completion — used only as market evidence, never as Thenar's own numbers
-- Avalanche network parameters above
+- Monad network parameters above
 - The event's judging rubric, which the build is scoped against
 
 Absent, and never to be fabricated: Thenar has no users, no revenue, no partners, no benchmarks, no trained policy, and no licence sales. Every number rendered in the app must come from live chain state or be visibly labeled as seeded demonstration data. Task names, scenario art, and score distributions shown before real traffic exist are synthetic and must be labeled as such.

@@ -1,352 +1,196 @@
-# Thenar
+# Thenar on Monad
 
-**The data foundry for physical AI.** Teleoperate a robot arm in the browser,
-have the run measured against the goal datum, and get paid on Avalanche in the
-same transaction that records the trajectory.
+**Robot training data, recorded by people, owned by the people who recorded it,
+and bought by agents.** An operator drives a robot arm in the browser; a
+verifier scores the recording against the goal and signs; one Monad transaction
+records the trajectory and pays the operator from escrowed MON, in under a
+second. A World ID Selfie Check puts that operator on the corpus' share
+whitelist, and every paid run issues their share of the corpus. An AI agent that
+wants a task's corpus asks for it over HTTP, is answered `402`, and either pays
+a cent of USDC on Monad through x402 or shows through World AgentKit that a
+verified human stands behind it. Every sale is logged on Monad with the sha256
+of the bytes served. A lab funds bounties from a Privy wallet whose policy lets
+it spend on nothing else.
 
-Built at Monad Blitz Hyderabad V3.
+Thenar was built at **Monad Blitz Hyderabad V3 (3rd place)** on Monad testnet,
+built out on Avalanche Fuji afterwards, and has now come back to Monad for
+**Metropolis**, Track 4: Trust, Identity & AI Infrastructure. The git history
+says which is which: the Blitz commits, then one squashed commit for the
+Avalanche build, then the move back.
 
 | | |
 | --- | --- |
-| **Live** | **https://thenar.io** |
-| **Repo** | https://github.com/nickthelegend/axon-monad |
-| **Chain** | Avalanche Fuji (43113) |
-| **AxonProtocolV2** | [`0x909d9318d602Cb4Ba84D2851Ab9BFf60DB7077C0`](https://testnet.snowtrace.io/address/0x909d9318d602Cb4Ba84D2851Ab9BFf60DB7077C0) — Sourcify `exact_match`. Adds escrow refunds, relayed submission, and a passkey digest that works. |
-| **AxonProtocol v1** | [`0x025dB4A545FDe9d5Ba61a03f2f7776187645F3b3`](https://testnet.snowtrace.io/address/0x025dB4A545FDe9d5Ba61a03f2f7776187645F3b3) — superseded; its runs are in the archive |
-| **TrajectoryCertificate** | [`0x7a060129A3730852A606Bbe985207952AC25c4f6`](https://testnet.snowtrace.io/address/0x7a060129A3730852A606Bbe985207952AC25c4f6) — Sourcify `exact_match`. Soulbound; names a run's recorder and conveys no rights over the data. |
-| **ConfidentialPayouts** | [`0x8CD8A9211CE32184a89F9ab9DC26224D08B775c2`](https://testnet.snowtrace.io/address/0x8CD8A9211CE32184a89F9ab9DC26224D08B775c2) — Sourcify `exact_match`. ElGamal on secp256k1: earnings add up on chain without the chain holding a number. |
-| **LicenceReceipt** | [`0xbA65eC5479C9E131d158Af1947452C989eF7D143`](https://testnet.snowtrace.io/address/0xbA65eC5479C9E131d158Af1947452C989eF7D143) — Sourcify `exact_match`. Emits an Avalanche Warp message attesting a policy, signed by Fuji's validators. |
-| **ContributionRecord** | [`0xa3b2dd739be34D13ca51a92ADDD0Ce2022E23247`](https://testnet.snowtrace.io/address/0xa3b2dd739be34D13ca51a92ADDD0Ce2022E23247) — Sourcify `exact_match`. A running total of work recorded, in a shape wallets read. Cannot be transferred, sold or redeemed. |
-| **Referrals** | [`0x50414b04e39434Fc66527Fc7c816d835C766AC32`](https://testnet.snowtrace.io/address/0x50414b04e39434Fc66527Fc7c816d835C766AC32) — Sourcify `exact_match`. Pays for bringing someone who then does the work, not for signing up. |
-| **Foundry** | [`0xFf4007B14d3bb18a409EF9eF1ac6DD21e601783E`](https://testnet.snowtrace.io/address/0xFf4007B14d3bb18a409EF9eF1ac6DD21e601783E) — Sourcify `exact_match`. A treasury the protocol's contributors vote to spend on new tasks, weighted by work recorded. |
-| **PrizePool** | [`0x42912F9a437C8EcF2a90Cb18F49D8a54DDe3F84f`](https://testnet.snowtrace.io/address/0x42912F9a437C8EcF2a90Cb18F49D8a54DDe3F84f) — Sourcify `exact_match`. Funded pot for one task; contributors enter themselves and it splits by work the protocol recorded. |
-| **CorpusAccess** | [`0xD6dE823EE979c4aAD3ba8eDe05f6E363DE65E165`](https://testnet.snowtrace.io/address/0xD6dE823EE979c4aAD3ba8eDe05f6E363DE65E165) — Sourcify `exact_match`. Time-boxed read access to the corpus. Sells time, not rights. |
-| **PasskeyRegistry** | [`0x82aE3011CE1dE3fce4fCf0F1A683b5d3826BCE9F`](https://testnet.snowtrace.io/address/0x82aE3011CE1dE3fce4fCf0F1A683b5d3826BCE9F) — Sourcify `exact_match` |
-| **Every contract, read live** | [`https://thenar.io/contracts`](https://thenar.io/contracts) — all eleven with balances, code size, the surface that uses each, and live readings from those with state |
-| **Hosting** | Vercel (frontend, custom domain) + Railway (API, Postgres, and a signer service holding the verifier key) |
-
-> **The directory is named `monad-blitz` and the git remote is `axon-monad`.**
-> Both are from the build this started as; the product is Thenar and it settles
-> on Avalanche. The names are left alone so the history stays traceable.
->
-> **Built at Monad Blitz Hyderabad V3, where it placed 3rd.** It ran on Monad
-> then; it settles on Avalanche now. The Monad deployment and the two
-> transactions in the demo below are left in place because they happened, and
-> the audits in [MONAD.md](MONAD.md) and [MONAD-2.md](MONAD-2.md) are kept as
-> the record of that build — they describe the Monad deployment, not what
-> thenar.io runs today.
+| **Chain** | Monad testnet, chain `10143`. Bounties, payouts, dividends and gas are MON. |
+| **Contracts** | [`lib/deployment.ts`](lib/deployment.ts), written from forge's broadcast record by [`scripts/apply-deploy.mjs`](scripts/apply-deploy.mjs). Every address below comes from there. |
+| **Corpus shares** | [`CorpusShares`](contracts/src/CorpusShares.sol): a token only World ID-verified humans can hold; shares per paid run, by score; dividends in MON at a record date fixed in advance |
+| **Agent payments** | x402 `exact` in USDC on Monad, settled by the [Monad facilitator](https://x402-facilitator.molandak.org/supported), which pays the gas |
+| **Sales log** | [`SalesLog`](contracts/src/SalesLog.sol): every pull, with the sha256 of the file served, in storage and in events |
+| **Identity** | World ID Selfie Check for operators; World AgentKit and AgentBook (World Chain 480) for agents |
+| **Wallets** | Privy: operators sign in with an email and get an embedded wallet on Monad; a lab's budget is a Privy server wallet whose policy only lets it fund bounties |
+| **Repo** | https://github.com/nickthelegend/thenar-monad |
+| **Submission** | [SUBMISSION.md](SUBMISSION.md) |
 
 ---
 
-## Demo
+## What Monad does here that another chain would not
 
-Drive the arm, place the payload, get paid, then buy a licence and watch the fee
-split across every contributor. Both transactions are real and linked below.
+Each of these is load-bearing, and each has a place in the code shaped by it.
 
-![Axon demo — pick and place, payout, and the transaction on Monad](docs/demo.gif)
+| Monad property | Where it shows |
+| --- | --- |
+| **Sub-second, single-slot finality** | A run is paid in the block that records it, and the station reports the settlement latency it measured. A share issue and a sales-log write each land a moment later, so the station shows the payout and the share in one panel instead of promising the second. |
+| **Parallel execution** | `AxonProtocolV2` shards its slot counter: each operator's submit writes only its own shard, so two runs on one task touch no common storage and execute side by side. |
+| **P-256 precompile at `0x0100`** | `PasskeyRegistry` verifies a browser passkey's secp256r1 signature on chain, and a run can be authorised with it. See `/passkey`. |
+| **Gas charged on the limit** | Gas limits are estimated plus a tenth, never doubled; the station and `/post` quote the cost from receipts, and the low-balance floor is one constant. |
+| **100-block `eth_getLogs` cap on public RPCs** | History is read from contract storage through Multicall3, not from logs. A run and a task each record the block they were made in, so a transaction hash is a one-block log query every endpoint answers. `SalesLog` keeps every sale in storage for the same reason. |
+| **Cheap enough for a one-cent sale** | An agent pays one cent of USDC per corpus; the facilitator pays the gas and the sale is final before the response is sent. |
 
-**[▶ Watch the full 2:54 demo](https://github.com/nickthelegend/axon-monad/releases/download/demo-v1/axon-demo.mp4)** — no narration, download or stream from the release.
+---
 
-<video src="https://github.com/nickthelegend/axon-monad/releases/download/demo-v1/axon-demo.mp4" controls muted playsinline width="100%"></video>
+## Architecture
 
-The two transactions the video shows, on Monad Testnet:
+```mermaid
+flowchart LR
+  OP["Operator's browser<br/>station + Privy wallet"]
+  AGENT["Buyer agent<br/>scripts/agent-buy.mjs"]
 
-| Step | Transaction | Block |
-| --- | --- | --- |
-| Payout — `submitTrajectory` records the run and pays the operator | [`0x4496b36a…434c5433`](https://testnet.monadscan.com/tx/0x4496b36a16be3f5b622305d058314212c0ab820eebda8fd1dd5cc2c4434c5433) | 55950354 |
-| Licence — `licensePolicy` pays the whole cap table in one call | [`0x139bc19e…73f14b9a`](https://testnet.monadscan.com/tx/0x139bc19e419194a12034059fb92cc864016a4ee5012b679f9acc1ecc73f14b9a) | 55950691 |
+  subgraph APP["Thenar app (Next.js)"]
+    VERIFY["/api/verify<br/>scores the samples,<br/>signs EIP-712"]
+    SUBMITTED["/api/submitted<br/>reads the receipt,<br/>issues the run's shares"]
+    WORLDV["/api/world/verify<br/>Selfie Check → whitelist"]
+    CORPUS["/api/agent/corpus<br/>x402 + AgentKit"]
+    LAB["/lab, /api/lab<br/>the lab's budget"]
+    DB[("SQLite or Postgres")]
+  end
+
+  subgraph MONAD["Monad testnet"]
+    AXON["AxonProtocolV2<br/>escrow + payout in MON"]
+    SHARES["CorpusShares<br/>whitelisted to humans"]
+    SALES["SalesLog<br/>sha256 of every sale"]
+    PASS["PasskeyRegistry<br/>P-256 at 0x0100"]
+    USDC["USDC"]
+  end
+
+  FAC["Monad x402 facilitator<br/>verify · settle · pays gas"]
+  BOOK["AgentBook<br/>World Chain"]
+  WORLD["World ID"]
+  PRIVY["Privy<br/>embedded wallets,<br/>policy-bound lab wallet"]
+
+  OP -- "samples" --> VERIFY --> DB
+  OP -- "submitTrajectory:<br/>records the run, pays the operator" --> AXON
+  OP -- "tx hash" --> SUBMITTED -- "issue(holder, shares, trajHash)" --> SHARES
+  OP -- "Selfie Check proof" --> WORLDV -- "verify" --> WORLD
+  WORLDV -- "addToControlList" --> SHARES
+  AXON -. "verify passkey" .-> PASS
+  AGENT -- "GET, then agentkit header,<br/>then PAYMENT-SIGNATURE" --> CORPUS
+  CORPUS -- "lookupHuman" --> BOOK
+  CORPUS -- "verify, then settle<br/>after the file is ready" --> FAC -- "transferWithAuthorization" --> USDC
+  CORPUS -- "logSale(sha256)" --> SALES
+  AGENT -. "servedCount(sha256)" .-> SALES
+  OP -- "email sign-in" --> PRIVY
+  LAB -- "eth_signTransaction" --> PRIVY
+  LAB -- "broadcasts the signed bounty" --> AXON
+```
 
 ---
 
 ## Contracts
 
-Solidity, Foundry, deployed and source-verified on **Avalanche Fuji (chain
-43113)**. The full set with addresses is in the table at the top of this file;
-every one reports `exact_match` on Sourcify, so the verified source is the
-source in this repo.
+All deployed by [`contracts/script/DeployMonad.s.sol`](contracts/script/DeployMonad.s.sol)
+in one broadcast. The addresses are in [`lib/deployment.ts`](lib/deployment.ts);
+an empty address there means not deployed yet, and every page says so.
 
-The pair below is the **Monad Testnet** deployment this project was built on at
-Monad Blitz Hyderabad V3. It is kept because it happened, and because the demo
-video and its two transactions are from it. It is not what the live app talks
-to.
+| Contract | Does |
+| --- | --- |
+| AxonProtocolV2 | Tasks, escrow, trajectories, payouts, policies, cap tables. Records a run and pays it in one call. Relayed runs and passkey-authorised runs. |
+| CorpusShares | New for Metropolis. The corpus as shares, whitelisted to verified humans, issued per run by score, with snapshot dividends in MON. |
+| SalesLog | New for Metropolis. Every corpus sale to an agent, with the sha256 of the bytes served. |
+| PasskeyRegistry | Binds a P-256 key to an address; verifies through the precompile at `0x0100`. |
+| TrajectoryCertificate | Soulbound record of who recorded a run. |
+| ContributionRecord | Running total of work recorded. |
+| CorpusAccess | A day of corpus access, paid in MON. |
+| CorpusManifest | The committed Merkle root of each task's corpus. |
+| Referrals, Foundry, PrizePool | A referral bounty, a treasury contributors vote to spend, a pot for task 1. |
+| ConfidentialPayouts | ElGamal on secp256k1: totals add up without the chain holding a number. |
 
-| Contract (Monad Testnet, historical) | Address | Source |
-| --- | --- | --- |
-| `AxonProtocol` — tasks, escrow, trajectories, policies, cap tables | [`0x89384f46…C0d6Ed4`](https://testnet.monadscan.com/address/0x89384f46e430F37DB61Afb98810eba995C0d6Ed4) | [`contracts/src/AxonProtocol.sol`](contracts/src/AxonProtocol.sol) |
-| `PasskeyRegistry` — secp256r1 verification via the P256 precompile at `0x0100` | [`0xD6dE823E…DE65E165`](https://testnet.monadscan.com/address/0xD6dE823EE979c4aAD3ba8eDe05f6E363DE65E165) | [`contracts/src/PasskeyRegistry.sol`](contracts/src/PasskeyRegistry.sol) |
+`LicenceReceipt`, `PolicyAnnouncer` and `PolicyRegistry` stay in the source and
+are not deployed: they attest through Avalanche's Warp and Teleporter.
 
-What the protocol does, in the order the video shows it:
-
-- **`createTask`** escrows `slots × rewardPerTrajectory` up front. A task that
-  cannot pay is not a task.
-- **`submitTrajectory`** takes the trajectory hash, the task, and a score the
-  verifier signed with EIP-712. It records the run and transfers the reward in
-  the same call — there is no separate claim. Replays revert `AlreadySubmitted`;
-  an unsigned score reverts `BadSignature`.
-- **`mintPolicy`** snapshots the contributor cap table when a task fills, weights
-  in basis points summing to 10000.
-- **`licensePolicy`** pays every contributor pro-rata in one transaction. A payee
-  that refuses transfers is credited instead of reverting the sale, and can pull
-  later with `claim`.
-
-Slot counters are **sharded** (`MAX_SHARDS`, `SLOTS_PER_SHARD`) so concurrent
-submissions to the same task write to different storage slots. The design was
-made for Monad, where a shared counter forces optimistically-parallel execution
-to re-run transactions serially. Avalanche C-Chain executes sequentially, so
-that particular argument does not apply on Fuji — the sharding stays because it
-costs nothing, still removes the one contended write, and is what the deployed
-contract does.
-
-Tests: [`contracts/test/AxonProtocol.t.sol`](contracts/test/AxonProtocol.t.sol)
-(23, including a 256-run fuzz and the sharding invariants) and
-[`contracts/test/PasskeyRegistry.t.sol`](contracts/test/PasskeyRegistry.t.sol)
-(10, run against a fork because the P256 precompile cannot be `vm.etch`ed).
-
-```bash
-cd contracts && forge test
-cd contracts && forge test --match-contract PasskeyRegistry --fork-url https://testnet-rpc.monad.xyz
-```
+The Blitz deployment, `AxonProtocol` v1 at
+[`0x89384f46…6Ed4`](https://testnet.monadscan.com/address/0x89384f46e430F37DB61Afb98810eba995C0d6Ed4),
+is still on Monad testnet with its Hyderabad runs, and `/archive` shows it.
 
 ---
-
-## The idea in one paragraph
-
-Physical AI is bottlenecked by data, not compute. Robot manipulation data is
-collected in closed labs — slow, expensive, too narrow to generalise. The
-networks already crowdsourcing it write one small record per trajectory on
-chain (a data ID bound to a task and a wallet) and keep the economics off chain:
-points, non-transferable, settled by hand every fortnight, redeemable for a
-possible future airdrop.
-
-Thenar writes the payment instead. A task is a funded escrow. An accepted
-trajectory pays out in the call that records it. A policy is minted with its
-contributor cap table attached, so a licence fee splits to everyone who trained
-it without anyone claiming anything. That is several times the state writes of a
-bare anchor, and those writes barely touch each other — different operators,
-different tasks, one shared slot counter. It is the workload parallel execution
-exists for, which is why it was built on Monad. It settles on Avalanche now,
-where the argument for the chain is different — see the top of this file.
-
----
-
-## The Monad deployment
-
-Historical. This is what the project ran on at Monad Blitz Hyderabad V3, and
-what the demo video shows. The live app settles on Avalanche Fuji — see the
-table at the top of this file.
-
-| | |
-| --- | --- |
-| AxonProtocol | [`0x89384f46e430F37DB61Afb98810eba995C0d6Ed4`](https://testnet.monadscan.com/address/0x89384f46e430F37DB61Afb98810eba995C0d6Ed4) — **verified**, exact match |
-| PasskeyRegistry | [`0xD6dE823EE979c4aAD3ba8eDe05f6E363DE65E165`](https://testnet.monadscan.com/address/0xD6dE823EE979c4aAD3ba8eDe05f6E363DE65E165) — **verified**, exact match |
-| Network | Monad Testnet, chain `10143` |
-
-## Live endpoints
-
-| | |
-| --- | --- |
-| **Live app** | **https://thenar.io** |
-| Network | Avalanche Fuji, chain `43113` |
-| Verifier key | `0x5beE0b22906c28F747279217F5C8019c39fB086b` — held only by the signer service |
-| Contract metadata | [`https://thenar.io/api/contract`](https://thenar.io/api/contract) — address, chain and full ABI |
-| Health | [`https://thenar.io/api/health`](https://thenar.io/api/health) |
-| Hosting | Vercel serves the pages. **Every `/api/*` request is rewritten to the Railway `web` service**, so an API change deployed only to Vercel changes nothing. Postgres and an isolated signer service also run on Railway |
 
 ## Run it
 
-Requires Node 20+, pnpm, and an injected EVM wallet to submit runs.
+Node 22 or later (scripts import TypeScript directly), pnpm, and Foundry.
 
 ```bash
 pnpm install
-cp .env.example .env.local   # then fill in the two values it lists
-pnpm dev
+cp .env.example .env.local        # fill in the 0x... values
+pnpm dev --port 3222
 ```
 
-Open http://localhost:3000. Browsing, the hub, the leaderboard, the foundry and
-the station all work read-only with no wallet, and the station's practice mode
-records a run without one. Submitting a run for payment needs a wallet on
-**Avalanche Fuji** with a little AVAX for gas — the faucet is at
-https://core.app/tools/testnet-faucet/ (select Fuji C-Chain).
-
-To regenerate the robot arm geometry (optional — the GLB is committed):
+Deploy everything to Monad testnet and point the app at it. The deployer needs
+about 2.5 MON; Monad charges the gas limit, so keep the multiplier at 110:
 
 ```bash
-python3 -m pip install numpy && python3 cad/arm.py
+cd contracts
+set -a; . ../.env.deployer; . ../.env.local; set +a
+forge script script/DeployMonad.s.sol --rpc-url https://testnet-rpc.monad.xyz \
+  --broadcast --gas-estimate-multiplier 110
+cd .. && node scripts/apply-deploy.mjs && node scripts/gen-abi.mjs
 ```
 
-## Verification
-
-Every one of these runs green right now:
+Scripts that import TypeScript run with the resolver:
 
 ```bash
-cd contracts && forge test              # 23 tests, incl. a 256-run fuzz
-cd contracts && forge test --match-contract PasskeyRegistry \
-  --fork-url https://testnet-rpc.monad.xyz            # 10, against the real precompile
-node --experimental-strip-types scripts/check-loop.ts   # IK + scoring
-node scripts/e2e.mjs http://localhost:3000              # live on-chain proof
-node scripts/lifecycle.mjs http://localhost:3000        # create -> fill -> mint -> licence
-npx impeccable detect app components lib                # design detector
-pnpm exec eslint app components lib && pnpm exec tsc --noEmit
+node --import ./test/register.mjs scripts/monad-run.mjs http://localhost:3222 1   # a scripted, paid run
+node --import ./test/register.mjs scripts/agent-buy.mjs http://localhost:3222 1   # an agent buying a corpus
+node --import ./test/register.mjs scripts/shares.mjs state                        # the share register
+node --import ./test/register.mjs scripts/privy-lab.mjs                           # a lab's policy-bound budget
 ```
 
-`scripts/e2e.mjs` is the one that matters: it records a run, has the server
-score and sign it, submits it on chain, and then asserts that the escrow fell
-by exactly the payout, that the operator's balance rose by exactly the payout
-net of gas, that replaying the same trajectory is refused, and that a forged
-score is refused. It passes against the live deployment, not just localhost:
-
-```
-node scripts/e2e.mjs https://thenar.io
-```
-
-`scripts/lifecycle.mjs` covers the other half — creating a funded task, filling
-every slot, minting its policy, and buying a licence, asserting the cap table
-sums to 100% and that the contributor is paid exactly its share.
-
-Two Monad behaviours were worth knowing when these ran there, and are recorded
-because the numbers below came from that deployment. Gas is reserved
-against the **limit**, not usage, and the floor is higher than `value + gas`:
-the same licence call reverted at 0.3 MON and settled at 2. And consensus and
-execution are pipelined, so a transaction receipt means the transaction was
-*ordered*, not that its state change has landed — a freshly funded account can
-still fail the next transaction until the balance actually appears.
-
----
-
-## What is actually built
-
-| Surface | Route | What it does |
-| --- | --- | --- |
-| Landing | `/` | The thesis, with a live THENAR-6 running a pick-and-place cycle |
-| Hub | `/hub` | Task board — scenario, skill, difficulty, lifecycle, slots, reward |
-| Station | `/station/[taskId]` | The teleoperation console: 3D viewport, recorder, live measurement |
-| Portfolio | `/portfolio` | Run history, measurements, earnings, held runs |
-| Leaderboard | `/leaderboard` | Operators ranked by what they produced |
-| Foundry | `/foundry` | Policies with their contributor cap tables and licence split |
-
-**The run loop.** Drive the arm with the arrow keys, `E`/`D` for height and
-space for the jaws. The pose is recorded at 20 Hz. When the payload comes to
-rest the measurement is taken automatically: how far its centre finished from
-the goal datum, against a ±25 mm band. Placement (55%), path smoothness (25%)
-and time against par (20%) resolve to one score on 0–10000. Below 4000 the run
-is rejected and pays nothing.
-
-Scoring is deterministic — the same trajectory always produces the same score,
-because the payout is derived from it and a drifting score would be an
-unauditable payout.
-
-| Task detail | `/task/[id]` | Chain state plus every recorded submission and its score distribution |
-| Verify a run | `/run/[hash]` | Public audit: re-hashes the stored samples and replays the tool path |
-| Post a task | `/post` | Open a bounty and escrow it |
-| Spec sheet | `/spec` | THENAR-6, generated from the CAD constants |
-
-**Nothing on these pages is a fixture.** Tasks, slots, escrow, scores, payouts,
-standings and cap tables are all read from the contract. The trajectories behind
-them are in Postgres, addressed by the same hash the chain records.
-
-### Not built, and never presented as built
-
-The station is still a kinematic sim with analytic grasping, and every payout
-is derived from that — MuJoCo is in the project but measures the recordings
-rather than driving them, reporting per run how far each is from rigid-body
-dynamics (about 1.3 mm, against a ±25 mm band). No IsaacSim augmentation, no
-trained policy, no post-training/DAgger
-loop, no mobile capture, no mainnet deployment. These are named as roadmap in
-the interface wherever a visitor could read them as capabilities.
-
----
-
-## The arm is code
-
-`cad/` is a parametric CAD kernel in Python — numpy only, no CSG booleans, no
-CAD file to open. Every part is a surface of revolution or a swept polygon,
-which keeps it manifold by construction; `arm.py` validates every part for
-closure before export and fails the build if any part is open.
-
-```
-21 parts, 8080 triangles, 0 not closed
-```
-
-It writes `public/models/thenar-6.glb` as a **named node hierarchy** — `J1_yaw`,
-`J2_pitch`, `J3_pitch`, `J5_pitch`, `jaw_left`, `jaw_right` — which is what lets
-the viewport drive the arm joint by joint from the IK solver rather than playing
-a baked animation. It also writes one STL per part to `cad/exports/`.
-
-Dimensions are named constants at the top of `cad/arm.py`; change one and rerun.
-`lib/kinematics.ts` carries the same link lengths in metres — the arm and its
-solver are one part.
-
----
-
-## Design
-
-The visual system is documented in [DESIGN.md](DESIGN.md) and the product truth
-it serves in [PRODUCT.md](PRODUCT.md).
-
-The world is **the inspection bench**: layout dye as the ground, a scribed line
-as the ink, brass for anything the operator is paid, and a two-value verdict for
-anything measured. It is not decoration — Thenar's semantics are metrology, so
-every recurring device (tolerance band, gauge-block slot tally, datum zone,
-leader-line callouts) is a real instrument-shop device doing its actual job.
-
-Verified clean by `npx impeccable detect` across all ten routes and the
-whole source tree.
-
----
-
-## Deployment
-
-The contract is deployed and verified. Redeploy with:
+The agent needs testnet USDC from [faucet.circle.com](https://faucet.circle.com)
+(Monad testnet) and no MON. To let it earn free pulls, register its wallet in
+AgentBook with World App:
 
 ```bash
-cd contracts && forge script script/Deploy.s.sol:Deploy   --rpc-url https://testnet-rpc.monad.xyz --broadcast --slow
+npx @worldcoin/agentkit-cli register 0x9a6C46E7115CfB5FF5a2265E5a1B955038cb63aA
 ```
 
-It needs `DEPLOYER_PRIVATE_KEY` and `VERIFIER_ADDRESS` in the environment, and
-it seeds eight funded task bounties as part of the same run.
+Tests:
 
-**Sharded slot accounting.** A single `slotsFilled` counter is one storage
-slot that every operator on a task writes to, which on an optimistically
-parallel chain forces them to re-execute serially — the exact anti-pattern
-Monad punishes, and the reason this was built. On Avalanche's sequential
-C-Chain the contention argument does not apply; the shape is kept because it is
-what is deployed and it costs nothing. Each operator instead writes only the shard their address
-maps to, and each shard carries its own quota, so concurrent submissions from
-different operators touch no shared state. A caller whose own shard is spent
-falls back to a scan; that is the only path that can contend and it only
-happens at the margin. `slotsFilledOf` sums the shards as a view, so reads
-never contend at all.
-
-The first deployment (`0x82aE3011CE1dE3fce4fCf0F1A683b5d3826BCE9F`) carried the
-single-counter version and is kept for the record.
-
-**Passkeys.** Both chains ship the P-256 precompile at `0x0100` — EIP-7951 on
-Monad, RIP-7212 on Avalanche — so a
-secp256r1 signature — the curve a passkey already uses — can be verified by the
-chain itself. `PasskeyRegistry` binds a public key to an address and spends
-signatures through it, and `submitTrajectoryWithPasskey` lets an operator
-authorise a run with that key rather than their wallet. The browser surface that
-demonstrated it was cut when wallet connection moved to RainbowKit, so the proof
-now lives in the fork tests: a genuine WebCrypto vector is accepted, the same
-signature with one bit flipped is refused, for about 34k gas. Ethereum mainnet has no
-such precompile; verifying secp256r1 there costs hundreds of thousands of gas
-in Solidity.
-
-This exists because Thenar's operators are gig workers, and the seed phrase is
-where that funnel dies.
-
-**The economics.** `createTask` escrows MON against a slot count.
-`submitTrajectory` checks a verifier signature, records the trajectory hash and
-its content address, decrements the slot, and transfers the operator's share —
-one call. `mintPolicy` snapshots the contributor cap table weighted by
-cumulative quality. `licensePolicy` fans a licence fee out to every contributor
-in a single transaction, crediting anyone whose transfer fails rather than
-reverting the sale.
+```bash
+pnpm test:unit                    # 86 unit tests
+cd contracts && forge test        # 117 contract tests, including CorpusShares and SalesLog
+```
 
 ---
 
-## Stack
+## Stated plainly: what is not proven
 
-Next.js 16 · React 19 · TypeScript · Tailwind v4 · three.js via
-react-three-fiber · Python (numpy) for the CAD kernel · Foundry for the
-contracts.
+- **Testnet only.** Nothing here is on Monad mainnet.
+- **Until `lib/deployment.ts` has addresses, nothing is deployed.** The pages
+  say so rather than showing figures.
+- **No run here has been driven by a person yet** on this deployment; scripted
+  runs from `scripts/monad-run.mjs` say that they are scripted wherever they
+  are shown.
+- **Monadscan's index needs a key.** The per-address call history on
+  `/contracts`, `/operator` and `/portfolio` reads Etherscan's V2 API and says
+  so when `ETHERSCAN_API_KEY` is unset. Everything else reads the chain.
+- **Kinematic, not rigid-body physics.** The station solves inverse kinematics
+  and grasps analytically. No trained policy exists yet.
+
+---
+
+## History
+
+- **Monad Blitz Hyderabad V3** — the protocol, the station, passkeys through the
+  P-256 precompile, sharded slots. 3rd place. The commits before
+  "Build the product on Avalanche Fuji".
+- **Avalanche Fuji** — the product built out: lab, hub, policies, licences,
+  referrals, prize pool, AxonProtocolV2, the test suites. One squashed commit;
+  the long form is in [docs/history/README-avalanche.md](docs/history/README-avalanche.md).
+- **Back on Monad, for Metropolis** — everything after that commit.

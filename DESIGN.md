@@ -1,6 +1,6 @@
 ---
 name: Thenar
-description: The data foundry for physical AI — teleoperate, measure, get paid on Avalanche.
+description: The data foundry for physical AI — teleoperate, measure, get paid on Monad.
 colors:
   ink-0: "#EFEFEE"
   ink-1: "#E4E4E2"
