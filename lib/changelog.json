@@ -1,5 +1,17 @@
 [
   {
+    "hash": "91e0ccf",
+    "date": "2026-09-24T00:49:18+05:30",
+    "subject": "Put the SO-101 on the bench and give the props real models",
+    "body": "Your SO-101 is now the default arm. Every single-arm task runs on it, so\n10 of the 11 live tasks now draw the MG996R arm and record its joints.\n\"[arm thenar6]\" still selects the THENAR-6, and the two-arm task keeps its\nTHENAR-6 pair. /post always writes the arm tag, so a task never depends on\na default. Joint callouts sit at the SO-101's own shoulder and base.\n\nSeventeen props are now CC0 photoscans from Poly Haven instead of\nprocedural stand-ins. Ten replace procedural props: bottle, can, bowl,\nspoon, ball, screwdriver, plate, basket, crate and tray. Seven are new:\napple, lemon, onion, pliers, stapler, cutting board and pot. Each is\nconverted by scripts/real-props.mjs into the props' convention and passes\nthe Khronos validator. The camera scan maps apple, orange and scissors onto\nthe new ones. The laptop and the drawer stay procedural: the live tasks ask\nfor a closed laptop and an open drawer, and the scans are an open laptop\nand a closed chest.\n\nAlso fixed along the way:\n- The CSP blocked the blob: URLs GLTFLoader reads embedded textures\n  through, so every textured model failed to load.\n- Previews are now stills from one shared offscreen renderer. The old\n  per-tile canvases hit the browser's WebGL context cap and left four\n  tiles blank on a full screen; /post now renders 41 of 41 with no canvas.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+  },
+  {
+    "hash": "572c590",
+    "date": "2026-09-24T00:31:42+05:30",
+    "subject": "Point the production frontend at the Monad backend, and stop pinning Arc addresses",
+    "body": "vercel.json set NEXT_PUBLIC_AXON_ADDRESS and three other contract addresses\nfrom the Arc deployment. Those override lib/deployment.ts, so any Vercel\nbuild from this tree would have read Arc addresses on Monad. It now sets\nonly what the deployment file cannot: BACKEND_ORIGIN, the Railway web\nservice the frontend proxies /api to, and the public web-push key. The\nPrivy and World app ids are Vercel project variables.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+  },
+  {
     "hash": "9521c85",
     "date": "2026-09-24T00:29:36+05:30",
     "subject": "Refuse to sign runs whose arm did not move the payload",
@@ -346,17 +358,5 @@
     "date": "2026-09-05T19:25:55+05:30",
     "subject": "fix(post): form validity gates the button, not the wallet",
     "body": "A task with a three-character instruction or zero slots showed its inline\nerror but left the button live, because the disabled check only applied once\na wallet was connected. The definition of a task is wrong or right on its own;\nonly affordability depends on the wallet.\n\nThe two gates are now separate, and the button says which one is failing:\n'Finish the definition', 'Connect a wallet', or 'Escrow exceeds your balance'.\n\nCo-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
-  },
-  {
-    "hash": "32ccbb5",
-    "date": "2026-09-05T18:51:08+05:30",
-    "subject": "test: prove the deferred-payment path on chain",
-    "body": "A contributor whose wallet refuses transfers must not be able to revert their\nown submission, so the protocol credits claimable instead of pushing. That\nbranch was covered by a unit test but had never executed against the real\nchain.\n\nRefusingContributor deploys, submits, refuses the payout, and then claims it:\nthe submission succeeded, 0 MON landed, 0.005958 MON was credited, and claim()\npulled exactly that once it stopped refusing.\n\nAll five contract entry points are now proven on Monad testnet — createTask,\nsubmitTrajectory, mintPolicy, licensePolicy and claim.\n\nCo-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
-  },
-  {
-    "hash": "d8df1ed",
-    "date": "2026-09-05T18:16:22+05:30",
-    "subject": "feat(deploy): live on Railway with a persistent trajectory store",
-    "body": "https://web-production-2d1d0.up.railway.app\n\nAll five health checks pass in production and the end-to-end proof runs green\nagainst the deployed app, not just localhost — a real transaction settled in\n747 ms with the escrow and the operator's balance both moving by exactly the\npayout.\n\nThe trajectory store sits on a mounted volume, so runs survive a redeploy.\nbetter-sqlite3 needed naming under pnpm.onlyBuiltDependencies for its native\nbinding to build, and the port had to be pinned since Railway injects its own.\n\nAlso surfaces Monad's reserve rule where an operator will actually hit it: the\nstation warns below the floor before the wallet can, and the wallet's own\nwording for it ('Signer had insufficient balance') is translated into something\nan operator can act on.\n\nCo-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
   }
 ]
