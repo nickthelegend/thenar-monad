@@ -77,6 +77,9 @@ export type SnapshotResult = {
   unsettled: number;
   props: number;
   uploaded: boolean;
+  /** False when no bucket is configured, which is not the same failure as a
+   *  bucket that refused: one is this server's setup, the other its upstream. */
+  configured: boolean;
   detail: string;
 };
 
@@ -114,7 +117,7 @@ export async function snapshot(stamp: string): Promise<SnapshotResult> {
   if (!cfg) {
     return {
       key: objectKey, bytes: body.length, sha256: digest, ...counts,
-      uploaded: false,
+      uploaded: false, configured: false,
       detail: "No bucket configured; snapshot was taken and verified but not stored.",
     };
   }
@@ -139,14 +142,14 @@ export async function snapshot(stamp: string): Promise<SnapshotResult> {
     const text = await res.text().catch(() => "");
     return {
       key: objectKey, bytes: body.length, sha256: digest, ...counts,
-      uploaded: false,
+      uploaded: false, configured: true,
       detail: `Storage refused the upload: ${res.status} ${text.slice(0, 200)}`,
     };
   }
 
   return {
     key: objectKey, bytes: body.length, sha256: digest, ...counts,
-    uploaded: true,
+    uploaded: true, configured: true,
     detail: `Stored in ${cfg.bucket}.`,
   };
 }

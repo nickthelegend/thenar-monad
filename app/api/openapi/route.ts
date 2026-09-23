@@ -138,9 +138,10 @@ function spec() {
       "/api/snapshot": { get: { summary: "The most recent corpus snapshot written to object storage.", responses: {
         "200": ok("Snapshot metadata; the snapshot was stored."),
         "401": ok("CRON_SECRET is set and the request did not carry it."),
-        // Documented because it is what this deployment answers: the snapshot
-        // is taken and hashed, and there is no bucket to put it in.
-        "502": ok("The snapshot was taken and verified, but no bucket is configured to store it."),
+        "502": ok("The snapshot was taken and verified, and the bucket refused it."),
+        // Documented because it is what a deployment without storage answers:
+        // the snapshot is taken and hashed, and there is no bucket to put it in.
+        "503": ok("The snapshot was taken and verified, but no bucket is configured to store it."),
       } } },
     },
   };

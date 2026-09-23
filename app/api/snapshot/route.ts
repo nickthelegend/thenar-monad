@@ -23,7 +23,9 @@ export async function GET(req: Request) {
 
   try {
     const result = await snapshot(stamp);
-    return NextResponse.json(result, { status: result.uploaded ? 200 : 502 });
+    // 503 when there is nowhere to store it, 502 when the store refused: a
+    // missing bucket is this server's configuration, not an upstream failure.
+    return NextResponse.json(result, { status: result.uploaded ? 200 : result.configured ? 502 : 503 });
   } catch (e) {
     return NextResponse.json(
       { error: e instanceof Error ? e.message : "Snapshot failed." },
