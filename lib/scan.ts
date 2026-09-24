@@ -142,6 +142,15 @@ export function homography(from: Pt[], to: Pt[]): number[] {
   return [...solve(A, b, 8), 1];
 }
 
+/** The inverse of a 3×3 homography, normalised so h33 = 1: table mm back to image pixels. */
+export function invert(H: number[]): number[] {
+  const [a, b, c, d, e, f, g, h, i] = H;
+  const A = e * i - f * h, B = -(d * i - f * g), C = d * h - e * g;
+  const det = a * A + b * B + c * C;
+  const m = [A, -(b * i - c * h), b * f - c * e, B, a * i - c * g, -(a * f - c * d), C, -(a * h - b * g), a * e - b * d].map((v) => v / det);
+  return m.map((v) => v / m[8]);
+}
+
 export function apply(H: number[], { x, y }: Pt): Pt {
   const w = H[6] * x + H[7] * y + H[8];
   return { x: (H[0] * x + H[1] * y + H[2]) / w, y: (H[3] * x + H[4] * y + H[5]) / w };
@@ -167,3 +176,61 @@ export function checkQuad(pts: Pt[]): string | null {
 
 /** Where an object's box touches the table: the middle of its bottom edge. */
 export const footprint = (b: { x: number; y: number; w: number; h: number }): Pt => ({ x: b.x + b.w / 2, y: b.y + b.h });
+
+/**
+ * Where the camera stood, in the table's frame (mm), recovered from the sheet.
+ *
+ * The four corners fix the table→image homography, and with square pixels and
+ * the principal point at the image centre that is enough to recover the
+ * focal length and the camera's pose (one-view calibration). Null when the
+ * view is too square-on to separate them.
+ */
+export function cameraFrom(H: number[], size: { w: number; h: number }): { x: number; y: number; z: number } | null {
+  // Table → image, with the image origin moved to its centre.
+  const M = invert(H);
+  const cx = size.w / 2, cy = size.h / 2;
+  const col = (j: number) => [M[j] - cx * M[6 + j], M[3 + j] - cy * M[6 + j], M[6 + j]];
+  const h1 = col(0), h2 = col(1), h3 = col(2);
+  // The two constraints on ω = diag(1/f², 1/f², 1), solved together for a = 1/f²:
+  // the table's axes are perpendicular (h1ᵀωh2 = 0) and equally long
+  // (h1ᵀωh1 = h2ᵀωh2). Either alone is degenerate when a table axis is
+  // parallel to the image, which is exactly the square-on view a person takes.
+  const A1 = h1[0] * h2[0] + h1[1] * h2[1], B1 = h1[2] * h2[2];
+  const A2 = h1[0] ** 2 + h1[1] ** 2 - h2[0] ** 2 - h2[1] ** 2, B2 = h1[2] ** 2 - h2[2] ** 2;
+  const a = -(A1 * B1 + A2 * B2) / (A1 * A1 + A2 * A2);
+  const f2 = 1 / a;
+  if (!(f2 > 0) || !Number.isFinite(f2)) return null;
+  const f = Math.sqrt(f2);
+  const kinv = (v: number[]) => [v[0] / f, v[1] / f, v[2]];
+  const r1 = kinv(h1), r2 = kinv(h2), t = kinv(h3);
+  const lam = 1 / Math.hypot(...r1);
+  const R1 = r1.map((v) => v * lam), R2 = r2.map((v) => v * lam), T = t.map((v) => v * lam);
+  const R3 = [R1[1] * R2[2] - R1[2] * R2[1], R1[2] * R2[0] - R1[0] * R2[2], R1[0] * R2[1] - R1[1] * R2[0]];
+  // Camera centre C = −Rᵀ·t, with R's columns R1, R2, R3.
+  const C = [0, 1, 2].map((i) => -([R1, R2, R3][i][0] * T[0] + [R1, R2, R3][i][1] * T[1] + [R1, R2, R3][i][2] * T[2]));
+  return { x: C[0], y: C[1], z: Math.abs(C[2]) };
+}
+
+/**
+ * The centre of an object's footprint on the table (mm), from its detection
+ * box and the sheet's homography.
+ *
+ * The bottom of a box is not where the object stands. For a rounded object
+ * it is where a ray grazing its front-bottom edge meets the table, which is
+ * r·tan(θ/2) short of the centre: r the object's half-width, θ the camera's
+ * elevation over it. Measured on a rendered photo with a known layout, the
+ * bottom edge put a 98 mm apple 38 mm short. So: the bottom edge's two ends
+ * give the width on the table, the sheet gives where the camera is
+ * (cameraFrom), and the centre is that offset further from the camera.
+ */
+export function groundCentre(H: number[], b: { x: number; y: number; w: number; h: number }, size: { w: number; h: number }): Pt {
+  const y = b.y + b.h;
+  const near = apply(H, { x: b.x + b.w / 2, y });
+  const left = apply(H, { x: b.x, y }), right = apply(H, { x: b.x + b.w, y });
+  const r = Math.hypot(right.x - left.x, right.y - left.y) / 2;
+  const cam = cameraFrom(H, size);
+  if (!cam) return near;
+  const dx = near.x - cam.x, dy = near.y - cam.y, d = Math.hypot(dx, dy) || 1;
+  const off = r * Math.tan(Math.atan2(cam.z, d) / 2);
+  return { x: near.x + (dx / d) * off, y: near.y + (dy / d) * off };
+}

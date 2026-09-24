@@ -41,11 +41,15 @@ export default function InventoryPage() {
       key: `p:${p.id}`, label: p.label, url: p.url, bytes: p.bytes,
       kind: p.role as Kind, room: p.scenario,
       detail: `${p.widthMm} mm`,
+      scan: Boolean(p.source),
+      source: p.source,
     }));
     const rooms = ENVIRONMENTS.map((e) => ({
       key: `e:${e.id}`, label: e.label, url: e.url, bytes: e.bytes,
       kind: "room" as Kind, room: e.id,
       detail: `${e.surfaceWidthMm} × ${e.surfaceDepthMm} mm`,
+      scan: false,
+      source: undefined as string | undefined,
     }));
     return [...rooms, ...props]
       .filter((i) => kind === "all" || i.kind === kind)
@@ -63,10 +67,12 @@ export default function InventoryPage() {
     <div className="mx-auto max-w-[1200px] px-5 py-8">
       <h1 className="font-display text-4xl font-600 leading-none tracking-[-0.01em]">Inventory</h1>
       <p className="mt-3 max-w-[64ch] text-[15px] leading-relaxed text-scribe-2">
-        Every object a task can be built from. Each one is generated from named
-        dimensions by the same kernel that makes the arm &mdash; there is no modelling
-        package in the loop and no asset file to lose. Pick a room and two objects
-        when you post a task and the station draws exactly these, at these sizes.
+        Every object a task can be built from. The rooms and most props are
+        generated from named dimensions by the same kernel that makes the arm;
+        the ones marked <span className="font-mono text-[13px] uppercase tracking-[0.12em] text-go">scan</span> are
+        photoscans of real objects from Poly Haven, released CC0. Pick a room and
+        two objects when you post a task and the station draws exactly these, at
+        these sizes.
       </p>
 
       <div className="mt-6 flex flex-wrap items-center gap-x-8 gap-y-2 border-y border-rule py-3">
@@ -104,7 +110,12 @@ export default function InventoryPage() {
             <li key={i.key} className="flex flex-col overflow-hidden border border-rule bg-ink-2">
               <PropPreview url={i.url} className="h-[104px] w-full" />
               <div className="border-t border-rule px-2 py-1.5">
-                <span className="block truncate font-mono text-[12px] leading-tight text-scribe">{i.label}</span>
+                <span className="flex items-baseline justify-between gap-2">
+                  <span className="block truncate font-mono text-[12px] leading-tight text-scribe">{i.label}</span>
+                  {i.scan ? (
+                    <span className="shrink-0 font-mono text-[10px] uppercase tracking-[0.12em] text-go" title={i.source}>scan</span>
+                  ) : null}
+                </span>
                 <span className="mt-0.5 flex items-baseline justify-between gap-2 font-mono text-[12px] tabular-nums text-scribe-3">
                   <span>{i.detail}</span>
                   <span>{(i.bytes / 1024).toFixed(0)} kB</span>

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/cn";
-import { A4_GAP_MM, apply, checkQuad, checkScan, footprint, homography, sheetCorners, type Pt, type ScannedScene } from "@/lib/scan";
+import { A4_GAP_MM, apply, checkQuad, checkScan, footprint, groundCentre, homography, invert, sheetCorners, type Pt, type ScannedScene } from "@/lib/scan";
 import { detect, loadDetector, sampleColour, propFor } from "@/lib/detect";
 
 /**
@@ -15,7 +15,11 @@ import { detect, loadDetector, sampleColour, propFor } from "@/lib/detect";
  * the object to move and the one to put it on hands the page a scene it writes
  * into the task's name on chain.
  */
-export type ScannedObject = { id: number; label: string; score: number | null; px: Pt; mm: Pt | null; colour: string; prop: string | null };
+export type ScannedObject = {
+  id: number; label: string; score: number | null; px: Pt; mm: Pt | null; colour: string; prop: string | null;
+  /** The detector's box, for a detected object: its footprint centre is measured from it (lib/scan.ts groundCentre). */
+  box?: { x: number; y: number; w: number; h: number };
+};
 export type ScanResult = { scene: ScannedScene; pick: ScannedObject; place: ScannedObject };
 
 const CORNERS = sheetCorners();
@@ -42,7 +46,16 @@ export function ScanPanel({ onScene }: { onScene: (r: ScanResult | null) => void
   useEffect(() => { loadDetector().catch(() => {}); }, []);
   useEffect(() => () => stream.current?.getTracks().forEach((t) => t.stop()), []);
 
-  const measure = useCallback((list: ScannedObject[], h: number[] | null) => list.map((o) => ({ ...o, mm: h ? apply(h, o.px) : null })), []);
+  // A detected object is measured from its box; one added by a click is where
+  // the click was, because that is the point the person chose.
+  const measure = useCallback((list: ScannedObject[], h: number[] | null) =>
+    list.map((o) => {
+      if (!h) return { ...o, mm: null, px: o.box ? footprint(o.box) : o.px };
+      if (!o.box) return { ...o, mm: apply(h, o.px) };
+      // The marker moves to the centre it measured, so the picture and the numbers agree.
+      const mm = groundCentre(h, o.box, { w: frame.current?.width ?? 0, h: frame.current?.height ?? 0 });
+      return { ...o, mm, px: apply(invert(h), mm) };
+    }), []);
 
   // ---- camera and photo ----------------------------------------------------------
 
@@ -90,7 +103,7 @@ export function ScanPanel({ onScene }: { onScene: (r: ScanResult | null) => void
     say("Looking for objects…");
     try {
       const found = await detect(frame.current!);
-      const list = found.map((d) => ({ id: nextId.current++, label: d.label, score: d.score, px: footprint(d.box), mm: null, colour: sampleColour(frame.current!, d.box), prop: propFor(d.label) }));
+      const list = found.map((d) => ({ id: nextId.current++, label: d.label, score: d.score, px: footprint(d.box), box: d.box, mm: null, colour: sampleColour(frame.current!, d.box), prop: propFor(d.label) }));
       setObjects(list);
       say(`${list.length ? `Found ${list.map((o) => o.label).join(", ")}. ` : "Nothing recognised; you can add objects by clicking. "}Now click the sheet's near-left corner, the one nearest the arm.`);
     } catch (e) {

@@ -102,7 +102,7 @@ export default function AgentsPage() {
         <dt className="font-mono text-[12px] uppercase tracking-[0.12em] text-scribe-3">Paid to</dt>
         <dd>
           {terms?.payTo ? (
-            <a href={explorerAddress(terms.payTo)} target="_blank" rel="noreferrer" className="font-mono text-[13px] text-signal hover:text-signal-hi">
+            <a href={explorerAddress(terms.payTo)} target="_blank" rel="noreferrer" className="break-all font-mono text-[13px] text-signal hover:text-signal-hi">
               {terms.payTo} &rarr;
             </a>
           ) : (
@@ -114,7 +114,7 @@ export default function AgentsPage() {
         <dd className="text-scribe-2">
           {terms?.salesLog && terms.salesLogUrl ? (
             <>
-              <a href={terms.salesLogUrl} target="_blank" rel="noreferrer" className="font-mono text-[13px] text-signal hover:text-signal-hi">
+              <a href={terms.salesLogUrl} target="_blank" rel="noreferrer" className="break-all font-mono text-[13px] text-signal hover:text-signal-hi">
                 SalesLog {short(terms.salesLog)}
               </a>
               {" "}— a contract only the seller can write to. Every pull is logged there with the sha256 of
@@ -135,7 +135,7 @@ export default function AgentsPage() {
         <dt className="font-mono text-[12px] uppercase tracking-[0.12em] text-scribe-3">Human check</dt>
         <dd className="text-scribe-2">
           AgentBook{" "}
-          <a href={`https://worldscan.org/address/${AGENT_CORPUS.agentBook.address}`} target="_blank" rel="noreferrer" className="font-mono text-[13px] text-signal hover:text-signal-hi">
+          <a href={`https://worldscan.org/address/${AGENT_CORPUS.agentBook.address}`} target="_blank" rel="noreferrer" className="break-all font-mono text-[13px] text-signal hover:text-signal-hi">
             {short(AGENT_CORPUS.agentBook.address)}
           </a>{" "}
           on World Chain, read at the moment of the request

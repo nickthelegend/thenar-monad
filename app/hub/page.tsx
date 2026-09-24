@@ -56,6 +56,44 @@ export default function HubPage() {
     return [...list].sort(by[sort]);
   }, [tasks, scenario, skill, arm, openOnly, sort, q]);
 
+  /**
+   * One row per offer, not per transaction.
+   *
+   * A funder posting the same bounty five times — which is what a lab's
+   * budget does when it tops a task up — put five identical rows on the board,
+   * and the board read as padding. Rows with the same funder and the same name
+   * on chain collapse into the first, which says how many more there are and
+   * opens them on request. Nothing is dropped: every one is a real task with
+   * its own escrow, and the toggle and the API both still show them all.
+   */
+  const [opened, setOpened] = useState<Set<string>>(() => new Set());
+  const groupOf = (t: TaskWithScene) => `${t.funder.toLowerCase()}|${t.chainName}`;
+  const { shown, more } = useMemo(() => {
+    const first = new Map<string, number>();
+    const more = new Map<number, number>();
+    const shown: TaskWithScene[] = [];
+    for (const t of rows) {
+      const g = `${t.funder.toLowerCase()}|${t.chainName}`;
+      const lead = first.get(g);
+      if (lead === undefined) {
+        first.set(g, t.id);
+        shown.push(t);
+        continue;
+      }
+      more.set(lead, (more.get(lead) ?? 0) + 1);
+      if (opened.has(g)) shown.push(t);
+    }
+    return { shown, more };
+  }, [rows, opened]);
+  const toggleGroup = (t: TaskWithScene) =>
+    setOpened((o) => {
+      const n = new Set(o);
+      const g = groupOf(t);
+      if (n.has(g)) n.delete(g);
+      else n.add(g);
+      return n;
+    });
+
   // Thenar has no third-party funders yet. Counted rather than asserted: the
   // product's own rule is that anything shown before real traffic exists is
   // labelled, not left to look like organic demand.
@@ -271,7 +309,7 @@ export default function HubPage() {
               </tr>
             </thead>
             <tbody>
-              {rows.map((t) => (
+              {shown.map((t) => (
                 <tr key={t.id} className="group border-b border-rule transition-colors hover:bg-ink-2">
                   <Td><span className="font-mono text-[12px] text-scribe-3">#{t.id}</span></Td>
                   <Td>
@@ -280,6 +318,7 @@ export default function HubPage() {
                         {t.name}
                       </Link>
                       <TaskChips task={t} />
+                      <MoreToggle count={more.get(t.id) ?? 0} open={opened.has(groupOf(t))} onToggle={() => toggleGroup(t)} />
                       <span className="font-mono text-[12px] text-scribe-3">
                       <span className="capitalize">{t.scenario}</span>
                       <span className="mx-1.5 text-rule-strong">/</span>
@@ -363,7 +402,7 @@ export default function HubPage() {
           </table>
 
           <ul className="mt-6 flex flex-col lg:hidden">
-            {rows.map((t) => (
+            {shown.map((t) => (
               <li key={t.id} className="border-b border-rule py-4">
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex min-w-0 flex-col gap-1">
@@ -379,6 +418,7 @@ export default function HubPage() {
                     </span>
                     <Link href={`/task/${t.id}`} className="text-[15px] text-scribe">{t.name}</Link>
                     <TaskChips task={t} className="mt-1" />
+                    <MoreToggle count={more.get(t.id) ?? 0} open={opened.has(groupOf(t))} onToggle={() => toggleGroup(t)} />
                       <span className="mt-0.5 block font-mono text-[12px] text-scribe-3">
                         {payloadLabel(t.scene, t.scenario)}
                         <span className="mx-1.5 text-rule-strong">&rarr;</span>
@@ -436,6 +476,23 @@ function Reading({ label, value, unit, tone }: { label: string; value: string; u
         {unit ? <span className="ml-1 text-[12px] text-scribe-3">{unit}</span> : null}
       </span>
     </span>
+  );
+}
+
+/** The row's "and N more like it" control. A component of its own, not one
+ *  declared inside the page: that remounted the button on every refetch,
+ *  every six seconds, and a click landing between two renders did nothing. */
+function MoreToggle({ count, open, onToggle }: { count: number; open: boolean; onToggle: () => void }) {
+  if (!count) return null;
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      className="self-start font-mono text-[11px] uppercase tracking-[0.12em] text-scribe-3 hover:text-signal"
+      aria-expanded={open}
+    >
+      {open ? `Hide ${count} identical` : `+${count} identical from this funder`}
+    </button>
   );
 }
 

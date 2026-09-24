@@ -63,3 +63,29 @@ test("an untagged task runs on the SO-101, unless it needs two arms", async () =
   assert.equal(armOf("Steady the crate with both arms and place the battery inside"), "thenar6");
   assert.equal(armOf("Steady the crate with both arms [arm so101]"), "so101", "a tag always wins");
 });
+
+test("a detected object is measured at its footprint centre, not its front edge", async () => {
+  const { homography, apply, invert, groundCentre, cameraFrom, sheetCorners } = await import("../lib/scan.ts");
+  // The camera of the rendered test photo: arm frame, 1600×1200, fov 50°,
+  // at (-320, 0, 520) mm looking at (300, 0, 0) mm.
+  const W = 1600, Hh = 1200, f = (Hh / 2) / Math.tan((50 * Math.PI) / 360);
+  const eye = [-320, 0, 520], at = [300, 0, 0];
+  const sub = (a, b) => a.map((v, i) => v - b[i]), norm = (v) => v.map((x) => x / Math.hypot(...v));
+  const cross = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+  const fwd = norm(sub(at, eye)), right = norm(cross(fwd, [0, 0, 1])), up = cross(right, fwd);
+  const project = (p) => { const d = sub(p, eye), z = d[0] * fwd[0] + d[1] * fwd[1] + d[2] * fwd[2]; return { x: W / 2 + (f * (d[0] * right[0] + d[1] * right[1] + d[2] * right[2])) / z, y: Hh / 2 - (f * (d[0] * up[0] + d[1] * up[1] + d[2] * up[2])) / z }; };
+  const H = homography(sheetCorners().map((c) => project([c.x, c.y, 0])), sheetCorners());
+  // A 98 mm ball standing at (200, 100) mm: its image box, from its silhouette.
+  const r = 49, c = [200, 100, r], pts = [];
+  for (let i = 0; i < 40; i++) for (let j = 0; j <= 20; j++) { const t = (i / 40) * 2 * Math.PI, u = (j / 20) * Math.PI; pts.push(project([c[0] + r * Math.sin(u) * Math.cos(t), c[1] + r * Math.sin(u) * Math.sin(t), c[2] + r * Math.cos(u)])); }
+  const xs = pts.map((p) => p.x), ys = pts.map((p) => p.y);
+  const box = { x: Math.min(...xs), y: Math.min(...ys), w: Math.max(...xs) - Math.min(...xs), h: Math.max(...ys) - Math.min(...ys) };
+  const bottomEdge = apply(H, { x: box.x + box.w / 2, y: box.y + box.h });
+  const centre = groundCentre(H, box, { w: W, h: Hh });
+  const cam = cameraFrom(H, { w: W, h: Hh });
+  assert.ok(Math.hypot(cam.x + 320, cam.y, cam.z - 520) < 2, `camera recovered at ${cam.x.toFixed(0)}, ${cam.y.toFixed(0)}, ${cam.z.toFixed(0)} mm`);
+  assert.ok(Math.hypot(bottomEdge.x - 200, bottomEdge.y - 100) > 15, "the bottom edge alone is well short");
+  assert.ok(Math.hypot(centre.x - 200, centre.y - 100) < 10, `centre measured at ${centre.x.toFixed(0)}, ${centre.y.toFixed(0)} mm`);
+  const back = apply(invert(H), apply(H, { x: 700, y: 650 }));
+  assert.ok(Math.hypot(back.x - 700, back.y - 650) < 1e-6, "invert undoes the homography");
+});

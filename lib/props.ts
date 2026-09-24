@@ -9,6 +9,9 @@ export type Prop = {
   widthMm: number;
   url: string;
   bytes: number;
+  /** Where a photoscanned model came from (Poly Haven, CC0). Absent on the
+   *  procedural props cad/props.py generates. */
+  source?: string;
 };
 
 export const PROPS = index.props as Prop[];

@@ -54,11 +54,12 @@ export default function So101SpecPage() {
       </p>
 
       <DimRule className="mt-12" note="Joints" />
-      <table className="mt-5 w-full border-collapse">
+      <div className="mt-5 overflow-x-auto">
+      <table className="w-full border-collapse">
         <thead>
           <tr className="border-b border-rule-strong">
             <th scope="col" className="label pb-2 text-left font-normal">Joint</th>
-            <th scope="col" className="label pb-2 text-left font-normal">Node</th>
+            <th scope="col" className="label hidden pb-2 text-left font-normal sm:table-cell">Node</th>
             <th scope="col" className="label pb-2 text-right font-normal">Limits</th>
             <th scope="col" className="label pb-2 text-right font-normal">Home</th>
           </tr>
@@ -67,7 +68,7 @@ export default function So101SpecPage() {
           {SO101.jointNames.map((n, i) => (
             <tr key={n} className="border-b border-rule">
               <td className="py-2.5 text-[14px]">{n}</td>
-              <td className="py-2.5 font-mono text-[12px] text-scribe-3">{SO101.joints[i]}</td>
+              <td className="hidden py-2.5 font-mono text-[12px] text-scribe-3 sm:table-cell">{SO101.joints[i]}</td>
               <td className="py-2.5 text-right font-mono text-[14px] tabular-nums text-signal">
                 {SO101.limitsDeg[i][0]}° … {SO101.limitsDeg[i][1]}°
               </td>
@@ -76,6 +77,7 @@ export default function So101SpecPage() {
           ))}
         </tbody>
       </table>
+      </div>
 
       <DimRule className="mt-12" note="On your desk" />
       <ol className="mt-5 flex max-w-[70ch] list-decimal flex-col gap-2 pl-5 text-[15px] leading-relaxed text-scribe-2">
