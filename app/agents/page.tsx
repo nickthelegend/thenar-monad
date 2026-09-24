@@ -10,7 +10,7 @@ import { readableError } from "@/lib/fetch-error";
  *
  * The corpus page is for a person deciding whether to licence the data. This
  * one is for the program that fetches it: the terms it is offered in a 402,
- * whether World's AgentBook says a human stands behind it, and the ledger of
+ * what a given agent has bought, and the ledger of
  * what agents have actually taken — each paid pull linked to the Monad
  * transaction that settled it, and each pull linked to the SalesLog entry that
  * recorded the hash of what it received.
@@ -27,7 +27,7 @@ type Sale = {
 };
 type Sales = { terms: { payTo: string | null; salesLog: string | null; salesLogUrl: string | null }; count: number; sales: Sale[] };
 type Status =
-  | { address: string; registered: boolean; humanId: string | null; freePulls: { used: number; of: number } | null; register: string }
+  | { address: string; purchases: number; tasks: number[]; sales: { taskId: number; at: number; transaction: string; sha256: string | null }[] }
   | { error: string };
 
 const short = (s: string) => (s.length > 20 ? `${s.slice(0, 10)}…${s.slice(-6)}` : s);
@@ -76,9 +76,8 @@ export default function AgentsPage() {
       <p className="mt-4 max-w-[64ch] text-[15px] leading-relaxed text-scribe-2">
         An agent can take one task&apos;s corpus without a subscription. It asks for the file, is
         answered <span className="font-mono text-[13px]">402</span>, and pays {agentCorpusPrice()} on
-        Monad in the request that fetches it, final in the block it lands in. If World&apos;s AgentBook maps its wallet to a verified
-        human, its first {AGENT_CORPUS.freeUses} pulls are free instead. An agent with nobody behind it
-        is not refused. It pays.
+        Monad in the request that fetches it, final in the block it lands in. No account, no API key
+        and no subscription: the payment is the permission.
       </p>
 
       <DimRule className="mt-10" note="The terms, as the 402 states them" />
@@ -126,23 +125,9 @@ export default function AgentsPage() {
           )}
         </dd>
 
-        <dt className="font-mono text-[12px] uppercase tracking-[0.12em] text-scribe-3">Free pulls</dt>
-        <dd className="text-scribe-2">
-          {AGENT_CORPUS.freeUses} per verified human, counted across every task and kept in the database,
-          so a restart does not hand them out again
-        </dd>
-
-        <dt className="font-mono text-[12px] uppercase tracking-[0.12em] text-scribe-3">Human check</dt>
-        <dd className="text-scribe-2">
-          AgentBook{" "}
-          <a href={`https://worldscan.org/address/${AGENT_CORPUS.agentBook.address}`} target="_blank" rel="noreferrer" className="break-all font-mono text-[13px] text-signal hover:text-signal-hi">
-            {short(AGENT_CORPUS.agentBook.address)}
-          </a>{" "}
-          on World Chain, read at the moment of the request
-        </dd>
       </dl>
 
-      <DimRule className="mt-10" note="Is a human behind this agent?" />
+      <DimRule className="mt-10" note="What has this agent bought?" />
       <form
         className="mt-4 flex flex-wrap items-center gap-3"
         onSubmit={(e) => { e.preventDefault(); void check(); }}
@@ -159,26 +144,22 @@ export default function AgentsPage() {
           disabled={checking || address.trim() === ""}
           className="border border-scribe bg-scribe px-4 py-2 font-mono text-[12px] uppercase tracking-[0.14em] text-ink-0 transition-colors hover:border-signal-hi hover:bg-signal-hi disabled:opacity-60"
         >
-          {checking ? "Asking World Chain…" : "Look it up"}
+          {checking ? "Reading the ledger…" : "Look it up"}
         </button>
       </form>
       {status ? (
         "error" in status ? (
           <p className="mt-3 text-[14px] text-reject">{status.error}</p>
-        ) : status.registered ? (
+        ) : status.purchases === 0 ? (
           <p className="mt-3 max-w-[64ch] text-[14px] leading-relaxed text-scribe-2">
-            <span className="text-go">Human-backed.</span> AgentBook maps this wallet to an anonymous
-            human id. Free pulls used: {status.freePulls?.used} of {status.freePulls?.of}; after that it pays
-            like anyone else.
+            <span className="text-scribe">Nothing yet.</span> This wallet has not bought a corpus from this deployment.
           </p>
         ) : (
-          <div className="mt-3 max-w-[64ch] text-[14px] leading-relaxed text-scribe-2">
-            <p>
-              <span className="text-scribe">Not in AgentBook.</span> The paywall will ask this agent to pay.
-              A person can vouch for it with World App:
-            </p>
-            <pre className="mt-2 overflow-x-auto border border-scribe-3 px-3 py-2 font-mono text-[12px] text-scribe">{status.register}</pre>
-          </div>
+          <p className="mt-3 max-w-[64ch] text-[14px] leading-relaxed text-scribe-2">
+            <span className="text-go">{status.purchases} {status.purchases === 1 ? "purchase" : "purchases"}</span>, of task
+            {status.tasks.length === 1 ? "" : "s"} {status.tasks.map((t) => `#${t}`).join(", ")}. Each one is in the ledger below with the
+            hash of the file it received.
+          </p>
         )
       ) : null}
 
@@ -213,7 +194,7 @@ export default function AgentsPage() {
                     {s.method === "x402" && s.amount ? (
                       <span className="text-signal">paid {usdc(s.amount)}</span>
                     ) : (
-                      <span className="text-go">free, human-backed</span>
+                      <span className="text-scribe-3">free pull (before x402-only)</span>
                     )}
                   </td>
                   <td className="py-2 pr-4 font-mono text-scribe-2">{s.buyer ? short(s.buyer) : "—"}</td>
@@ -246,9 +227,8 @@ export default function AgentsPage() {
 
       <DimRule className="mt-10" note="Run the buyer" />
       <p className="mt-4 max-w-[64ch] text-[14px] leading-relaxed text-scribe-2">
-        The agent in the repository signs AgentKit&apos;s challenge with its wallet and, when that does not
-        earn a free pull, signs a USDC authorisation with the same key for x402 to settle on Monad. Then it
-        hashes what it received and asks SalesLog on Monad whether those exact bytes were logged as sold.
+        The agent in the repository signs a USDC authorisation for x402 to settle on Monad. Then it hashes
+        what it received and asks SalesLog on Monad whether those exact bytes were logged as sold.
       </p>
       <pre className="mt-3 overflow-x-auto border border-scribe-3 px-3 py-2 font-mono text-[12px] text-scribe">
         node --import ./test/register.mjs scripts/agent-buy.mjs http://localhost:3222 1

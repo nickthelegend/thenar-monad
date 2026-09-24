@@ -26,8 +26,8 @@ export type SubmitState = {
   blockMs?: number;
   gasMon?: number;
   error?: string;
-  /** The verifier refused because no World ID proof stands behind this address. */
-  humanRequired?: boolean;
+  /** The verifier refused because no passkey has admitted this address yet. */
+  passkeyRequired?: boolean;
   /** True between the payout confirming and the share issuance being reported. */
   sharesPending?: boolean;
   shares?: RunShares;
@@ -105,7 +105,6 @@ export function useSubmitRun() {
        * what changes is that the operator's consent to *this run* is bound to
        * the trajectory rather than implied by the transaction.
        */
-      withPasskey?: boolean;
     }) => {
       if (!address) {
         setState({ phase: "error", error: "Connect a wallet first." });
@@ -123,10 +122,10 @@ export function useSubmitRun() {
         });
         const v = await res.json();
         if (!res.ok) {
-          // No proof of a live human behind this address: nothing is scored
-          // or signed, and the station shows the World ID check instead.
-          if (v.humanRequired) {
-            setState({ phase: "error", error: v.error, humanRequired: true });
+          // No passkey behind this address yet: nothing is scored or signed,
+          // and the station shows the passkey step instead.
+          if (v.passkeyRequired) {
+            setState({ phase: "error", error: v.error, passkeyRequired: true });
             return;
           }
           throw new Error(v.error ?? "The verifier rejected this run.");
@@ -144,30 +143,12 @@ export function useSubmitRun() {
         setState({ phase: "signing", trajHash: v.trajHash, cid: v.cid, score: v.score });
         const started = performance.now();
 
-        // The passkey path exists again because the contract can now verify
-        // what a browser is able to sign. v1 handed the raw trajectory hash to
-        // the precompile while WebCrypto signs sha256 of it, so the call could
-        // never succeed and the path was removed rather than shipped broken.
-        let txHash: `0x${string}`;
-        if (args.withPasskey) {
-          const { storedKey, signDigest } = await import("@/lib/passkey");
-          const pair = await storedKey();
-          if (!pair) throw new Error("No passkey on this device. Register one first.");
-          const { r, s: sv } = await signDigest(pair, v.trajHash);
-          txHash = await writeContractAsync({
-            address: AXON_ADDRESS,
-            abi: AXON_ABI,
-            functionName: "submitTrajectoryWithPasskey",
-            args: [BigInt(args.taskId), v.trajHash, v.cid, v.score, v.signature, r, sv],
-          });
-        } else {
-          txHash = await writeContractAsync({
-            address: AXON_ADDRESS,
-            abi: AXON_ABI,
-            functionName: "submitTrajectory",
-            args: [BigInt(args.taskId), v.trajHash, v.cid, v.score, v.signature],
-          });
-        }
+        const txHash = await writeContractAsync({
+          address: AXON_ADDRESS,
+          abi: AXON_ABI,
+          functionName: "submitTrajectory",
+          args: [BigInt(args.taskId), v.trajHash, v.cid, v.score, v.signature],
+        });
 
         setState((s) => ({ ...s, phase: "pending", txHash }));
 

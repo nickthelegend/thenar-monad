@@ -11,147 +11,143 @@ import { useSession } from "@/components/session";
 import { addressUrl, IS_DEPLOYED, CURRENCY, appChain } from "@/lib/chain";
 import { fmtMon, shortHash } from "@/lib/format";
 
-const ROUTES = [
-  { href: "/hub", label: "Hub" },
-  { href: "/agents", label: "Agents" },
-  { href: "/corpus-token", label: "Shares" },
-  { href: "/lab", label: "Labs" },
-  { href: "/space", label: "Floor" },
-  { href: "/inventory", label: "Inventory" },
-  { href: "/portfolio", label: "Portfolio" },
-  { href: "/leaderboard", label: "Leaderboard" },
-  { href: "/foundry", label: "Foundry" },
-  { href: "/contracts", label: "Contracts" },
+/**
+ * Every page, in three groups a person can read.
+ *
+ * Ten sections in a row, named after the protocol's own nouns ("Floor",
+ * "Foundry", "Labs"), made the site read as a control panel: the words meant
+ * nothing to someone who came to do a task, and the row ran off the edge.
+ * Grouped by what a visitor came for, with a line saying what each page is,
+ * nothing is removed and everything is findable.
+ */
+const GROUPS: { label: string; items: { href: string; label: string; hint: string }[] }[] = [
+  {
+    label: "Earn",
+    items: [
+      { href: "/hub", label: "Find a task", hint: "Do a task with a robot arm and get paid" },
+      { href: "/post", label: "Post a task", hint: "Fund a task for others to record" },
+      { href: "/portfolio", label: "My earnings", hint: "Your runs and what they paid" },
+      { href: "/leaderboard", label: "Top operators", hint: "Who has earned the most" },
+      { href: "/passkey", label: "Your passkey", hint: "The one-time step before you can earn" },
+    ],
+  },
+  {
+    label: "Data",
+    items: [
+      { href: "/corpus", label: "Buy the data", hint: "Every recorded run, ready for training" },
+      { href: "/agents", label: "For AI agents", hint: "Agents pay per task, in USDC on Monad" },
+      { href: "/corpus-token", label: "Owner shares", hint: "People who record the data own it" },
+      { href: "/inventory", label: "Object library", hint: "Every object and room a task can use" },
+      { href: "/space", label: "Live floor", hint: "Who is working on what, right now" },
+    ],
+  },
+  {
+    label: "Protocol",
+    items: [
+      { href: "/lab", label: "Labs", hint: "A research lab's budget, spent only on tasks" },
+      { href: "/foundry", label: "Model foundry", hint: "Models trained on the data, and who gets paid" },
+      { href: "/spec/so101", label: "The arms", hint: "The SO-101 and the THENAR-6, drivable" },
+      { href: "/contracts", label: "Contracts", hint: "Every contract on Monad, read live" },
+      { href: "/status", label: "Status", hint: "Is everything working" },
+      { href: "/changelog", label: "Changelog", hint: "What changed, from the git history" },
+    ],
+  },
 ];
+
+const inGroup = (pathname: string | null, g: (typeof GROUPS)[number]) =>
+  g.items.some((i) => pathname === i.href || pathname?.startsWith(`${i.href}/`) || (i.href === "/spec/so101" && pathname === "/spec"));
 
 export function SiteNav() {
   const pathname = usePathname();
-
   const s = useSession();
   const { data: block } = useBlockNumber({ watch: true, query: { enabled: IS_DEPLOYED } });
 
-  /**
-   * Whether the sections actually run past the edge.
-   *
-   * The fade used to be switched off at `md`, on the assumption that by 768px
-   * they all fit. They do not: at 789px there were still 157px of sections past
-   * the edge and, with the fade gone, nothing saying so — "Leaderboard" was cut
-   * through the middle against a hard edge and "Foundry" was off the end
-   * entirely. The bar scrolled; nothing suggested it could.
-   *
-   * A breakpoint was the wrong instrument. The row overflows when its contents
-   * are wider than it is, and that depends on the wallet chip and the block
-   * number beside it as much as on the viewport — so it is measured rather than
-   * predicted, and the fade is on exactly when there is somewhere to scroll to.
-   *
-   * Declared above the station early-return below, because a hook after a
-   * conditional return is a hook that does not always run.
-   */
-  const scroller = useRef<HTMLElement>(null);
-  const [overflowing, setOverflowing] = useState(false);
-
-  /**
-   * One underline that moves, rather than a border on whichever item is active.
-   *
-   * A border-bottom per item means the mark under the current section vanishes
-   * and reappears somewhere else — the eye has nothing to follow and the bar
-   * reads as two unrelated states. A single rule that travels says the same
-   * thing and says where it came from, which is the whole difference between a
-   * change and a transition.
-   *
-   * Measured rather than laid out: the items are different widths and the row
-   * scrolls, so the only reliable geometry is the active element's own box,
-   * read after layout. It is re-measured when the route changes, when the row
-   * resizes, and when a font swap changes the measure of the words in it.
-   */
-  const [mark, setMark] = useState<{ left: number; width: number } | null>(null);
+  // Which menu is open: a group label, "all" for the phone menu, or none.
+  const [open, setOpen] = useState<string | null>(null);
+  const bar = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    const row = scroller.current;
-    if (!row) return;
-    const place = () => {
-      const active = row.querySelector<HTMLElement>("[aria-current='page']");
-      if (!active) return setMark(null);
-      setMark({ left: active.offsetLeft, width: active.offsetWidth });
-    };
-    place();
-    if (typeof ResizeObserver === "undefined") return;
-    const ro = new ResizeObserver(place);
-    ro.observe(row);
-    for (const child of Array.from(row.children)) ro.observe(child);
-    return () => ro.disconnect();
-  }, [pathname]);
-  useEffect(() => {
-    const el = scroller.current;
-    if (!el || typeof ResizeObserver === "undefined") return;
-    const check = () => setOverflowing(el.scrollWidth > el.clientWidth + 1);
-    const ro = new ResizeObserver(check);
-    ro.observe(el);
-    // The links carry the width, so a font swap changing their measure has to
-    // re-check too — not only the bar being resized around them.
-    for (const child of Array.from(el.children)) ro.observe(child);
-    check();
-    return () => ro.disconnect();
-  }, [pathname]);
+    if (!open) return;
+    const away = (e: MouseEvent) => { if (!bar.current?.contains(e.target as Node)) setOpen(null); };
+    const esc = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(null); };
+    document.addEventListener("mousedown", away);
+    document.addEventListener("keydown", esc);
+    return () => { document.removeEventListener("mousedown", away); document.removeEventListener("keydown", esc); };
+  }, [open]);
 
-  // Below the hooks, with the station's, for the reason the note above gives:
-  // a hook after a conditional return is a hook that does not always run.
-  //
-  // The landing page carries its own nav — a different structure, a different
-  // palette, and a brand lockup sized to a poster rather than to an app bar.
-  // Rendering both would stack two fixed headers on top of one another.
+  // Hooks above, early returns below: a hook after a conditional return is a
+  // hook that does not always run. The landing page carries its own nav, and
+  // the station is a full-screen instrument.
   if (pathname === "/") return null;
   if (pathname?.startsWith("/station/")) return null;
+
+  const item = (i: (typeof GROUPS)[number]["items"][number]) => {
+    const active = pathname === i.href || pathname?.startsWith(`${i.href}/`);
+    return (
+      <Link
+        key={i.href}
+        href={i.href}
+        onClick={() => setOpen(null)}
+        aria-current={active ? "page" : undefined}
+        className={cn("flex flex-col gap-0.5 px-4 py-2.5 transition-colors hover:bg-ink-2", active && "bg-ink-2")}
+      >
+        <span className={cn("text-[14px]", active ? "text-signal" : "text-scribe")}>{i.label}</span>
+        <span className="text-[12px] leading-snug text-scribe-3">{i.hint}</span>
+      </Link>
+    );
+  };
 
   return (
     <>
       <header className="sticky top-0 z-40 border-b border-rule bg-ink-1">
-        <div className="mx-auto flex h-14 max-w-[1400px] items-stretch gap-3 px-4 sm:gap-6 sm:px-5">
+        <div ref={bar} className="relative mx-auto flex h-14 max-w-[1400px] items-stretch gap-3 px-4 sm:gap-6 sm:px-5">
           <Link href="/" className="flex shrink-0 items-center self-center" aria-label="Thenar home">
             <ThenarWordmark />
           </Link>
 
-          <nav
-            ref={scroller}
-            /* The scrollbar is hidden, so the sections past the edge have
-               nothing saying they are there. The mask fades the last few pixels,
-               which is the only cue a horizontal scroll gets once the bar itself
-               is gone — on while there is somewhere to scroll to, off when the
-               row fits and a fade would only dim the last item for no reason. */
-            className={cn(
-              "relative flex min-w-0 flex-1 items-stretch overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
-              overflowing &&
-                "[mask-image:linear-gradient(to_right,#000_calc(100%-28px),transparent)]",
-            )}
-            aria-label="Sections"
-          >
-            {ROUTES.map((r) => {
-              const active = pathname === r.href || pathname?.startsWith(`${r.href}/`);
-              return (
-                <Link
-                  key={r.href}
-                  href={r.href}
-                  aria-current={active ? "page" : undefined}
+          <nav className="hidden min-w-0 flex-1 items-stretch sm:flex" aria-label="Sections">
+            {GROUPS.map((g) => (
+              <div key={g.label} className="relative flex">
+                <button
+                  type="button"
+                  aria-expanded={open === g.label}
+                  aria-haspopup="true"
+                  onClick={() => setOpen(open === g.label ? null : g.label)}
                   className={cn(
-                    "flex shrink-0 items-center whitespace-nowrap px-3 font-mono text-[12px] font-medium uppercase tracking-[0.14em] transition-colors sm:px-4",
-                    active ? "text-scribe" : "text-scribe-3 hover:text-scribe-2",
+                    "flex items-center gap-1.5 whitespace-nowrap px-3 font-mono text-[12px] font-medium uppercase tracking-[0.14em] transition-colors sm:px-4",
+                    inGroup(pathname, g) || open === g.label ? "text-scribe" : "text-scribe-3 hover:text-scribe-2",
                   )}
                 >
-                  {r.label}
-                </Link>
-              );
-            })}
-
-            {/* Drawn once, moved rather than redrawn. `motion-safe` is the whole
-                reduced-motion story here: with motion reduced it still lands in
-                the right place, it just arrives there without the journey. */}
-            {mark ? (
-              <span
-                aria-hidden
-                className="pointer-events-none absolute bottom-0 h-[2px] bg-signal motion-safe:transition-[transform,width] motion-safe:duration-300 motion-safe:ease-[cubic-bezier(0.22,1,0.36,1)]"
-                style={{ transform: `translateX(${mark.left}px)`, width: mark.width }}
-              />
-            ) : null}
+                  {g.label}
+                  <span aria-hidden className={cn("text-[9px] transition-transform", open === g.label && "rotate-180")}>▼</span>
+                </button>
+                {inGroup(pathname, g) ? <span aria-hidden className="pointer-events-none absolute inset-x-3 bottom-0 h-[2px] bg-signal sm:inset-x-4" /> : null}
+                {open === g.label ? (
+                  <div className="absolute left-0 top-full z-50 mt-px w-[290px] border border-rule bg-ink-1 py-1 shadow-lg">
+                    {g.items.map(item)}
+                  </div>
+                ) : null}
+              </div>
+            ))}
           </nav>
+
+          <button
+            type="button"
+            aria-expanded={open === "all"}
+            onClick={() => setOpen(open === "all" ? null : "all")}
+            className="flex flex-1 items-center justify-start font-mono text-[12px] uppercase tracking-[0.14em] text-scribe-2 sm:hidden"
+          >
+            Menu {open === "all" ? "✕" : "▼"}
+          </button>
+          {open === "all" ? (
+            <div className="absolute inset-x-0 top-full z-50 max-h-[80vh] overflow-y-auto border-b border-rule bg-ink-1 sm:hidden">
+              {GROUPS.map((g) => (
+                <div key={g.label} className="border-t border-rule py-1">
+                  <span className="block px-4 pt-2 font-mono text-[11px] uppercase tracking-[0.14em] text-scribe-3">{g.label}</span>
+                  {g.items.map(item)}
+                </div>
+              ))}
+            </div>
+          ) : null}
 
           <div className="flex shrink-0 items-center gap-3 sm:gap-4">
             <span className="hidden items-baseline gap-2 font-mono text-[12px] text-scribe-3 xl:flex">
@@ -163,7 +159,7 @@ export function SiteNav() {
               ) : null}
             </span>
 
-            <ThemeToggle />
+            <span className="hidden sm:flex"><ThemeToggle /></span>
 
             {s.connected ? (
               <div className="flex items-stretch border border-rule-strong">
@@ -183,7 +179,7 @@ export function SiteNav() {
                 <button
                   onClick={() => s.disconnect()}
                   className="border-l border-rule-strong px-2.5 font-mono text-[12px] uppercase tracking-[0.1em] text-scribe-3 transition-colors hover:text-reject"
-                  title="Disconnect"
+                  title="Sign out"
                 >
                   ✕
                 </button>
@@ -194,7 +190,7 @@ export function SiteNav() {
                 disabled={s.connecting}
                 className="border border-scribe bg-scribe px-4 py-1.5 font-mono text-[12px] font-medium uppercase tracking-[0.14em] text-ink-0 transition-colors hover:border-signal-hi hover:bg-signal-hi disabled:opacity-60"
               >
-                {s.connecting ? "Connecting…" : "Connect"}
+                {s.connecting ? "Signing in…" : "Sign in"}
               </button>
             )}
           </div>

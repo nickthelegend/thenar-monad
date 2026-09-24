@@ -1,55 +1,34 @@
 import { NextResponse } from "next/server";
-import { createAgentBookVerifier } from "@worldcoin/agentkit-core";
 import { logged } from "@/lib/server/log";
-import { query } from "@/lib/server/sql";
-import { AGENT_CORPUS } from "@/lib/agent-corpus";
+import { salesTo } from "@/lib/server/agent-sales";
+import { AGENT_CORPUS, agentCorpusPrice } from "@/lib/agent-corpus";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const book = createAgentBookVerifier();
-
 /**
- * Whether World's AgentBook maps an agent wallet to a verified human, asked of
- * World Chain at the moment of the request.
+ * What one agent wallet has bought, and on what terms it can buy more.
  *
- * The same lookup the corpus paywall makes before granting a free pull, so
- * what this says is what the paywall will do. The human id is AgentBook's own
- * anonymous identifier; it names nobody.
+ * Read from the sales ledger the paywall writes, with each sale's digest and
+ * its place in SalesLog, so an agent can check the file it holds against the
+ * chain without keeping its own record.
  */
 async function handleGET(req: Request) {
   const address = new URL(req.url).searchParams.get("address");
   if (!address || !/^0x[0-9a-fA-F]{40}$/.test(address)) {
     return NextResponse.json({ error: "address must be a 20-byte hex address" }, { status: 400 });
   }
-
-  let humanId: string | null;
-  try {
-    humanId = await book.lookupHuman(address);
-  } catch (e) {
-    return NextResponse.json(
-      { error: `World Chain could not be read: ${e instanceof Error ? e.message.split("\n")[0] : "unknown error"}` },
-      { status: 502 },
-    );
-  }
-
-  // No row means this human has taken no free pulls yet, which is zero.
-  const used = humanId
-    ? Number(
-        (await query<{ uses: number }>(
-          `SELECT uses FROM agentkit_usage WHERE endpoint = ? AND human_id = ?`,
-          [AGENT_CORPUS.path, humanId],
-        ))[0]?.uses ?? 0,
-      )
-    : null;
-
+  const sales = await salesTo(address);
   return NextResponse.json({
     address,
-    agentBook: AGENT_CORPUS.agentBook,
-    registered: humanId !== null,
-    humanId,
-    freePulls: humanId ? { used, of: AGENT_CORPUS.freeUses } : null,
-    register: `npx @worldcoin/agentkit-cli register ${address}`,
+    terms: { endpoint: AGENT_CORPUS.path, price: agentCorpusPrice(), network: AGENT_CORPUS.network },
+    purchases: sales.length,
+    tasks: [...new Set(sales.map((s) => s.task_id))].sort((a, b) => a - b),
+    sales: sales.map((s) => ({
+      taskId: s.task_id, at: s.created_at, transaction: s.id, sha256: s.sha256,
+      salesLog: s.log_contract ? { contract: s.log_contract, sequence: s.log_seq, transaction: s.log_tx } : null,
+      unrecorded: s.audit_error,
+    })),
   });
 }
 

@@ -87,8 +87,8 @@ export default function CorpusTokenPage() {
       <h1 className="font-display text-4xl font-600 leading-none">Corpus shares</h1>
       <p className="mt-3 max-w-[640px] text-[15px] leading-relaxed text-scribe-2">
         The recordings are owned by the people who made them. Thenar&rsquo;s corpus is a token on Monad
-        that only a whitelisted address can hold, send or receive, and Thenar adds an address only after a
-        World ID proof of a live human. Every paid run issues its share, scaled by its score, and corpus
+        that only a whitelisted address can hold, send or receive, and Thenar adds an address only after
+        its owner signs in with a passkey that the registry on Monad verifies. Every paid run issues its share, scaled by its score, and corpus
         sales are paid out to holders as dividends in {CURRENCY}, snapshotted at a record date set in advance.
       </p>
 

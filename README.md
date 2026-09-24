@@ -4,12 +4,13 @@
 and bought by agents.** An operator drives a robot arm in the browser; a
 verifier scores the recording against the goal and signs; one Monad transaction
 records the trajectory and pays the operator from escrowed MON, in under a
-second. A World ID Selfie Check puts that operator on the corpus' share
-whitelist, and every paid run issues their share of the corpus. An AI agent that
-wants a task's corpus asks for it over HTTP, is answered `402`, and either pays
-a cent of USDC on Monad through x402 or shows through World AgentKit that a
-verified human stands behind it. Every sale is logged on Monad with the sha256
-of the bytes served. A lab funds bounties from a Privy wallet whose policy lets
+second. The operator signs in once with a passkey (Face ID, a fingerprint, a
+PIN), made through Mera; its P-256 key is registered on Monad and its signature
+checked there by the P-256 precompile, which puts them on the corpus' share
+whitelist, and every paid run issues their share of the corpus. An AI agent
+that wants a task's corpus asks for it over HTTP, is answered `402`, and pays a
+cent of USDC on Monad through x402. Every sale is logged on Monad with the
+sha256 of the bytes served. A lab funds bounties from a Privy wallet whose policy lets
 it spend on nothing else.
 
 Thenar was built at **Monad Blitz Hyderabad V3 (3rd place)** on Monad testnet,
@@ -22,10 +23,10 @@ Avalanche build, then the move back.
 | --- | --- |
 | **Chain** | Monad testnet, chain `10143`. Bounties, payouts, dividends and gas are MON. |
 | **Contracts** | [`lib/deployment.ts`](lib/deployment.ts), written from forge's broadcast record by [`scripts/apply-deploy.mjs`](scripts/apply-deploy.mjs). Every address below comes from there. |
-| **Corpus shares** | [`CorpusShares`](contracts/src/CorpusShares.sol): a token only World ID-verified humans can hold; shares per paid run, by score; dividends in MON at a record date fixed in advance |
+| **Corpus shares** | [`CorpusShares`](contracts/src/CorpusShares.sol): a token only passkey-admitted operators can hold; shares per paid run, by score; dividends in MON at a record date fixed in advance |
 | **Agent payments** | x402 `exact` in USDC on Monad, settled by the [Monad facilitator](https://x402-facilitator.molandak.org/supported), which pays the gas |
 | **Sales log** | [`SalesLog`](contracts/src/SalesLog.sol): every pull, with the sha256 of the file served, in storage and in events |
-| **Identity** | World ID Selfie Check for operators; World AgentKit and AgentBook (World Chain 480) for agents |
+| **Identity** | A passkey per operator, made with [Mera](https://github.com/category-labs/mera) and verified on chain by [`PasskeyRegistry`](contracts/src/PasskeyRegistry.sol) through the P-256 precompile at `0x0100` ([`/api/operator`](app/api/operator/route.ts)) |
 | **Wallets** | Privy: operators sign in with an email and get an embedded wallet on Monad; a lab's budget is a Privy server wallet whose policy only lets it fund bounties |
 | **Repo** | https://github.com/nickthelegend/thenar-monad |
 | **Submission** | [SUBMISSION.md](SUBMISSION.md) |
@@ -57,8 +58,8 @@ flowchart LR
   subgraph APP["Thenar app (Next.js)"]
     VERIFY["/api/verify<br/>scores the samples,<br/>signs EIP-712"]
     SUBMITTED["/api/submitted<br/>reads the receipt,<br/>issues the run's shares"]
-    WORLDV["/api/world/verify<br/>Selfie Check → whitelist"]
-    CORPUS["/api/agent/corpus<br/>x402 + AgentKit"]
+    OPERATOR["/api/operator<br/>passkey sign-in → whitelist"]
+    CORPUS["/api/agent/corpus<br/>x402"]
     LAB["/lab, /api/lab<br/>the lab's budget"]
     DB[("SQLite or Postgres")]
   end
@@ -72,18 +73,15 @@ flowchart LR
   end
 
   FAC["Monad x402 facilitator<br/>verify · settle · pays gas"]
-  BOOK["AgentBook<br/>World Chain"]
-  WORLD["World ID"]
   PRIVY["Privy<br/>embedded wallets,<br/>policy-bound lab wallet"]
 
   OP -- "samples" --> VERIFY --> DB
   OP -- "submitTrajectory:<br/>records the run, pays the operator" --> AXON
   OP -- "tx hash" --> SUBMITTED -- "issue(holder, shares, trajHash)" --> SHARES
-  OP -- "Selfie Check proof" --> WORLDV -- "verify" --> WORLD
-  WORLDV -- "addToControlList" --> SHARES
-  AXON -. "verify passkey" .-> PASS
-  AGENT -- "GET, then agentkit header,<br/>then PAYMENT-SIGNATURE" --> CORPUS
-  CORPUS -- "lookupHuman" --> BOOK
+  OP -- "registers its passkey's P-256 key" --> PASS
+  OP -- "passkey signs a challenge" --> OPERATOR -- "verify(digest, r, s)" --> PASS
+  OPERATOR -- "addToControlList" --> SHARES
+  AGENT -- "GET, then PAYMENT-SIGNATURE" --> CORPUS
   CORPUS -- "verify, then settle<br/>after the file is ready" --> FAC -- "transferWithAuthorization" --> USDC
   CORPUS -- "logSale(sha256)" --> SALES
   AGENT -. "servedCount(sha256)" .-> SALES
@@ -159,12 +157,7 @@ node --import ./test/register.mjs scripts/privy-lab.mjs                         
 ```
 
 The agent needs testnet USDC from [faucet.circle.com](https://faucet.circle.com)
-(Monad testnet) and no MON. To let it earn free pulls, register its wallet in
-AgentBook with World App:
-
-```bash
-npx @worldcoin/agentkit-cli register 0x9a6C46E7115CfB5FF5a2265E5a1B955038cb63aA
-```
+(Monad testnet) and no MON.
 
 Tests:
 

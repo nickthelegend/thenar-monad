@@ -3,11 +3,9 @@ import { NextResponse, type NextRequest } from "next/server";
 import { HTTPFacilitatorClient, decodePaymentRequiredHeader, decodePaymentResponseHeader } from "@x402/core/http";
 import { withX402FromHTTPServer, x402HTTPResourceServer, x402ResourceServer } from "@x402/next";
 import { ExactEvmScheme } from "@x402/evm/exact/server";
-import { agentkitResourceServerExtension, createAgentkitHooks, declareAgentkitExtension } from "@worldcoin/agentkit";
-import { createAgentBookVerifier, parseAgentkitHeader } from "@worldcoin/agentkit-core";
 import { logged } from "@/lib/server/log";
 import { taskCorpus } from "@/lib/server/corpus-export";
-import { agentKitStorage, corpusTreasury, recordAudit, recordSale, type CorpusSale } from "@/lib/server/agent-sales";
+import { corpusTreasury, recordAudit, recordSale, type CorpusSale } from "@/lib/server/agent-sales";
 import { publishSale } from "@/lib/server/sales-log";
 import { AGENT_CORPUS } from "@/lib/agent-corpus";
 
@@ -17,12 +15,9 @@ export const dynamic = "force-dynamic";
 /**
  * One task's corpus, for an agent, paid in the request that fetches it.
  *
- * The first answer is a 402 carrying two offers. One is x402's exact scheme on
- * Monad: a cent of USDC to the corpus treasury, as an EIP-3009 authorisation
- * the agent signs and the Monad facilitator submits and pays the gas for. The
- * other is AgentKit's: sign a challenge with the agent's wallet, and if World's
- * AgentBook maps that wallet to a verified human, the first few pulls are free.
- * An agent with no human behind it is not refused; it pays.
+ * The first answer is a 402 carrying the offer: x402's exact scheme on Monad,
+ * a cent of USDC to the corpus treasury, as an EIP-3009 authorisation the
+ * agent signs and the Monad facilitator submits and pays the gas for.
  *
  * Settlement happens only after the export below returns a success, so an
  * agent that pays for a task with nothing recorded is told 404 and charged
@@ -32,23 +27,6 @@ export const dynamic = "force-dynamic";
 
 type Handler = (req: NextRequest) => Promise<NextResponse>;
 let paywalled: Handler | null = null;
-
-/**
- * AgentKit's server extension, with the challenge fields that are new on every
- * 402 said to be new on every 402.
- *
- * x402 checks that a paying client echoes the extensions it was offered, field
- * for field. AgentKit 0.2.1 predates that check and does not declare that its
- * nonce and timestamps are regenerated per response, so without this every paid
- * retry fails as `extension_echo_mismatch`: the client echoes the nonce it was
- * handed and the server compares it with the one it has just minted. Leaving
- * them out of the echo comparison weakens nothing — AgentKit checks its own
- * nonce against the database before it grants a free pull.
- */
-const agentkitExtension = {
-  ...agentkitResourceServerExtension,
-  dynamicInfoFields: ["nonce", "issuedAt", "expirationTime"],
-};
 
 function taskIdOf(url: string): number | null {
   const raw = new URL(url).searchParams.get("taskId");
@@ -67,14 +45,7 @@ function build(treasury: string): Handler {
   if (paywalled) return paywalled;
 
   const resourceServer = new x402ResourceServer(new HTTPFacilitatorClient({ url: AGENT_CORPUS.facilitator }))
-    .register(AGENT_CORPUS.network, new ExactEvmScheme())
-    .registerExtension(agentkitExtension);
-
-  const hooks = createAgentkitHooks({
-    agentBook: createAgentBookVerifier(),
-    mode: { type: "free-trial", uses: AGENT_CORPUS.freeUses },
-    storage: agentKitStorage,
-  });
+    .register(AGENT_CORPUS.network, new ExactEvmScheme());
 
   const http = new x402HTTPResourceServer(resourceServer, {
     [AGENT_CORPUS.path]: {
@@ -90,26 +61,14 @@ function build(treasury: string): Handler {
         "with the failures kept in their own labelled array.",
       mimeType: "application/json",
       serviceName: "Thenar corpus",
-      extensions: declareAgentkitExtension({
-        statement: "Sign in as an agent. If a verified human stands behind this wallet, the first pulls are free.",
-        network: AGENT_CORPUS.agentBook.network,
-        mode: { type: "free-trial", uses: AGENT_CORPUS.freeUses },
-        expirationSeconds: 300,
-      }),
     },
-  }).onProtectedRequest(hooks.requestHook);
+  });
 
   paywalled = withX402FromHTTPServer(corpus, http);
   return paywalled;
 }
 
-/**
- * The terms a successful response was served on, read from what granted it.
- *
- * A settlement receipt means it was paid. A success with no payment on this
- * protected route can only have been granted by AgentKit, so the agentkit
- * header says who took it.
- */
+/** The sale a successful response records: its settlement receipt says who paid. */
 function saleOf(req: Request, res: Response, taskId: number): CorpusSale | null {
   const receipt = res.headers.get("PAYMENT-RESPONSE");
   if (receipt) {
@@ -119,15 +78,6 @@ function saleOf(req: Request, res: Response, taskId: number): CorpusSale | null 
       id: settled.transaction, task_id: taskId, method: "x402",
       buyer: settled.payer ?? null, network: settled.network,
       amount: AGENT_CORPUS.amount, asset: AGENT_CORPUS.asset, created_at: Date.now(),
-    };
-  }
-  const agent = req.headers.get("agentkit");
-  if (agent && !req.headers.get("payment-signature")) {
-    const p = parseAgentkitHeader(agent);
-    return {
-      id: `agentkit:${p.nonce}`, task_id: taskId, method: "agentkit",
-      buyer: p.address.toLowerCase(), network: p.chainId,
-      amount: null, asset: null, created_at: Date.now(),
     };
   }
   return null;
@@ -152,9 +102,8 @@ async function handleGET(req: Request) {
 
   const res = await build(treasury)(req as NextRequest);
 
-  // x402 v2 puts the offer in a header and leaves the body empty. AgentKit's
-  // client reads the offer from the body, and so does anyone reading a 402 by
-  // hand, so the same object goes in both. Browsers get the paywall page as is.
+  // x402 v2 puts the offer in a header and leaves the body empty. Anyone
+  // reading a 402 by hand reads the body, so the same object goes in both. Browsers get the paywall page as is.
   if (res.status === 402 && !res.headers.get("content-type")?.includes("text/html")) {
     const offer = res.headers.get("PAYMENT-REQUIRED");
     if (offer) {

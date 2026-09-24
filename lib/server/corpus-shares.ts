@@ -20,9 +20,8 @@ import { query, run } from "@/lib/server/sql";
  * this server:
  *
  *  - It is a whitelist. Only an address on its control list can hold, send or
- *    receive a share, and an address gets there only after a World ID proof
- *    that a live human stands behind it. A bot farm can record runs; it cannot
- *    own the corpus.
+ *    receive a share, and an address gets there only after its owner signs in
+ *    with a passkey that PasskeyRegistry verifies on Monad.
  *  - Shares are issued per accepted run, in proportion to the signed score,
  *    and each issue names the run's hash.
  *  - A dividend declared from corpus sales, escrowed in MON, pays whoever held
@@ -88,8 +87,11 @@ async function settle(tx: Hash, kind: TokenEventKind, account: string | null, am
   );
 }
 
-/** Put a verified human on the security's whitelist. Idempotent. */
-export async function admitHuman(address: Address, nullifier: string): Promise<{ tx: Hash | null; already: boolean }> {
+/**
+ * Put an operator on the security's whitelist. Idempotent.
+ * `because` is what admitted them, written beside the transaction in the log.
+ */
+export async function admitOperator(address: Address, because: string): Promise<{ tx: Hash | null; already: boolean }> {
   const token = security();
   const listed = await monad.readContract({
     address: token, abi: CORPUS_SHARES_ABI, functionName: "isInControlList", args: [address],
@@ -101,7 +103,7 @@ export async function admitHuman(address: Address, nullifier: string): Promise<{
     account, address: token, abi: CORPUS_SHARES_ABI, functionName: "addToControlList", args: [address],
   });
   const tx = await wallet.writeContract(request);
-  await settle(tx, "admit", address, null, `World ID nullifier ${nullifier.slice(0, 16)}…`);
+  await settle(tx, "admit", address, null, because);
   return { tx, already: false };
 }
 

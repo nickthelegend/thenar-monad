@@ -6,6 +6,7 @@
  *   node scripts/arm-relay.mjs --follower /dev/cu.usbserial-B   stream targets to the MG996R follower (disarmed)
  *   node scripts/arm-relay.mjs --follower … --arm               allow it to arm once the pose is home
  *   node scripts/arm-relay.mjs --leader /dev/cu.usbserial-A     the AS5600 leader drives the follower directly
+ *   node scripts/arm-relay.mjs … --owner <ed25519 public key>    only frames signed by the owner's passkey move the arm
  *
  * The station's "Mirror to my SO-101" connects here over a WebSocket on
  * loopback and streams the arm's joints in degrees, 30 times a second. This
@@ -19,7 +20,11 @@
  *     (forward kinematics of the same CAD chain the station solves on);
  *   - a stale stream, a closed tab or a stopped relay sends STOP;
  *   - it listens on 127.0.0.1 and accepts pages only from loopback origins or
- *     ones named with --origin, so no website can reach an arm on this desk.
+ *     ones named with --origin, so no website can reach an arm on this desk;
+ *   - with --owner, a frame moves the arm only if it is signed by that key:
+ *     the Ed25519 key the owner's passkey derives (lib/robot-key.ts). A frame
+ *     unsigned, signed by another key, older than two seconds or replayed
+ *     stops the arm instead.
  */
 import { createServer } from "node:http";
 import { register } from "node:module";
@@ -27,6 +32,8 @@ import { parseArgs } from "node:util";
 
 register("../test/resolve-ts.mjs", import.meta.url);
 const { SO101, So101Chain } = await import("../lib/so101.ts");
+const { commandMessage } = await import("../lib/robot-command.ts");
+const { createPublicKey, verify: verifySig } = await import("node:crypto");
 const { WebSocketServer } = await import("ws");
 
 const { values: opt } = parseArgs({
@@ -37,11 +44,32 @@ const { values: opt } = parseArgs({
     follower: { type: "string" },
     arm: { type: "boolean", default: false },
     origin: { type: "string", multiple: true, default: [] },
+    owner: { type: "string" },
   },
 });
 if (opt.arm && !opt.follower) {
   console.error("--arm needs --follower");
   process.exit(2);
+}
+
+if (opt.owner && !/^[0-9a-fA-F]{64}$/.test(opt.owner)) {
+  console.error("--owner must be the 32-byte Ed25519 public key, as 64 hex characters");
+  process.exit(2);
+}
+// An Ed25519 public key as Node takes it: the fixed SPKI prefix, then the 32 raw bytes.
+const ownerKey = opt.owner
+  ? createPublicKey({ key: Buffer.concat([Buffer.from("302a300506032b6570032100", "hex"), Buffer.from(opt.owner, "hex")]), format: "der", type: "spki" })
+  : null;
+let lastSeq = -1;
+/** Why a frame may not move the arm, or null. Only asked when --owner is set. */
+function refusedFrame(msg) {
+  if (!Number.isInteger(msg.seq) || !Number.isFinite(msg.ts) || typeof msg.sig !== "string") return "an unsigned command";
+  if (Math.abs(Date.now() - msg.ts) > 2000) return "a stale command";
+  if (msg.seq <= lastSeq) return "a replayed command";
+  const ok = verifySig(null, commandMessage(msg.seq, msg.ts, msg.q), ownerKey, Buffer.from(msg.sig, "hex"));
+  if (!ok) return "a command signed by someone other than the owner";
+  lastSeq = msg.seq;
+  return null;
 }
 
 const HOME = SO101.homeDeg;
@@ -132,6 +160,7 @@ function status() {
     type: "status",
     clients: clients.size,
     home: HOME,
+    owner: opt.owner ? opt.owner.toLowerCase() : null,
     leader: leader.port ? { port: opt.leader, streaming: Date.now() - leader.at < 300 } : null,
     follower: follower.port
       ? { port: opt.follower, armed: follower.armed, canArm: opt.arm, last: follower.last, reason: follower.reason }
@@ -150,6 +179,10 @@ wss.on("connection", (ws, req) => {
       return;
     }
     if (msg.type === "state") {
+      if (ownerKey && Array.isArray(msg.q)) {
+        const why = refusedFrame(msg);
+        if (why) return followerStop(`refused ${why}`);
+      }
       lastStation = Date.now();
       // The physical leader, when it is streaming, is the only thing that drives hardware.
       if (!leader.port || Date.now() - leader.at > 300) sendFollower(msg.q, "station");

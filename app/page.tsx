@@ -22,12 +22,13 @@ const BRAND = "THENAR";
  */
 const FRONT_LETTER = 3; // "N" — the pedestal crosses it
 
+// The landing's short list, in plain words; every other page is one click
+// away in the site's menus.
 const NAV = [
-  { href: "/hub", label: "Hub" },
-  { href: "/space", label: "Floor" },
-  { href: "/spec", label: "Spec" },
-  { href: "/leaderboard", label: "Paid" },
-  { href: "/foundry", label: "Foundry" },
+  { href: "/hub", label: "Tasks" },
+  { href: "/post", label: "Post a task" },
+  { href: "/corpus", label: "The data" },
+  { href: "/spec/so101", label: "The arm" },
 ];
 
 /**
@@ -122,7 +123,7 @@ export default function Home() {
 
           <div className="rv rv-d2" style={{ display: "flex", flexWrap: "wrap", gap: 12, marginTop: 30 }}>
             <Link href="/hub" className="pill pill-solid">Find a task</Link>
-            <Link href="/space" className="pill pill-line">Walk onto the floor</Link>
+            <Link href="/spec/so101" className="pill pill-line">See the robot arm</Link>
           </div>
 
           <dl className="rule rv rv-d3" style={{ marginTop: 40, paddingTop: 16, display: "flex", flexWrap: "wrap", gap: "10px 40px" }}>

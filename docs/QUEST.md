@@ -26,7 +26,7 @@ your real table and press **B** to stand the arm exactly there.
 
 The panel above the bench shows the task, the run and what to press. Take the headset
 off to submit: a run is paid from your wallet like any other, after the same
-World ID check, and recorded in the same shape as one driven from a keyboard.
+passkey sign-in, and recorded in the same shape as one driven from a keyboard.
 
 ### Reaching the dev server from the headset
 

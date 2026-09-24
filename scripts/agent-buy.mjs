@@ -1,15 +1,12 @@
 /**
  * An agent buying one task's corpus, for real, and checking what it bought.
  *
- * One key does both jobs. AGENT_PRIVATE_KEY signs the AgentKit challenge for
- * World Chain, and it signs the EIP-3009 USDC authorisation x402 settles on
+ * AGENT_PRIVATE_KEY signs the EIP-3009 USDC authorisation x402 settles on
  * Monad. The wallet needs testnet USDC (faucet.circle.com, Monad testnet) and
  * no MON at all: the facilitator submits the transfer and pays the gas.
  *
- * The request goes through AgentKit first. If AgentBook maps this wallet to a
- * verified human with free pulls left, the corpus comes back and nothing moves.
- * Otherwise the server answers 402 again, and the x402 wrapper pays a cent of
- * USDC, final in the Monad block it lands in.
+ * The server answers 402, and the x402 wrapper pays a cent of USDC, final in
+ * the Monad block it lands in.
  *
  * Then it hashes the bytes it received and asks SalesLog on Monad — not the
  * seller's server — whether a sale serving exactly those bytes was logged.
@@ -19,7 +16,6 @@
 import { createHash } from "node:crypto";
 import { createPublicClient, formatUnits, parseAbi } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
-import { createAgentkitClient } from "@worldcoin/agentkit";
 import { decodePaymentResponseHeader, wrapFetchWithPayment, x402Client } from "@x402/fetch";
 import { ExactEvmScheme } from "@x402/evm/exact/client";
 import { toClientEvmSigner } from "@x402/evm";
@@ -40,17 +36,6 @@ const usdc = await monad.readContract({
   args: [wallet.address],
 });
 
-const agentkit = createAgentkitClient({
-  signer: {
-    address: wallet.address,
-    chainId: AGENT_CORPUS.agentBook.network,
-    type: "eip191",
-    signMessage: (message) => wallet.signMessage({ message }),
-  },
-  onEvent: (e) =>
-    console.log(`agentkit  ${e.type}${e.reason ? `: ${e.reason}` : ""}${e.status ? ` -> ${e.status}` : ""}`),
-});
-
 const payer = x402Client.fromConfig({
   schemes: [{ network: AGENT_CORPUS.network, client: new ExactEvmScheme(toClientEvmSigner(wallet, monad)) }],
   // Monad testnet USDC is not one of x402's default assets, so the client
@@ -60,7 +45,7 @@ const payer = x402Client.fromConfig({
   },
 });
 
-const fetchPaid = wrapFetchWithPayment(agentkit.fetch, payer);
+const fetchPaid = wrapFetchWithPayment(fetch, payer);
 
 const url = `${BASE}${AGENT_CORPUS.path}?taskId=${TASK}`;
 console.log(`agent     ${wallet.address}  ${formatUnits(usdc, AGENT_CORPUS.decimals)} USDC on Monad`);
@@ -75,8 +60,6 @@ if (receipt) {
   const s = decodePaymentResponseHeader(receipt);
   console.log(`settled   ${s.success}  tx ${s.transaction}  payer ${s.payer ?? "-"}  ${s.network}`);
   if (s.transaction) console.log(`monadscan ${txUrl(s.transaction)}`);
-} else if (res.ok) {
-  console.log("settled   nothing: AgentKit granted this pull");
 }
 
 const bytes = Buffer.from(await res.arrayBuffer());

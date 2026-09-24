@@ -5,7 +5,7 @@ import { insertTrajectory, getTrajectory, settledSamplesForTask } from "@/lib/se
 import { nearestNeighbour, DUPLICATE_MM } from "@/lib/similarity";
 import { validateSamples, validatePayloadIds, VerifyError } from "@/lib/server/verifier";
 import { POST as signLocally } from "@/app/api/sign/route";
-import { humanFor } from "@/lib/server/world-id";
+import { isOperator } from "@/lib/server/operator";
 import type { Sample } from "@/lib/types";
 import { canonicalise } from "@/lib/canonical";
 import { keccak256, toHex } from "viem";
@@ -106,15 +106,15 @@ async function handlePOST(req: Request) {
       return NextResponse.json({ error: "Too many submissions. Wait a moment." }, { status: 429 });
     }
 
-    // A run is only worth paying for if a person drove it. The proof is made
-    // once per operator address, on /api/world/verify, and checked here on
-    // every run, before any scoring, so calling this route directly cannot
-    // skip it and a script cannot get as far as a signature.
-    if (!(await humanFor(contributor))) {
+    // A run is only worth paying for if a person drove it. An operator joins
+    // the CorpusShares whitelist once, by signing with a passkey the registry
+    // on Monad checks (/api/operator), and the whitelist is read here on every
+    // run, before any scoring, so a script cannot get as far as a signature.
+    if (!(await isOperator(contributor))) {
       return NextResponse.json(
         {
-          error: "Prove you are a live human with World ID before contributing. A run earns nothing until a person stands behind the address.",
-          humanRequired: true,
+          error: "Set up your passkey before contributing. A run earns nothing until a person signs in with one.",
+          passkeyRequired: true,
         },
         { status: 403 },
       );

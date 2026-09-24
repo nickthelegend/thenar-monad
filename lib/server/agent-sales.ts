@@ -1,41 +1,7 @@
 import "server-only";
-import type { AgentKitStorage } from "@worldcoin/agentkit";
 import { isAddress } from "@/lib/chain";
 import { DEPLOYMENT } from "@/lib/deployment";
 import { query, run } from "./sql";
-
-/**
- * AgentKit's counters, in the database the corpus already lives in.
- *
- * The library ships an in-memory store. A free trial counted in memory resets
- * whenever the process restarts, which on a host that restarts on every deploy
- * is not a trial with a limit, and a nonce list in memory forgets which
- * challenges were already answered.
- */
-export const agentKitStorage: AgentKitStorage = {
-  async tryIncrementUsage(endpoint, humanId, limit) {
-    // One statement, so no second request can land between the check and the
-    // increment: either the row moves while it is under the limit and comes
-    // back, or nothing does.
-    const rows = await query<{ uses: number }>(
-      `INSERT INTO agentkit_usage (endpoint, human_id, uses) VALUES (?, ?, 1)
-       ON CONFLICT (endpoint, human_id) DO UPDATE SET uses = agentkit_usage.uses + 1
-       WHERE agentkit_usage.uses < ?
-       RETURNING uses`,
-      [endpoint, humanId, limit],
-    );
-    return rows.length > 0;
-  },
-  async hasUsedNonce(nonce) {
-    return (await query(`SELECT 1 AS n FROM agentkit_nonce WHERE nonce = ?`, [nonce])).length > 0;
-  },
-  async recordNonce(nonce) {
-    await run(
-      `INSERT INTO agentkit_nonce (nonce, created_at) VALUES (?, ?) ON CONFLICT (nonce) DO NOTHING`,
-      [nonce, Date.now()],
-    );
-  },
-};
 
 /** Where corpus sales are paid: CORPUS_TREASURY, or the deployer that funds the tasks. */
 export function corpusTreasury(): string | null {
@@ -47,6 +13,8 @@ export type CorpusSale = {
   /** The settlement tx hash for a paid pull; `agentkit:<nonce>` for a free one. */
   id: string;
   task_id: number;
+  /** Every sale is x402; "agentkit" survives only on rows from before World's
+   *  free-pull path was removed. */
   method: "x402" | "agentkit";
   /** The paying address for a payment, the agent's address for a free pull. */
   buyer: string | null;
@@ -98,5 +66,17 @@ export async function recentSales(limit = 50): Promise<ListedSale[]> {
        FROM corpus_sale s LEFT JOIN corpus_sale_audit a ON a.sale_id = s.id
       ORDER BY s.created_at DESC LIMIT ?`,
     [limit],
+  );
+}
+
+/** Everything one agent wallet has bought, newest first. */
+export async function salesTo(buyer: string, limit = 50): Promise<ListedSale[]> {
+  return query<ListedSale>(
+    `SELECT s.id, s.task_id, s.method, s.buyer, s.network, s.amount, s.asset, s.created_at,
+            a.sha256, a.log_contract, a.log_seq, a.transaction_id AS log_tx, a.error AS audit_error
+       FROM corpus_sale s LEFT JOIN corpus_sale_audit a ON a.sale_id = s.id
+      WHERE s.buyer = ?
+      ORDER BY s.created_at DESC LIMIT ?`,
+    [buyer.toLowerCase(), limit],
   );
 }

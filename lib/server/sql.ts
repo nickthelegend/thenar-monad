@@ -303,24 +303,9 @@ export function migrate(): Promise<void> {
           PRIMARY KEY (task_id, member)
         );
 
-        -- How many free pulls each World ID-backed human has had from an
-        -- endpoint, and which AgentKit challenges have already been answered.
-        -- Kept here rather than in memory: a free trial that resets whenever
-        -- the process restarts is not a trial with a limit.
-        CREATE TABLE IF NOT EXISTS agentkit_usage (
-          endpoint   TEXT NOT NULL,
-          human_id   TEXT NOT NULL,
-          uses       INTEGER NOT NULL,
-          PRIMARY KEY (endpoint, human_id)
-        );
-        CREATE TABLE IF NOT EXISTS agentkit_nonce (
-          nonce      TEXT PRIMARY KEY,
-          created_at BIGINT NOT NULL
-        );
 
-        -- Every corpus an agent took, and on what terms: an x402 payment
-        -- settled in USDC on Monad (id is its transaction hash), or an
-        -- AgentKit free pull (id is the challenge nonce it signed).
+        -- Every corpus an agent took: an x402 payment settled in USDC on
+        -- Monad, keyed by its transaction hash.
         CREATE TABLE IF NOT EXISTS corpus_sale (
           id         TEXT PRIMARY KEY,
           task_id    INTEGER NOT NULL,
@@ -345,22 +330,9 @@ export function migrate(): Promise<void> {
           created_at     BIGINT NOT NULL
         );
 
-        -- A World ID proof that a live human stands behind an operator
-        -- address. The nullifier is the key because it is what World makes
-        -- unique per human per action: one person cannot verify two addresses,
-        -- and one address cannot borrow somebody else's face.
-        CREATE TABLE IF NOT EXISTS human (
-          nullifier   TEXT PRIMARY KEY,
-          address     TEXT NOT NULL UNIQUE,
-          credential  TEXT NOT NULL,
-          protocol    TEXT NOT NULL,
-          action      TEXT NOT NULL,
-          environment TEXT NOT NULL,
-          verified_at BIGINT NOT NULL
-        );
 
         -- Every write this server made to CorpusShares on Monad: the
-        -- control-list entry that follows a human proof, the shares a paid run
+        -- control-list entry that follows a passkey sign-in, the shares a paid run
         -- earns, a dividend declared from sales. Keyed on the transaction, so
         -- each line can be found on Monadscan.
         CREATE TABLE IF NOT EXISTS token_event (
@@ -372,13 +344,15 @@ export function migrate(): Promise<void> {
           created_at BIGINT NOT NULL
         );
 
-        -- Proof requests this server signed and has not yet seen answered.
-        -- World's verify endpoint checks a proof, not whether this server
-        -- asked for it, so the nonce is written down before it leaves.
-        CREATE TABLE IF NOT EXISTS world_nonce (
+
+        -- A one-time challenge an operator's passkey signs to join the
+        -- CorpusShares whitelist. Used once, then marked, so a captured
+        -- assertion cannot admit anyone a second time.
+        CREATE TABLE IF NOT EXISTS operator_challenge (
           nonce      TEXT PRIMARY KEY,
           address    TEXT NOT NULL,
-          expires_at BIGINT NOT NULL
+          expires_at BIGINT NOT NULL,
+          used_at    BIGINT
         );
       `);
 
@@ -533,16 +507,6 @@ export function migrate(): Promise<void> {
       CREATE INDEX IF NOT EXISTS idx_policy_rank
         ON policy_submission(placed DESC, grasped DESC, median_mm ASC);
 
-      CREATE TABLE IF NOT EXISTS agentkit_usage (
-        endpoint   TEXT NOT NULL,
-        human_id   TEXT NOT NULL,
-        uses       INTEGER NOT NULL,
-        PRIMARY KEY (endpoint, human_id)
-      );
-      CREATE TABLE IF NOT EXISTS agentkit_nonce (
-        nonce      TEXT PRIMARY KEY,
-        created_at INTEGER NOT NULL
-      );
       CREATE TABLE IF NOT EXISTS corpus_sale (
         id         TEXT PRIMARY KEY,
         task_id    INTEGER NOT NULL,
@@ -562,15 +526,6 @@ export function migrate(): Promise<void> {
         error          TEXT,
         created_at     INTEGER NOT NULL
       );
-      CREATE TABLE IF NOT EXISTS human (
-        nullifier   TEXT PRIMARY KEY,
-        address     TEXT NOT NULL UNIQUE,
-        credential  TEXT NOT NULL,
-        protocol    TEXT NOT NULL,
-        action      TEXT NOT NULL,
-        environment TEXT NOT NULL,
-        verified_at INTEGER NOT NULL
-      );
       CREATE TABLE IF NOT EXISTS token_event (
         tx         TEXT PRIMARY KEY,
         kind       TEXT NOT NULL,
@@ -579,10 +534,11 @@ export function migrate(): Promise<void> {
         detail     TEXT,
         created_at INTEGER NOT NULL
       );
-      CREATE TABLE IF NOT EXISTS world_nonce (
+      CREATE TABLE IF NOT EXISTS operator_challenge (
         nonce      TEXT PRIMARY KEY,
         address    TEXT NOT NULL,
-        expires_at INTEGER NOT NULL
+        expires_at INTEGER NOT NULL,
+        used_at    INTEGER
       );
     `);
   })();

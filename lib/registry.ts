@@ -80,7 +80,7 @@ export const DEPLOYED: Deployed[] = [
     name: "CorpusShares",
     address: at(C.corpusShares),
     does:
-      "The corpus as shares. Only a World ID-verified human can hold one; each paid run issues its share by score, " +
+      "The corpus as shares. Only an operator admitted with a passkey can hold one; each paid run issues its share by score, " +
       "and dividends from corpus sales pay whoever held at a record date fixed in advance.",
     source: "contracts/src/CorpusShares.sol",
     surface: "/corpus-token, /station",

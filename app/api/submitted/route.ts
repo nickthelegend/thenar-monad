@@ -6,7 +6,7 @@ import { chainClient } from "@/lib/rpc";
 import { AXON_ADDRESS, appChain } from "@/lib/chain";
 import { getTrajectory, markSettled } from "@/lib/server/db";
 import { queryOne } from "@/lib/server/sql";
-import { humanFor } from "@/lib/server/world-id";
+import { isOperator } from "@/lib/server/operator";
 import { issueShares, refusal, sharesFor, TokenError } from "@/lib/server/corpus-shares";
 
 export const runtime = "nodejs";
@@ -80,8 +80,8 @@ export type RunShares =
 async function issueRunShares(trajHash: string): Promise<RunShares> {
   const stored = await getTrajectory(trajHash);
   if (!stored) return { issued: false, reason: "no stored trajectory for this hash" };
-  if (!(await humanFor(stored.contributor))) {
-    return { issued: false, reason: "the contributor has no World ID proof on file" };
+  if (!(await isOperator(stored.contributor))) {
+    return { issued: false, reason: "the contributor is not on the CorpusShares whitelist" };
   }
 
   const prior = await queryOne<{ tx: string }>(

@@ -26,8 +26,6 @@ async function handleGET() {
       asset: AGENT_CORPUS.asset,
       payTo: corpusTreasury(),
       facilitator: AGENT_CORPUS.facilitator,
-      freePullsPerHuman: AGENT_CORPUS.freeUses,
-      agentBook: AGENT_CORPUS.agentBook,
       salesLog,
       salesLogUrl: salesLog ? addressUrl(salesLog) : null,
     },

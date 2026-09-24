@@ -1,8 +1,8 @@
 /**
  * Drive CorpusShares through its lifecycle on Monad testnet.
  *
- * The station issues shares and the Selfie Check whitelists humans on their
- * own; this is for the operations the issuer performs by hand, and for showing
+ * The station issues shares and the passkey step whitelists operators on
+ * their own; this is for the operations the issuer performs by hand, and for showing
  * each one working against the real contract rather than describing it.
  *
  *   node --import ./test/register.mjs scripts/shares.mjs state

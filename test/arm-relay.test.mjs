@@ -139,3 +139,44 @@ test("an armed follower is stopped when the station's stream goes quiet", async 
     fw.p.kill();
   }
 });
+
+test("with --owner, only frames signed by the owner's key move the arm", async () => {
+  const { generateKeyPairSync, sign } = await import("node:crypto");
+  const { commandMessage } = await import("../lib/robot-command.ts");
+  const owner = generateKeyPairSync("ed25519"), stranger = generateKeyPairSync("ed25519");
+  const raw = (k) => k.publicKey.export({ format: "der", type: "spki" }).subarray(-32).toString("hex");
+  const fw = await fakeFollower();
+  const r = await relay(["--follower", fw.path, "--arm", "--owner", raw(owner)]);
+  try {
+    const st = await station();
+    const s0 = await until(() => st.inbox.find((m) => m.type === "status"));
+    assert.equal(s0.owner, raw(owner), "the relay says whose arm it is");
+    let seq = 0;
+    const signed = (q, key = owner.privateKey, at = Date.now(), n = ++seq) =>
+      st.ws.send(JSON.stringify({ type: "state", q, seq: n, ts: at, sig: sign(null, commandMessage(n, at, q), key).toString("hex") }));
+
+    for (let i = 0; i < 4; i++) (signed([0, -25, 35, 0, 0, 20]), await pause(40));
+    await until(() => fw.lines.includes("ARM"));
+    assert.ok(fw.lines.some((l) => l.startsWith("Q ")), "the owner's frames reach the arm");
+
+    fw.lines.length = 0;
+    st.send([0, -25, 35, 0, 0, 20]); // unsigned
+    await until(() => fw.lines.at(-1) === "STOP");
+
+    for (const bad of [
+      () => signed([0, -25, 35, 0, 0, 20], stranger.privateKey),          // another key
+      () => signed([0, -25, 35, 0, 0, 20], owner.privateKey, Date.now() - 10_000), // stale
+      () => signed([0, -25, 35, 0, 0, 20], owner.privateKey, Date.now(), 1),       // replayed sequence
+    ]) {
+      fw.lines.length = 0;
+      await pause(40);
+      bad();
+      await until(() => fw.lines.at(-1) === "STOP");
+      assert.ok(!fw.lines.some((l) => l.startsWith("Q ")), "a refused frame never reaches the arm");
+    }
+    st.ws.close();
+  } finally {
+    r.kill();
+    fw.p.kill();
+  }
+});

@@ -50,7 +50,7 @@ function useDarkGround() {
  *
  * An extension installed alongside is detected too, and could be the wallet
  * wagmi is handed instead — and some (CELL) sign transactions but refuse to sign
- * a plain message, which is exactly what the World ID check asks for. When an
+ * a plain message. When an
  * embedded wallet exists, it is the active one.
  */
 function PreferEmbeddedWallet() {

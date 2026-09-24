@@ -4,8 +4,7 @@
  * A CorpusAccess subscription is a wallet buying a day. That fits a person with
  * a browser and fits an agent badly: an agent wants one task's file, now, paid
  * for in the request that fetches it. So the same file is also sold per pull
- * over x402, in USDC on Monad, and an agent that can show a verified human
- * behind it in World's AgentBook gets its first pulls free.
+ * over x402, in USDC on Monad.
  *
  * Monad is what makes a one-cent sale sensible: the agent signs an EIP-3009
  * authorisation, the facilitator submits it and pays the gas, and the transfer
@@ -29,13 +28,6 @@ export const AGENT_CORPUS = {
   symbol: "USDC",
   /** The Monad Foundation's public facilitator. It pays the gas; no key. */
   facilitator: "https://x402-facilitator.molandak.org",
-  /** Free pulls per verified human, counted across every task. */
-  freeUses: 3,
-  /** Where AgentBook lives. The agent signs for this chain; the lookup reads it. */
-  agentBook: {
-    network: "eip155:480",
-    address: "0xA23aB2712eA7BBa896930544C7d6636a96b944dA",
-  },
   /** The wallet scripts/agent-buy.mjs signs with. */
   demoAgent: "0x9a6C46E7115CfB5FF5a2265E5a1B955038cb63aA",
   explorer: "https://testnet.monadscan.com",
