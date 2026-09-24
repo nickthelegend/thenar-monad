@@ -24,7 +24,7 @@ const pace = () => new Promise((r) => setTimeout(r, 5200));
 const post = async (body) => (await pace(), fetch(`${BASE}/api/operator`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) })
   .then(async (r) => ({ status: r.status, body: await r.json() })));
 const challenge = async (who = address) => (await post({ action: "challenge", address: who })).body.challenge;
-function assertion(ch, { rpId = "localhost", origin = BASE, flags = 0x05, type = "webauthn.get" } = {}) {
+function assertion(ch, { rpId = new URL(BASE).hostname, origin = BASE, flags = 0x05, type = "webauthn.get" } = {}) {
   const authData = Buffer.concat([sha(Buffer.from(rpId)), Buffer.from([flags]), Buffer.from([0, 0, 0, 7])]);
   const clientData = Buffer.from(JSON.stringify({ type, challenge: ch, origin }));
   return { authenticatorData: b64url(authData), clientDataJSON: b64url(clientData), signature: b64url(sign("sha256", Buffer.concat([authData, sha(clientData)]), privateKey)) };
