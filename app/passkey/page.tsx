@@ -5,7 +5,7 @@ import { usePublicClient, useReadContract } from "wagmi";
 import { Button, DimRule } from "@/components/primitives";
 import { useSession } from "@/components/session";
 import { OperatorGate } from "@/components/operator-gate";
-import { PASSKEY_ADDRESS, addressUrl } from "@/lib/chain";
+import { CHAIN_SHORT, PASSKEY_ADDRESS, addressUrl } from "@/lib/chain";
 import { PASSKEY_ABI } from "@/lib/passkey-abi";
 import { b64url, fromB64url, signChallenge, storedPasskey } from "@/lib/passkey";
 import { assertionDigest, derToRs } from "@/lib/webauthn";
@@ -29,7 +29,7 @@ export default function PasskeyPage() {
   const [error, setError] = useState<string | null>(null);
   const [proof, setProof] = useState<Proof>(null);
 
-  const { data: registered } = useReadContract({
+  const { data: registered, refetch } = useReadContract({
     address: PASSKEY_ADDRESS, abi: PASSKEY_ABI, functionName: "hasPasskey",
     args: s.address ? [s.address] : undefined, query: { enabled: Boolean(s.address) },
   });
@@ -77,7 +77,7 @@ export default function PasskeyPage() {
           <span className={local ? "text-go" : "text-scribe-3"}>{local ? "holds your passkey" : "no passkey"}</span>
         </span>
         <span className="flex items-baseline gap-2">
-          <span className="label">On Monad</span>
+          <span className="label">On {CHAIN_SHORT}</span>
           <span className={registered ? "text-go" : "text-scribe-3"}>
             {s.connected ? (registered ? "registered" : "not registered") : "connect to read"}
           </span>
@@ -93,22 +93,23 @@ export default function PasskeyPage() {
         </div>
       ) : (
         <>
-          <div className="mt-8"><OperatorGate /></div>
+          {/* Setting up registers the key, so the registry's answer above is stale the moment it succeeds. */}
+          <div className="mt-8"><OperatorGate onAdmitted={() => void refetch()} /></div>
 
           {registered ? (
             <>
-              <DimRule className="mt-10" note="Check it on Monad yourself" />
+              <DimRule className="mt-10" note={`Check it on ${CHAIN_SHORT} yourself`} />
               <p className="mt-3 max-w-[62ch] text-[14px] leading-relaxed text-scribe-3">
                 Your passkey signs a fresh random message, and the registry on Monad verifies that signature
                 against the key registered to your address, through the P-256 precompile. Nothing is sent and
                 nothing costs gas: it is a read.
               </p>
               <Button className="mt-4" onClick={prove} disabled={busy}>
-                {busy ? "Waiting for your passkey…" : "Prove it on Monad"}
+                {busy ? "Waiting for your passkey…" : `Prove it on ${CHAIN_SHORT}`}
               </Button>
               {proof ? (
                 <p className={`mt-3 font-mono text-[13px] ${proof.ok ? "text-go" : "text-reject"}`}>
-                  {proof.ok ? "Verified on Monad" : "Rejected by the registry"} · digest {shortHash(proof.digest)}
+                  {proof.ok ? `Verified on ${CHAIN_SHORT}` : "Rejected by the registry"} · digest {shortHash(proof.digest)}
                 </p>
               ) : null}
               {error ? <p className="mt-3 text-[13px] text-reject">{error}</p> : null}

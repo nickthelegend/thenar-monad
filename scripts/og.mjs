@@ -24,7 +24,7 @@ import React from "react";
 import { writeFileSync } from "node:fs";
 import { createPublicClient, formatEther } from "viem";
 import { AXON_ABI as abi } from "../lib/abi.ts";
-import { monadTestnet as chain, transport, ADDR, need } from "./monad.mjs";
+import { appChain as chain, transport, ADDR, need } from "./monad.mjs";
 
 const h = React.createElement;
 

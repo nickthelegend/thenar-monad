@@ -1,6 +1,5 @@
 import "server-only";
-import { isAddress } from "@/lib/chain";
-import { DEPLOYMENT } from "@/lib/deployment";
+import { ACTIVE_DEPLOYMENT as DEPLOYMENT, isAddress } from "@/lib/chain";
 import { query, run } from "./sql";
 
 /** Where corpus sales are paid: CORPUS_TREASURY, or the deployer that funds the tasks. */

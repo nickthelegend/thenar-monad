@@ -30,7 +30,7 @@ import { saveDraft, loadDraft, clearDraft } from "@/lib/run-draft";
 import { webglAvailable } from "@/lib/webgl";
 import { readTally, noteMeasured, notePaid, meanScore, minutes, type Tally } from "@/lib/session-tally";
 import { soundOn, setSound } from "@/lib/click";
-import { txUrl, CURRENCY, FAUCET_URL, LOW_GAS_BALANCE, appChain } from "@/lib/chain";
+import { txUrl, CURRENCY, CHAIN_SHORT, FAUCET_URL, LOW_GAS_BALANCE, appChain } from "@/lib/chain";
 import { sceneForTask } from "@/lib/props";
 import { cn } from "@/lib/cn";
 import { fmtGasCost, fmtMon, fmtScore, fmtSeconds, shortHash } from "@/lib/format";
@@ -1210,7 +1210,7 @@ function MeasurementSnap({
                 <span>Issuing this run&rsquo;s share of the corpus&hellip;</span>
               ) : tx.shares?.issued ? (
                 <span>
-                  {tx.shares.units ? `${tx.shares.units} ${SHARES_SYMBOL}` : "Corpus shares"} issued on Monad ·{" "}
+                  {tx.shares.units ? `${tx.shares.units} ${SHARES_SYMBOL}` : "Corpus shares"} issued on {CHAIN_SHORT} ·{" "}
                   <a
                     href={txUrl(tx.shares.tx)}
                     target="_blank"

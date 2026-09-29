@@ -12,7 +12,7 @@
 import { chromium } from "playwright";
 import { createPublicClient, fallback, http } from "viem";
 import { AXON_ABI } from "../lib/abi.ts";
-import { monadTestnet, RPC_ENDPOINTS, ADDR, need } from "./monad.mjs";
+import { appChain, RPC_ENDPOINTS, ADDR, need } from "./monad.mjs";
 
 const BASE = process.argv[2] ?? "http://127.0.0.1:3111";
 
@@ -149,7 +149,7 @@ await b.close();
   const AXON = need(ADDR.axon, "AxonProtocolV2's address (lib/deployment.ts, or NEXT_PUBLIC_AXON_ADDRESS)");
   const read = async (urls) => {
     const c = createPublicClient({
-      chain: monadTestnet,
+      chain: appChain,
       transport: fallback(
         urls.map((u) => http(u, { retryCount: 1, retryDelay: 200, timeout: 15000 })),
         { rank: false },

@@ -8,10 +8,15 @@
  * The deployment's addresses come from lib/deployment.ts, which
  * scripts/apply-deploy.mjs writes from forge's broadcast record, with
  * .env.local allowed to override any of them.
+ *
+ * With NEXT_PUBLIC_CHAIN=local, the same holds for the local chain: its
+ * addresses from lib/deployment-local.ts, its env from .env.localnet, both
+ * written by scripts/localnet.mjs.
  */
 import { existsSync, readFileSync } from "node:fs";
 import { defineChain, fallback, http } from "viem";
 import { DEPLOYMENT } from "../lib/deployment.ts";
+import { LOCAL_DEPLOYMENT } from "../lib/deployment-local.ts";
 
 export const monadTestnet = defineChain({
   id: 10143,
@@ -23,16 +28,36 @@ export const monadTestnet = defineChain({
   testnet: true,
 });
 
-export const RPC_ENDPOINTS = [
-  "https://testnet-rpc.monad.xyz",
-  "https://rpc.ankr.com/monad_testnet",
-  "https://10143.rpc.thirdweb.com",
-];
+export const LOCALNET = process.env.NEXT_PUBLIC_CHAIN === "local";
+export const LOCAL_RPC = process.env.NEXT_PUBLIC_LOCAL_RPC || "http://127.0.0.1:8645";
+/** Where the local app serves its explorer, for the links scripts print. */
+const LOCAL_APP = process.env.LOCAL_APP_URL || "http://127.0.0.1:3336";
+
+export const thenarLocalnet = defineChain({
+  id: 31337,
+  name: "Thenar Localnet",
+  nativeCurrency: { name: "Monad", symbol: "MON", decimals: 18 },
+  rpcUrls: { default: { http: [LOCAL_RPC] } },
+  blockExplorers: { default: { name: "Local explorer", url: `${LOCAL_APP}/explorer` } },
+  contracts: { multicall3: { address: "0xcA11bde05977b3631167028862bE2a173976CA11" } },
+  testnet: true,
+});
+
+/** The chain scripts talk to: the one the app talks to. */
+export const appChain = LOCALNET ? thenarLocalnet : monadTestnet;
+
+export const RPC_ENDPOINTS = LOCALNET
+  ? [LOCAL_RPC]
+  : [
+      "https://testnet-rpc.monad.xyz",
+      "https://rpc.ankr.com/monad_testnet",
+      "https://10143.rpc.thirdweb.com",
+    ];
 
 export const transport = () =>
   fallback(RPC_ENDPOINTS.map((url) => http(url, { retryCount: 1, timeout: 30_000 })), { rank: false });
 
-export const EXPLORER = monadTestnet.blockExplorers.default.url;
+export const EXPLORER = appChain.blockExplorers.default.url;
 export const txUrl = (h) => `${EXPLORER}/tx/${h}`;
 export const addressUrl = (a) => `${EXPLORER}/address/${a}`;
 
@@ -48,12 +73,17 @@ export function readEnvFile(file) {
   );
 }
 
-const files = { ...readEnvFile(".env.deployer"), ...readEnvFile(".env.local") };
+// The local chain's keys are anvil's well-known test accounts, and they must
+// win over .env.local, which names Monad's.
+const files = LOCALNET
+  ? readEnvFile(".env.localnet")
+  : { ...readEnvFile(".env.deployer"), ...readEnvFile(".env.local") };
 
-/** process.env first, then .env.local, then .env.deployer. */
+/** process.env first, then .env.local, then .env.deployer (or .env.localnet alone). */
 export const env = (name) => process.env[name] || files[name] || undefined;
 
-const C = DEPLOYMENT.contracts;
+const D = LOCALNET ? LOCAL_DEPLOYMENT : DEPLOYMENT;
+const C = D.contracts;
 const pick = (name, deployed) => env(name) || deployed || undefined;
 
 /** The deployment's addresses, as the app sees them. */
@@ -72,7 +102,7 @@ export const ADDR = {
   confidentialPayouts: C.confidentialPayouts || undefined,
 };
 
-export const DEPLOY_BLOCK = BigInt(DEPLOYMENT.deployBlock || 0);
+export const DEPLOY_BLOCK = BigInt(D.deployBlock || 0);
 
 export function need(value, what) {
   if (!value) {

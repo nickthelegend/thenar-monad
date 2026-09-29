@@ -48,6 +48,14 @@ export function forgetPasskey(address: string) {
 export const passkeysAvailable = () =>
   typeof window !== "undefined" && typeof window.PublicKeyCredential === "function" && !!navigator.credentials;
 
+/**
+ * Whether this page's address can own a passkey at all. WebAuthn binds a
+ * passkey to a domain name, and refuses an IP address outright, so a site
+ * opened at 127.0.0.1 fails with nothing more useful than "creation failed".
+ */
+export const passkeyHostOk = () =>
+  typeof window === "undefined" || !/^(\d{1,3}(\.\d{1,3}){3}|\[[0-9a-f:]+\])$/i.test(window.location.hostname);
+
 type Captured = { spki?: ArrayBuffer | null; credentialId?: string; transports?: string[]; assertion?: Assertion };
 
 /**

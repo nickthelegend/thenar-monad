@@ -1,6 +1,7 @@
 import { defineChain } from "viem";
 
 import { DEPLOYMENT } from "./deployment";
+import { LOCAL_DEPLOYMENT } from "./deployment-local";
 
 /**
  * Monad testnet, where Thenar was first built at Monad Blitz Hyderabad.
@@ -36,11 +37,45 @@ export const monadTestnet = defineChain({
   testnet: true,
 });
 
-/** Circle's USDC on Monad testnet. 6 decimals. What agents pay for the corpus in. */
-export const USDC = "0x534b2f3A21130d7a60830c2Df862319e593943A3" as const;
+/**
+ * A local chain with Monad's shape, for running every flow end to end on one
+ * machine: anvil with the Osaka hardfork, which has the same P-256 precompile
+ * at 0x0100 that Monad has, the same contracts deployed by the same script,
+ * and a USDC with Circle's EIP-3009 interface. scripts/localnet.mjs starts it.
+ *
+ * Chosen at build time with NEXT_PUBLIC_CHAIN=local. Transactions on it are
+ * real transactions on a real chain; they are just not on Monad, and every
+ * page of a local build carries a banner saying so (app/layout.tsx).
+ */
+export const LOCALNET = process.env.NEXT_PUBLIC_CHAIN === "local";
+
+export const LOCAL_RPC = process.env.NEXT_PUBLIC_LOCAL_RPC || "http://127.0.0.1:8645";
+
+export const thenarLocalnet = defineChain({
+  id: 31337,
+  name: "Thenar Localnet",
+  nativeCurrency: { name: "Monad", symbol: "MON", decimals: 18 },
+  rpcUrls: { default: { http: [LOCAL_RPC] } },
+  // Nothing indexes a local chain for a block explorer, so the app has its
+  // own: /explorer reads a transaction or an address straight off the node.
+  blockExplorers: { default: { name: "Local explorer", url: "/explorer" } },
+  contracts: {
+    multicall3: { address: "0xcA11bde05977b3631167028862bE2a173976CA11" },
+  },
+  testnet: true,
+});
+
+/** How copy names the chain in a sentence: "registered on Monad". */
+export const CHAIN_SHORT = LOCALNET ? "the local chain" : "Monad";
+
+/** The contracts this build reads and writes: Monad's, or the local chain's. */
+export const ACTIVE_DEPLOYMENT = LOCALNET ? LOCAL_DEPLOYMENT : DEPLOYMENT;
+
+/** Circle's USDC on Monad testnet, or its local stand-in. 6 decimals. What agents pay for the corpus in. */
+export const USDC = (LOCALNET ? LOCAL_DEPLOYMENT.usdc : "0x534b2f3A21130d7a60830c2Df862319e593943A3") as `0x${string}`;
 
 /** The one place the chain is named. Everything else reads it from here. */
-export const appChain = monadTestnet;
+export const appChain = LOCALNET ? thenarLocalnet : monadTestnet;
 
 /**
  * Monad's RPCs, in the order reads try them.
@@ -51,17 +86,19 @@ export const appChain = monadTestnet;
  * on it costs latency instead of every figure on the site. drpc is not on the
  * list: it refuses the gas an eth_call through Multicall3 asks for.
  */
-export const RPC_ENDPOINTS = [
-  monadTestnet.rpcUrls.default.http[0],
-  "https://rpc.ankr.com/monad_testnet",
-  "https://10143.rpc.thirdweb.com",
-] as const;
+export const RPC_ENDPOINTS: readonly string[] = LOCALNET
+  ? [LOCAL_RPC]
+  : [
+      monadTestnet.rpcUrls.default.http[0],
+      "https://rpc.ankr.com/monad_testnet",
+      "https://10143.rpc.thirdweb.com",
+    ];
 
-/** Where an operator with no gas is sent. */
-export const FAUCET_URL = "https://faucet.monad.xyz";
+/** Where an operator with no gas is sent. On the local chain, its own faucet. */
+export const FAUCET_URL = LOCALNET ? "/localnet" : "https://faucet.monad.xyz";
 
 /** Where an agent with no USDC is sent. Circle's faucet has Monad testnet. */
-export const USDC_FAUCET_URL = "https://faucet.circle.com";
+export const USDC_FAUCET_URL = LOCALNET ? "/localnet" : "https://faucet.circle.com";
 
 /** The ticker shown beside every amount. Hardcoding it is how a UI ends up
  *  quoting one chain's currency while settling in another's. */
@@ -70,7 +107,7 @@ export const CURRENCY = appChain.nativeCurrency.symbol;
 const pick = (env: string | undefined, deployed: string) =>
   ((env && env.length ? env : deployed) ?? "") as `0x${string}`;
 
-const C = DEPLOYMENT.contracts;
+const C = ACTIVE_DEPLOYMENT.contracts;
 
 /** Time-boxed read access to the corpus. Sells time, not rights: a
  *  subscription conveys no licence and no claim on any policy. */
@@ -102,8 +139,8 @@ export const isAddress = (a: string) => /^0x[0-9a-fA-F]{40}$/.test(a);
 
 export const IS_DEPLOYED = isAddress(AXON_ADDRESS);
 
-/** The block AxonProtocolV2 was deployed in on Monad testnet. */
-export const AXON_DEPLOY_BLOCK = BigInt(DEPLOYMENT.deployBlock);
+/** The block AxonProtocolV2 was deployed in. */
+export const AXON_DEPLOY_BLOCK = BigInt(ACTIVE_DEPLOYMENT.deployBlock);
 
 /**
  * Below this much MON a wallet cannot be relied on to pay for a submit.
@@ -193,7 +230,7 @@ export const txUrlOn = (chainId: number, hash: string) =>
  * look like organic demand. Read off the chain, not asserted: compare a task's
  * funder to this and say so.
  */
-export const SEED_FUNDER = (DEPLOYMENT.deployer || "0xDf93bdA9B5de2fBf71C2201268DEFf54c1689815").toLowerCase();
+export const SEED_FUNDER = (ACTIVE_DEPLOYMENT.deployer || "0xDf93bdA9B5de2fBf71C2201268DEFf54c1689815").toLowerCase();
 
 export const isSeedFunded = (funder: string) => funder.toLowerCase() === SEED_FUNDER;
 

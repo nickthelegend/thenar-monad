@@ -22,13 +22,13 @@ import {
 } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { CORPUS_SHARES_ABI } from "../lib/registry-abi.ts";
-import { ADDR, env, monadTestnet, need, transport, txUrl } from "./monad.mjs";
+import { ADDR, env, appChain, need, transport, txUrl } from "./monad.mjs";
 
 const [command, ...args] = process.argv.slice(2);
 const shares = getAddress(need(ADDR.corpusShares, "CorpusShares' address (deploy, then scripts/apply-deploy.mjs)"));
 const account = privateKeyToAccount(need(env("CORPUS_ISSUER_PRIVATE_KEY"), "CORPUS_ISSUER_PRIVATE_KEY"));
-const client = createPublicClient({ chain: monadTestnet, transport: transport() });
-const wallet = createWalletClient({ account, chain: monadTestnet, transport: transport() });
+const client = createPublicClient({ chain: appChain, transport: transport() });
+const wallet = createWalletClient({ account, chain: appChain, transport: transport() });
 const token = { address: shares, abi: CORPUS_SHARES_ABI };
 
 function fail(message) {

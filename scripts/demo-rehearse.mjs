@@ -16,7 +16,7 @@
 import { chromium } from "playwright";
 import { createPublicClient, formatEther } from "viem";
 import { AXON_ABI as abi } from "../lib/abi.ts";
-import { monadTestnet as chain, transport, ADDR, need, txUrl } from "./monad.mjs";
+import { appChain as chain, transport, ADDR, need, txUrl } from "./monad.mjs";
 
 const BASE = process.argv[2] ?? "https://thenar.io";
 const node = createPublicClient({ chain, transport: transport() });

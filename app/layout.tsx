@@ -7,6 +7,7 @@ import { Archivo, DM_Mono, Hanken_Grotesk, IBM_Plex_Mono } from "next/font/googl
 import { Providers } from "@/components/providers";
 import { SiteNav } from "@/components/site-nav";
 import { Conditions } from "@/components/conditions";
+import { LOCALNET, appChain } from "@/lib/chain";
 import "./globals.css";
 
 /**
@@ -122,6 +123,14 @@ export default function RootLayout({
         <Providers>
           <LocaleReady>
             <SiteNav />
+            {/* The copy across the site names Monad, where Thenar runs. A local
+                build says, on every page, that this is not Monad. */}
+            {LOCALNET ? (
+              <div data-testid="localnet-banner" className="border-b border-rule bg-ink-1 px-5 py-1.5 text-center font-mono text-[12px] text-scribe-2">
+                Local chain: every transaction here is on {appChain.name} ({appChain.id}) on this machine, not on Monad.{" "}
+                <a href="/localnet" className="text-probe hover:underline">Wallet and faucet</a>
+              </div>
+            ) : null}
             <Conditions />
             <Pulse />
             <InstallShell />

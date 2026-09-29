@@ -70,3 +70,5 @@ demo/out/check/
 
 # The object detector's runtime, copied from @mediapipe/tasks-vision on install.
 /public/vision/wasm/
+.localnet/
+.next-local/

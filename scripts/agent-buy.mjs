@@ -21,13 +21,13 @@ import { ExactEvmScheme } from "@x402/evm/exact/client";
 import { toClientEvmSigner } from "@x402/evm";
 import { AGENT_CORPUS } from "../lib/agent-corpus.ts";
 import { SALES_LOG_ABI } from "../lib/registry-abi.ts";
-import { ADDR, env, monadTestnet, need, transport, txUrl } from "./monad.mjs";
+import { ADDR, env, appChain, need, transport, txUrl } from "./monad.mjs";
 
 const BASE = process.argv[2] ?? "http://127.0.0.1:3111";
 const TASK = process.argv[3] ?? "1";
 
 const wallet = privateKeyToAccount(need(env("AGENT_PRIVATE_KEY"), "AGENT_PRIVATE_KEY"));
-const monad = createPublicClient({ chain: monadTestnet, transport: transport() });
+const monad = createPublicClient({ chain: appChain, transport: transport() });
 
 const usdc = await monad.readContract({
   address: AGENT_CORPUS.asset,

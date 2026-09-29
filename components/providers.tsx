@@ -5,13 +5,14 @@ import { Suspense, useEffect, useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { PrivyProvider, useWallets } from "@privy-io/react-auth";
 import { WagmiProvider, useSetActiveWallet } from "@privy-io/wagmi";
-import { useAccount } from "wagmi";
+import { WagmiProvider as PlainWagmiProvider, useAccount } from "wagmi";
 import { TasksProvider } from "@/components/tasks-provider";
 import { ModelStageProvider } from "@/components/model-stage";
 import { Palette } from "@/components/palette";
 import { Tour } from "@/components/tour";
 import { wagmiConfig } from "@/lib/wagmi";
-import { appChain } from "@/lib/chain";
+import { localWagmiConfig } from "@/lib/wagmi-local";
+import { LOCALNET, appChain } from "@/lib/chain";
 
 /**
  * The Privy app operators sign in through.
@@ -21,7 +22,7 @@ import { appChain } from "@/lib/chain";
  * id fails loudly here instead of quietly everywhere.
  */
 const PRIVY_APP_ID = process.env.NEXT_PUBLIC_PRIVY_APP_ID;
-if (!PRIVY_APP_ID) {
+if (!PRIVY_APP_ID && !LOCALNET) {
   throw new Error("NEXT_PUBLIC_PRIVY_APP_ID is not set. Operators sign in through Privy; see .env.example.");
 }
 
@@ -67,8 +68,7 @@ function PreferEmbeddedWallet() {
   return null;
 }
 
-export function Providers({ children }: { children: React.ReactNode }) {
-  const dark = useDarkGround();
+function useQueryClient() {
   const [queryClient] = useState(
     () =>
       new QueryClient({
@@ -83,6 +83,45 @@ export function Providers({ children }: { children: React.ReactNode }) {
         },
       }),
   );
+  return queryClient;
+}
+
+/** Everything under the wallet, the same on every chain. */
+function AppTree({ children }: { children: React.ReactNode }) {
+  return (
+    <TasksProvider>
+      <ModelStageProvider>
+        {children}
+        <Palette />
+        {/* The tour reads its step from the query string, and a component
+            that reads search params cannot be prerendered — without this
+            boundary the 404 page fails to build. Nothing renders here
+            until a ?tour= is present, so an empty fallback is the whole
+            fallback. */}
+        <Suspense fallback={null}>
+          <Tour />
+        </Suspense>
+      </ModelStageProvider>
+    </TasksProvider>
+  );
+}
+
+/** The local chain: wagmi alone, with the browser-held local wallet. */
+function LocalProviders({ children }: { children: React.ReactNode }) {
+  const queryClient = useQueryClient();
+  return (
+    <QueryClientProvider client={queryClient}>
+      {/* wagmi's Register names the Privy config's type; the chains differ, the hooks do not. */}
+      <PlainWagmiProvider config={localWagmiConfig as unknown as typeof wagmiConfig}>
+        <AppTree>{children}</AppTree>
+      </PlainWagmiProvider>
+    </QueryClientProvider>
+  );
+}
+
+function PrivyProviders({ children }: { children: React.ReactNode }) {
+  const dark = useDarkGround();
+  const queryClient = useQueryClient();
 
   return (
     <PrivyProvider
@@ -107,22 +146,12 @@ export function Providers({ children }: { children: React.ReactNode }) {
       <QueryClientProvider client={queryClient}>
         <WagmiProvider config={wagmiConfig}>
           <PreferEmbeddedWallet />
-          <TasksProvider>
-          <ModelStageProvider>
-            {children}
-            <Palette />
-            {/* The tour reads its step from the query string, and a component
-                that reads search params cannot be prerendered — without this
-                boundary the 404 page fails to build. Nothing renders here
-                until a ?tour= is present, so an empty fallback is the whole
-                fallback. */}
-            <Suspense fallback={null}>
-              <Tour />
-            </Suspense>
-          </ModelStageProvider>
-          </TasksProvider>
+          <AppTree>{children}</AppTree>
         </WagmiProvider>
       </QueryClientProvider>
     </PrivyProvider>
   );
 }
+
+/** Chosen once, at build time: a build is for Monad or for the local chain. */
+export const Providers = LOCALNET ? LocalProviders : PrivyProviders;

@@ -1,4 +1,4 @@
-import { fallback, http } from "wagmi";
+import { fallback, http, type Transport } from "wagmi";
 import { createConfig } from "@privy-io/wagmi";
 import { appChain, RPC_ENDPOINTS } from "./chain";
 
@@ -41,7 +41,7 @@ export const wagmiConfig = createConfig({
       ),
       { rank: false },        // in order: the first is the one that answers widest
     ),
-  },
+  } as Record<typeof appChain.id, Transport>,
   ssr: true,
 });
 

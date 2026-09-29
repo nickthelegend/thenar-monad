@@ -10,7 +10,7 @@
  * "/contracts only", that contract has no other home in the interface yet.
  */
 
-import { DEPLOYMENT } from "./deployment";
+import { ACTIVE_DEPLOYMENT as DEPLOYMENT } from "./chain";
 
 export type Deployed = {
   key: string;

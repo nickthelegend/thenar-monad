@@ -23,7 +23,7 @@ import {
 } from "viem";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 import { solve, toolPosition } from "../lib/kinematics.ts";
-import { ADDR, env, monadTestnet, need, transport, txUrl } from "./monad.mjs";
+import { ADDR, env, appChain, need, transport, txUrl } from "./monad.mjs";
 
 const BASE = process.argv[2] ?? "http://localhost:3222";
 const TASK = Number(process.argv[3] ?? "1");
@@ -100,10 +100,10 @@ function heldDistanceMm(samples) {
   return d[d.length >> 1] * 1000;
 }
 
-const pub = createPublicClient({ chain: monadTestnet, transport: transport() });
-const funder = createWalletClient({ account: privateKeyToAccount(DEPLOYER_KEY), chain: monadTestnet, transport: transport() });
+const pub = createPublicClient({ chain: appChain, transport: transport() });
+const funder = createWalletClient({ account: privateKeyToAccount(DEPLOYER_KEY), chain: appChain, transport: transport() });
 const op = privateKeyToAccount(generatePrivateKey());
-const operator = createWalletClient({ account: op, chain: monadTestnet, transport: transport() });
+const operator = createWalletClient({ account: op, chain: appChain, transport: transport() });
 
 console.log(`task      #${TASK}  seed ${SEED}  operator ${op.address}`);
 

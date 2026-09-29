@@ -17,11 +17,11 @@ import { chromium } from "playwright";
 import { createPublicClient, formatEther } from "viem";
 import { DEPLOYED } from "../lib/registry.ts";
 import { DEPLOYMENT } from "../lib/deployment.ts";
-import { monadTestnet, transport } from "./monad.mjs";
+import { appChain, transport } from "./monad.mjs";
 
 const BASE = process.argv[2] ?? "https://thenar.io";
-const node = createPublicClient({ chain: monadTestnet, transport: transport() });
-const SYMBOL = monadTestnet.nativeCurrency.symbol;
+const node = createPublicClient({ chain: appChain, transport: transport() });
+const SYMBOL = appChain.nativeCurrency.symbol;
 
 // Addresses come from the registry the app itself ships, not from a copy here.
 const entries = DEPLOYED.map((d) => ({ name: d.name, address: d.address, monad: d.monad }));

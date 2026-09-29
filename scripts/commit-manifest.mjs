@@ -17,7 +17,7 @@
 import { createPublicClient, createWalletClient, parseAbi } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { rootOf, proofFor, verifyProof } from "../lib/merkle.ts";
-import { monadTestnet as chain, transport, ADDR, env, need, txUrl } from "./monad.mjs";
+import { appChain as chain, transport, ADDR, env, need, txUrl } from "./monad.mjs";
 
 const TASK = Number(process.argv[2] ?? 0);
 const BASE = process.argv[3] ?? "http://localhost:3222";

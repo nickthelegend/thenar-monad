@@ -10,11 +10,11 @@
  */
 import { createPublicClient, parseAbiItem } from "viem";
 import { AXON_ABI } from "../lib/abi.ts";
-import { monadTestnet, transport, ADDR, need } from "./monad.mjs";
+import { appChain, transport, ADDR, need } from "./monad.mjs";
 
 const BASE = process.argv[2] ?? "http://localhost:3000";
 const AXON = need(ADDR.axon, "AxonProtocolV2's address (lib/deployment.ts, or NEXT_PUBLIC_AXON_ADDRESS)");
-const pub = createPublicClient({ chain: monadTestnet, transport: transport() });
+const pub = createPublicClient({ chain: appChain, transport: transport() });
 
 const ACCEPTED = parseAbiItem(
   "event TrajectoryAccepted(uint256 indexed trajectoryId, uint256 indexed taskId, address indexed contributor, bytes32 trajHash, string cid, uint16 score, uint256 paid)"

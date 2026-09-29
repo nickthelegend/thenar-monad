@@ -18,11 +18,11 @@
  * record the deploy script writes — so the suite follows a redeploy without
  * being edited. RPC in the environment still overrides the endpoint.
  */
-import { monadTestnet, RPC_ENDPOINTS, ADDR } from "../scripts/monad.mjs";
+import { appChain, RPC_ENDPOINTS, ADDR } from "../scripts/monad.mjs";
 
 const BASE = process.env.BASE ?? "http://localhost:3222";
 const RPC = process.env.RPC ?? RPC_ENDPOINTS[0];
-const CHAIN_ID = monadTestnet.id;
+const CHAIN_ID = appChain.id;
 /**
  * The contract the deployment is actually reading, asked of the deployment.
  *
@@ -449,7 +449,7 @@ if (feed?.runs?.length) {
       body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "eth_getTransactionReceipt", params: [run.tx_hash] }),
       signal: AbortSignal.timeout(30_000),
     }).then((x) => x.json());
-    check(`feed tx resolves on ${monadTestnet.name} ${run.tx_hash.slice(0, 12)}`, r.result != null);
+    check(`feed tx resolves on ${appChain.name} ${run.tx_hash.slice(0, 12)}`, r.result != null);
   }
 }
 

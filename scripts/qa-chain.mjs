@@ -11,7 +11,7 @@
  */
 import { createPublicClient, parseAbi, formatEther } from "viem";
 import { AXON_ABI as abi } from "../lib/abi.ts";
-import { monadTestnet as chain, transport, RPC_ENDPOINTS, ADDR, env, need } from "./monad.mjs";
+import { appChain as chain, transport, RPC_ENDPOINTS, ADDR, env, need } from "./monad.mjs";
 
 const BASE = process.argv[2] ?? "https://thenar.io";
 const c = createPublicClient({ chain, transport: transport() });

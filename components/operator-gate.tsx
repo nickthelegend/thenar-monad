@@ -4,9 +4,9 @@ import { useCallback, useEffect, useState } from "react";
 import { usePublicClient, useWriteContract } from "wagmi";
 import { Button } from "@/components/primitives";
 import { useSession } from "@/components/session";
-import { PASSKEY_ADDRESS, txUrl } from "@/lib/chain";
+import { CHAIN_SHORT, PASSKEY_ADDRESS, appChain, txUrl } from "@/lib/chain";
 import { PASSKEY_ABI } from "@/lib/passkey-abi";
-import { createPasskey, passkeysAvailable, signChallenge, storedPasskey } from "@/lib/passkey";
+import { createPasskey, passkeyHostOk, passkeysAvailable, signChallenge, storedPasskey } from "@/lib/passkey";
 
 type Status = { address: string; passkey: boolean; operator: boolean };
 
@@ -63,7 +63,7 @@ export function OperatorGate({ onAdmitted }: { onAdmitted?: () => void }) {
     if (!c.challenge) throw new Error(c.error ?? "The server gave no challenge.");
     setBusy("Confirm with your passkey…");
     const assertion = await signChallenge(address, c.challenge);
-    setBusy("Checking it on Monad…");
+    setBusy(`Checking it on ${CHAIN_SHORT}…`);
     const r = await fetch("/api/operator", {
       method: "POST", headers: { "content-type": "application/json" },
       body: JSON.stringify({ action: "admit", address, assertion }),
@@ -85,12 +85,12 @@ export function OperatorGate({ onAdmitted }: { onAdmitted?: () => void }) {
       // at all: make one if needed, then register its key from the wallet.
       if (!onChain || !local) {
         const key = local ?? (setBusy("Creating your passkey…"), await createPasskey(address));
-        setBusy("Registering it on Monad (confirm in your wallet)…");
+        setBusy(`Registering it on ${CHAIN_SHORT} (confirm in your wallet)…`);
         const hash = await writeContractAsync({
           address: PASSKEY_ADDRESS, abi: PASSKEY_ABI, functionName: "register", args: [key.x, key.y],
         });
         setTx(hash);
-        setBusy("Waiting for Monad…");
+        setBusy(`Waiting for ${CHAIN_SHORT}…`);
         await client?.waitForTransactionReceipt({ hash });
         onChain = true;
       }
@@ -114,7 +114,7 @@ export function OperatorGate({ onAdmitted }: { onAdmitted?: () => void }) {
         </span>
         {tx ? (
           <a href={txUrl(tx)} target="_blank" rel="noreferrer" className="font-mono text-[12px] text-probe hover:underline">
-            See it on Monad →
+            See it on {CHAIN_SHORT} →
           </a>
         ) : null}
       </div>
@@ -127,14 +127,19 @@ export function OperatorGate({ onAdmitted }: { onAdmitted?: () => void }) {
     <div className="flex flex-col gap-2 border border-rule p-3">
       <span className="font-mono text-[12px] uppercase tracking-[0.14em] text-scribe">One step before you earn</span>
       <span className="text-[13px] leading-relaxed text-scribe-2">
-        Use Face ID, your fingerprint or a PIN to create a passkey. Its public key is registered on Monad
+        Use Face ID, your fingerprint or a PIN to create a passkey. Its public key is registered on {CHAIN_SHORT}{" "}
         and checked there, so paid runs always come from a person. No seed phrase, and nothing about you
         leaves your device.
       </span>
       {!passkeysAvailable() ? (
         <span className="text-[13px] text-reject">This browser cannot make passkeys. Try Chrome, Safari or Edge.</span>
+      ) : !passkeyHostOk() ? (
+        <span className="text-[13px] text-reject">
+          A passkey belongs to a site&rsquo;s name, and this page was opened at an IP address. Open it at{" "}
+          <a className="underline" href={window.location.href.replace(window.location.hostname, "localhost")}>localhost</a> instead.
+        </span>
       ) : s.wrongNetwork ? (
-        <Button variant="primary" onClick={s.switchToChain}>Switch to Monad</Button>
+        <Button variant="primary" onClick={s.switchToChain}>Switch to {appChain.name}</Button>
       ) : (
         <Button variant="primary" onClick={setUp} disabled={!status || Boolean(busy)}>
           {busy ?? label}
@@ -142,7 +147,7 @@ export function OperatorGate({ onAdmitted }: { onAdmitted?: () => void }) {
       )}
       {tx && !status?.operator ? (
         <a href={txUrl(tx)} target="_blank" rel="noreferrer" className="font-mono text-[12px] text-probe hover:underline">
-          Registration on Monad →
+          Registration on {CHAIN_SHORT} →
         </a>
       ) : null}
       {error ? <span className="text-[13px] leading-relaxed text-reject">{error}</span> : null}
