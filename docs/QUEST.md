@@ -40,6 +40,39 @@ pnpm exec next dev --port 3334
 Then open `http://localhost:3334/station/0` in the Quest browser. A deployed site
 (HTTPS) needs nothing.
 
+## Driving a task with your SO-101 leader (AS5600)
+
+The leader is the arm with no motors: six AS5600 encoders on an ESP32 and a
+TCA9548A (thenar-arms, `so101-mg996r/firmware/thenar`, built with
+`-DROLE_LEADER=1`). Move it by hand and the SO-101 in the task follows it joint
+for joint, and the run records exactly what your hand did.
+
+**On thenar.io, with nothing installed** (Chrome or Edge on a computer):
+
+1. Plug the leader into the computer over USB.
+2. Open an SO-101 task's station, e.g. `thenar.io/station/0`. Under **Your SO-101**, press
+   **Drive with my leader arm** and pick the leader's port.
+3. The first time only: hold the leader in the home pose (base 0°, shoulder −25°,
+   elbow +35°, wrist 0°, roll 0°, jaw 20°) and press **This is home**. The leader
+   stores it (`ZERO`). If a joint on screen turns the opposite way to your hand,
+   press **reverse** beside it (`SIGN`). Both survive a power cycle.
+4. The panel says *Your leader is driving the arm*. Press **Begin run**, do the task
+   with the leader (the trigger is the jaws), and submit as usual.
+
+**Through the relay**, with a physical follower copying the same motion:
+
+```bash
+node scripts/arm-relay.mjs --leader /dev/cu.usbserial-LEADER --follower /dev/cu.usbserial-FOLLOWER --arm
+```
+
+Then press **My leader is on the arm relay** on the station. The relay drives the
+follower from the leader directly and forwards the same pose to the page.
+
+`test/live-localnet.mjs` with `DRIVE=leader` checks the whole path on the local
+chain: a stand-in for the leader firmware on a pseudo-terminal
+(`test/fake-leader.py`), the real relay, the station, the submit, the payout and
+the corpus shares, and that every recorded sample is a pose the leader sent.
+
 ## Scanning a task from a real table (`/post`)
 
 1. Lay a sheet of A4 flat in front of the arm, long side pointing away, near edge

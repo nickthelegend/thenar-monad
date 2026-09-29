@@ -26,13 +26,22 @@
 import { chromium } from "playwright";
 import assert from "node:assert/strict";
 import { createPublicClient, formatEther, http, parseAbi, parseAbiItem } from "viem";
+import { spawn } from "node:child_process";
+import { writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { fileURLToPath } from "node:url";
+import * as THREE from "three";
 import { LOCAL_DEPLOYMENT } from "../lib/deployment-local.ts";
+import { So101Chain, solveSo101, SO101 } from "../lib/so101.ts";
 
 // localhost, not 127.0.0.1: WebAuthn refuses an IP address as a passkey's site.
 const BASE = process.env.BASE ?? "http://localhost:3336";
 const RPC = process.env.NEXT_PUBLIC_LOCAL_RPC ?? "http://127.0.0.1:8645";
 const TASK = Number(process.env.TASK ?? 0);
 const SHOTS = process.env.SHOTS;
+/** "keyboard" drives the arm from the keys; "leader" from a physical-leader stand-in through the relay. */
+const DRIVE = process.env.DRIVE ?? "keyboard";
 const C = LOCAL_DEPLOYMENT.contracts;
 const chain = createPublicClient({ transport: http(RPC) });
 const log = (k, v) => console.log(k.padEnd(10), typeof v === "string" ? v : JSON.stringify(v));
@@ -97,10 +106,16 @@ try {
   assert.match(await text(), /Verified on/, "PasskeyRegistry verified a fresh assertion through the P-256 precompile");
 
   // 4. A paid run at the station.
+  let leaderPoses = null, fakeLeader = null, relay = null;
+  if (DRIVE === "leader") ({ leaderPoses, fakeLeader, relay } = await startLeader());
   await page.goto(`${BASE}/station/${TASK}`);
   const begin = page.getByRole("button", { name: /^Begin run$/ });
   await begin.waitFor({ timeout: 90_000 });
   await page.waitForTimeout(1500);
+  if (DRIVE === "leader") {
+    await page.getByRole("button", { name: "My leader is on the arm relay" }).click();
+    await until(async () => /Your leader is driving the arm/.test(await text()), 15_000, "the leader to drive the arm");
+  }
   await begin.click();
   await until(async () => /end run/i.test(await text()), 10_000, "the run to begin");
   await page.locator("canvas").first().hover();
@@ -111,37 +126,48 @@ try {
     return m ? [+m[1], +m[2], +m[3]] : null;
   };
   await until(tool, 10_000, "the tool readout");
-  const KEYS = [["w", "s"], ["a", "d"], ["e", "q"]];
-  const SPEED = 0.42; // m/s, components/station/viewport.tsx
-  const goTo = async (goal, tol = 0.004) => {
-    for (let pass = 0; pass < 8; pass++) {
-      const now = await tool();
-      const e = goal.map((g, i) => g - now[i]);
-      if (Math.hypot(...e) < tol) return now;
-      for (let i = 0; i < 3; i++) {
-        if (Math.abs(e[i]) < tol / 2) continue;
-        const k = KEYS[i][e[i] > 0 ? 0 : 1];
-        await page.keyboard.down(k);
-        await page.waitForTimeout(Math.max(16, (Math.abs(e[i]) / SPEED) * 1000 * (pass ? 0.8 : 0.95)));
-        await page.keyboard.up(k);
-        await page.waitForTimeout(120);
-      }
-    }
-    return tool();
-  };
-  const jaws = async () => { await page.keyboard.press(" "); await page.waitForTimeout(500); };
-
   const at0 = await tool();
-  await goTo([0.22, 0.14, 0.12]);
-  const over = await goTo([0.22, 0.14, 0.05]);
-  await jaws();
-  const held = /HELD|holding/i.test(await text());
-  await goTo([0.22, 0.14, 0.16]);
-  await goTo([0.16, -0.18, 0.16]);
-  await goTo([0.16, -0.18, 0.07]);
-  await jaws();
-  await goTo([0.16, -0.18, 0.18], 0.01);
-  log("drive", { start: at0, over, held });
+  let over, held = false;
+  if (DRIVE === "leader") {
+    // The hand on the leader does the task; the page only watches.
+    fakeLeader.stdin.write("GO\n");
+    const end = Date.now() + (leaderPoses.length / 50) * 1000 + 1500;
+    while (Date.now() < end) {
+      if (/HELD|holding/i.test(await text())) held = true;
+      await page.waitForTimeout(100);
+    }
+    over = await tool();
+  } else {
+    const KEYS = [["w", "s"], ["a", "d"], ["e", "q"]];
+    const SPEED = 0.42; // m/s, components/station/viewport.tsx
+    const goTo = async (goal, tol = 0.004) => {
+      for (let pass = 0; pass < 8; pass++) {
+        const now = await tool();
+        const e = goal.map((g, i) => g - now[i]);
+        if (Math.hypot(...e) < tol) return now;
+        for (let i = 0; i < 3; i++) {
+          if (Math.abs(e[i]) < tol / 2) continue;
+          const k = KEYS[i][e[i] > 0 ? 0 : 1];
+          await page.keyboard.down(k);
+          await page.waitForTimeout(Math.max(16, (Math.abs(e[i]) / SPEED) * 1000 * (pass ? 0.8 : 0.95)));
+          await page.keyboard.up(k);
+          await page.waitForTimeout(120);
+        }
+      }
+      return tool();
+    };
+    const jaws = async () => { await page.keyboard.press(" "); await page.waitForTimeout(500); };
+    await goTo([0.22, 0.14, 0.12]);
+    over = await goTo([0.22, 0.14, 0.05]);
+    await jaws();
+    held = /HELD|holding/i.test(await text());
+    await goTo([0.22, 0.14, 0.16]);
+    await goTo([0.16, -0.18, 0.16]);
+    await goTo([0.16, -0.18, 0.07]);
+    await jaws();
+    await goTo([0.16, -0.18, 0.18], 0.01);
+  }
+  log("drive", { by: DRIVE, start: at0, end: over, held });
   await until(async () => /IN TOLERANCE|OUT OF TOLERANCE/.test(await text()), 20_000, "the verdict");
   const verdict = (await text()).match(/(IN|OUT OF) TOLERANCE\s*([\d.]+)/);
   log("verdict", verdict?.[0]);
@@ -189,6 +215,19 @@ try {
   assert.match(await text(), /Success/);
   assert.match(await text(), /TrajectoryAccepted/);
 
+  if (leaderPoses) {
+    // The recording is the leader's motion: every sample's joints are a pose
+    // the leader sent, to within the rounding of the wire format.
+    const traj = await (await fetch(`${BASE}/api/trajectory/${hash}`)).json();
+    const samples = traj.samples ?? traj.trajectory?.samples ?? [];
+    const D = 180 / Math.PI;
+    const worst = samples.map((smp) => Math.min(...leaderPoses.map((p) =>
+      Math.max(...[0, 1, 2, 3, 4].map((j) => Math.abs(smp.q[j] * D - p[j])))))).reduce((a, b) => Math.max(a, b), 0);
+    log("leader", { samples: samples.length, poses: leaderPoses.length, worstJointDegFromALeaderPose: +worst.toFixed(3) });
+    assert.ok(samples.length > 50, "the run was recorded");
+    assert.ok(worst < 0.05, `every recorded pose is one the leader sent (worst ${worst}°)`);
+  }
+
   log("errors", errors);
   log("failed", failed);
   assert.deepEqual(errors, [], "no console errors");
@@ -204,4 +243,52 @@ try {
   throw e;
 } finally {
   await browser.close();
+  stopLeader?.();
+}
+
+/**
+ * A hand on a physical leader, played back: a pick-and-place from the task's
+ * start to its goal, solved into SO-101 joint angles with the station's own
+ * chain, sent as the AS5600 firmware sends them (test/fake-leader.py, on a
+ * pseudo-terminal) and read by the real arm relay with --leader.
+ */
+var stopLeader;
+async function startLeader() {
+  const c = new So101Chain();
+  const fk = () => { const p = new THREE.Vector3().setFromMatrixPosition(c.tcpPose()); return [p.x / 1000, p.y / 1000, p.z / 1000]; };
+  const home = fk();
+  const OPEN = 46, SHUT = 7;
+  const legs = [
+    [[0.22, 0.14, 0.12], 2.0, OPEN], [[0.22, 0.14, 0.05], 1.0, OPEN], [[0.22, 0.14, 0.05], 0.6, SHUT],
+    [[0.22, 0.14, 0.16], 1.0, SHUT], [[0.16, -0.18, 0.16], 2.0, SHUT], [[0.16, -0.18, 0.07], 1.0, SHUT],
+    [[0.16, -0.18, 0.07], 0.6, OPEN], [[0.16, -0.18, 0.18], 0.8, OPEN],
+  ];
+  const poses = [[...SO101.homeDeg]];
+  let from = home, jaw = SO101.homeDeg[5];
+  for (const [to, secs, toJaw] of legs) {
+    const n = Math.round(secs * 50);
+    for (let i = 1; i <= n; i++) {
+      const u = i / n, e = u * u * (3 - 2 * u);
+      solveSo101(c, from.map((f, k) => f + (to[k] - f) * e));
+      poses.push([...c.q.slice(0, 5).map((v) => +v.toFixed(3)), +(jaw + (toJaw - jaw) * e).toFixed(3)]);
+    }
+    from = to; jaw = toJaw;
+  }
+  const file = join(tmpdir(), `thenar-leader-${process.pid}.json`);
+  writeFileSync(file, JSON.stringify(poses));
+  const fakeLeader = spawn("python3", [fileURLToPath(new URL("./fake-leader.py", import.meta.url)), file, "--calibrated"]);
+  let err = "";
+  fakeLeader.stderr.on("data", (d) => (err += d));
+  const pty = await Promise.race([
+    new Promise((ok) => fakeLeader.stdout.once("data", (d) => ok(String(d).split("\n")[0].trim()))),
+    new Promise((_, no) => setTimeout(() => no(new Error(`the fake leader did not start: ${err}`)), 5000)),
+  ]);
+  const relay = spawn(process.execPath, ["scripts/arm-relay.mjs", "--leader", pty]);
+  let out = "";
+  relay.stdout.on("data", (d) => (out += d));
+  relay.stderr.on("data", (d) => (out += d));
+  await until(async () => out.includes("THENAR arm relay on"), 10_000, "the relay");
+  stopLeader = () => { relay.kill(); fakeLeader.kill(); };
+  log("leader", { pty, poses: poses.length, seconds: poses.length / 50 });
+  return { leaderPoses: poses, fakeLeader, relay };
 }

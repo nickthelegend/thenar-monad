@@ -8,6 +8,7 @@ import { click } from "@/lib/click";
 import { sceneColor } from "@/lib/theme-color";
 import { JAW_MM_PER_DEG, SO101, So101Chain, solveSo101 } from "@/lib/so101";
 import { mirrorJoints } from "@/components/station/arm-link";
+import { leaderJoints } from "@/components/station/leader";
 
 export const SO101_URL = "/models/so101-mg996r.glb";
 useGLTF.preload(SO101_URL);
@@ -81,13 +82,36 @@ export function So101Arm({
     chain.current ??= new So101Chain();
     const c = chain.current;
     const t = target.current;
-    const jawDeg = Math.min(SO101.limitsDeg[5][1], Math.max(SO101.limitsDeg[5][0], grip.current / JAW_MM_PER_DEG));
+
+    // A physical leader, when one is streaming, drives the arm joint for joint.
+    // Its pose is what the operator's hand did; the tool is wherever the chain
+    // puts it, and the target and the jaws follow so that letting go of the
+    // leader hands the keyboard an arm that is already where it was left.
+    const lead = leaderJoints();
+    let out: So101Joints | undefined;
+    let jawDeg: number;
+    if (lead) {
+      c.set(lead);
+      jawDeg = Math.min(SO101.limitsDeg[5][1], Math.max(SO101.limitsDeg[5][0], lead[5]));
+      grip.current = jawDeg * JAW_MM_PER_DEG;
+      const tcp = new THREE.Vector3().setFromMatrixPosition(c.tcpPose());
+      out = {
+        j1: c.q[0] * D2R, j2: c.q[1] * D2R, j3: c.q[2] * D2R, j5: c.q[3] * D2R,
+        clamped: false,
+        q: toQ([...c.q.slice(0, 5), jawDeg]),
+        tool: [tcp.x / 1000, tcp.y / 1000, tcp.z / 1000],
+      };
+      t[0] = out.tool[0]; t[1] = out.tool[1]; t[2] = out.tool[2];
+      last.current = { at: [t[0], t[1], t[2]], out };
+    } else {
+      jawDeg = Math.min(SO101.limitsDeg[5][1], Math.max(SO101.limitsDeg[5][0], grip.current / JAW_MM_PER_DEG));
+    }
 
     // The solve is a few hundred matrix updates; skip it when the target has
     // not moved, which is most frames of a run.
-    let out = last.current?.out;
+    out ??= last.current?.out;
     const at = last.current?.at;
-    if (!out || !at || at[0] !== t[0] || at[1] !== t[1] || at[2] !== t[2]) {
+    if (!lead && (!out || !at || at[0] !== t[0] || at[1] !== t[1] || at[2] !== t[2])) {
       const err = solveSo101(c, t);
       const tcp = new THREE.Vector3().setFromMatrixPosition(c.tcpPose());
       out = {
@@ -102,9 +126,10 @@ export function So101Arm({
         tool: [tcp.x / 1000, tcp.y / 1000, tcp.z / 1000],
       };
       last.current = { at: [t[0], t[1], t[2]], out };
-    } else {
+    } else if (!lead && out) {
       out.q[5] = jawDeg * D2R;
     }
+    if (!out) return;
 
     const n = nodes.current;
     for (let i = 0; i < 5; i++) if (n[i]) n[i]!.rotation.z = c.q[i] * D2R;

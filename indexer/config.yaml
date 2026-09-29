@@ -1,0 +1,132 @@
+# yaml-language-server: $schema=./node_modules/envio/evm.schema.json
+#
+# Thenar indexer — Envio HyperIndex v3.
+#
+# Five Thenar contracts, one entity model:
+#   AxonProtocolV2   tasks, accepted runs (trajectories), payouts, refunds, claims
+#   SalesLog         every corpus sale (x402 paid pulls and free AgentKit pulls)
+#   CorpusShares     the whitelist, share issuance per run, transfers, dividends
+#   PasskeyRegistry  operators binding a P-256 passkey to their address
+#   CorpusAccess     time-boxed read subscriptions
+#
+# Two chains, each switched on or off by an env flag:
+#   10143  Monad testnet — the production target. Needs HyperSync, so it needs
+#          ENVIO_API_TOKEN. Skipped by default until that token exists
+#          (ENVIO_THENAR_SKIP_MONAD=false turns it on). See README.md.
+#   31337  the local anvil chain from scripts/localnet.mjs — RPC only. On by
+#          default (ENVIO_THENAR_SKIP_LOCAL=true turns it off).
+#
+# Every address, URL and start block comes from an `ENVIO_`-prefixed variable,
+# because Envio only passes that prefix through (and Envio Cloud only accepts
+# it). The defaults are the deployments in lib/deployment.ts and
+# lib/deployment-local.ts.
+name: thenar-indexer
+description: Thenar on Monad — tasks, runs, operators, corpus sales, shares, dividends, passkeys and subscriptions.
+
+# Handlers live in src/ (every .ts file there is loaded).
+handlers: src
+
+# Rows are keyed by (id, chainId): task 0 on Monad and task 0 on the local chain
+# are two different rows, never one. Every entity gets a generated `chainId`;
+# filter on it when more than one chain is enabled.
+disable_default_cross_chain: true
+
+# Every event carries its block number and timestamp. The transaction hash is
+# stored on runs, sales, admissions, passkeys, dividends and subscriptions, so
+# select it once for all of them.
+field_selection:
+  transaction_fields: [hash]
+
+contracts:
+  - name: AxonProtocolV2
+    events:
+      - event: "TaskCreated(uint256 indexed taskId, address indexed funder, string name, uint32 slots, uint128 rewardPerTrajectory, uint8 scenario, uint8 difficulty)"
+      - event: "TaskFunded(uint256 indexed taskId, address indexed from, uint256 amount)"
+      - event: "TrajectoryAccepted(uint256 indexed trajectoryId, uint256 indexed taskId, address indexed contributor, bytes32 trajHash, string cid, uint16 score, uint256 paid)"
+      # Emitted right after TrajectoryAccepted when the run came in through
+      # submitTrajectoryWithPasskey: marks the run as passkey-signed.
+      - event: "PasskeyRun(uint256 indexed trajectoryId, address indexed contributor)"
+      - event: "TaskFilled(uint256 indexed taskId)"
+      - event: "TaskExpired(uint256 indexed taskId, address indexed funder, uint256 refunded)"
+      - event: "Claimed(address indexed to, uint256 amount)"
+      - event: "PaymentDeferred(address indexed to, uint256 amount)"
+
+  - name: SalesLog
+    events:
+      # `terms` is the Solidity enum SalesLog.Terms, which the ABI encodes as uint8.
+      - event: "CorpusSold(uint256 indexed seq, bytes32 indexed saleId, uint256 indexed taskId, uint8 terms, address buyer, address asset, uint256 amount, bytes32 sha256)"
+
+  - name: CorpusShares
+    events:
+      - event: "Admitted(address indexed account)"
+      - event: "Issued(address indexed holder, uint256 value, bytes32 indexed trajHash)"
+      - event: "Transfer(address indexed from, address indexed to, uint256 value)"
+      - event: "DividendDeclared(uint256 indexed id, uint64 recordDate, uint64 executionDate, uint256 amount)"
+      - event: "DividendClaimed(uint256 indexed id, address indexed holder, uint256 amount)"
+      - event: "DividendReclaimed(uint256 indexed id, uint256 amount)"
+
+  - name: PasskeyRegistry
+    events:
+      - event: "PasskeyRegistered(address indexed owner, bytes32 x, bytes32 y)"
+      - event: "PasskeyRevoked(address indexed owner)"
+
+  - name: CorpusAccess
+    events:
+      - event: "Subscribed(address indexed who, uint32 days_, uint256 paid, uint64 until)"
+
+chains:
+  # ---------------------------------------------------------------------------
+  # Monad testnet (10143) — the production target.
+  #
+  # The deployment is at block 64,987,386 and the head is ~66.8M, so this chain
+  # is only practical over HyperSync, which needs ENVIO_API_TOKEN (free, from
+  # https://envio.dev/app/api-tokens). Skipped until then.
+  #
+  # With a token: HyperSync is the source and the RPC is a fallback.
+  # Without one you *can* set ENVIO_THENAR_MONAD_RPC_FOR=sync, but the public
+  # RPC answers eth_getLogs at most 100 blocks wide, so a backfill of ~1.8M
+  # blocks is ~18k requests. The interval settings below keep it inside that cap.
+  # ---------------------------------------------------------------------------
+  - id: 10143
+    skip: ${ENVIO_THENAR_SKIP_MONAD:-true}
+    start_block: ${ENVIO_THENAR_MONAD_START_BLOCK:-64987386}
+    hypersync_config:
+      url: ${ENVIO_THENAR_MONAD_HYPERSYNC_URL:-https://monad-testnet.hypersync.xyz}
+    rpc:
+      - url: ${ENVIO_MONAD_TESTNET_RPC_URL:-https://testnet-rpc.monad.xyz}
+        for: ${ENVIO_THENAR_MONAD_RPC_FOR:-fallback}
+        initial_block_interval: 100
+        interval_ceiling: 100
+    contracts:
+      - name: AxonProtocolV2
+        address: "${ENVIO_THENAR_MONAD_AXON:-0x17731731c6652770CE630e29b62791DC2CED5f38}"
+      - name: SalesLog
+        address: "${ENVIO_THENAR_MONAD_SALES_LOG:-0xf34A45021B8006C141E8b9CFe4B8a509a9b1fE27}"
+      - name: CorpusShares
+        address: "${ENVIO_THENAR_MONAD_CORPUS_SHARES:-0xAE1F24fE0F759BEF941eA2Df2dcb23dc3e130fc7}"
+      - name: PasskeyRegistry
+        address: "${ENVIO_THENAR_MONAD_PASSKEY_REGISTRY:-0xE344179839c9cA2101Ad930BD49268103F3945a9}"
+      - name: CorpusAccess
+        address: "${ENVIO_THENAR_MONAD_CORPUS_ACCESS:-0xD0ad261D8d7a3D5a1D0Bf6Ed6EbE4BAD691b4AA1}"
+
+  # ---------------------------------------------------------------------------
+  # Local anvil (31337) — scripts/localnet.mjs, one block a second.
+  # Not a HyperSync chain: the RPC is the only source.
+  # ---------------------------------------------------------------------------
+  - id: 31337
+    skip: ${ENVIO_THENAR_SKIP_LOCAL:-false}
+    start_block: ${ENVIO_THENAR_LOCAL_START_BLOCK:-0}
+    rpc:
+      - url: ${ENVIO_THENAR_LOCAL_RPC_URL:-http://127.0.0.1:8645}
+        for: sync
+    contracts:
+      - name: AxonProtocolV2
+        address: "${ENVIO_THENAR_LOCAL_AXON:-0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512}"
+      - name: SalesLog
+        address: "${ENVIO_THENAR_LOCAL_SALES_LOG:-0xa513E6E4b8f2a923D98304ec87F64353C4D5C853}"
+      - name: CorpusShares
+        address: "${ENVIO_THENAR_LOCAL_CORPUS_SHARES:-0x0165878A594ca255338adfa4d48449f69242Eb8F}"
+      - name: PasskeyRegistry
+        address: "${ENVIO_THENAR_LOCAL_PASSKEY_REGISTRY:-0x5FbDB2315678afecb367f032d93F642f64180aa3}"
+      - name: CorpusAccess
+        address: "${ENVIO_THENAR_LOCAL_CORPUS_ACCESS:-0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9}"

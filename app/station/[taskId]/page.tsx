@@ -18,6 +18,7 @@ import { useTaskCatalogue, useCatalogueTask } from "@/components/tasks-provider"
 import { XR_ACTION, xrState } from "@/components/station/xr";
 import { TeachPanel } from "@/components/station/teach-panel";
 import { MirrorPanel } from "@/components/station/arm-link";
+import { LeaderPanel } from "@/components/station/leader-panel";
 import { TaskChips } from "@/components/task-chips";
 import { embodimentOf } from "@/lib/embodiment";
 import type { Skill } from "@/lib/teach";
@@ -560,7 +561,10 @@ export default function StationPage() {
           </Section>
           {task.arm === "so101" ? (
             <Section title="Your SO-101">
-              <MirrorPanel />
+              <div className="flex flex-col gap-4">
+                <LeaderPanel />
+                <MirrorPanel />
+              </div>
             </Section>
           ) : null}
           <Section title="Controls">

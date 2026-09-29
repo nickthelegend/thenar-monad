@@ -6,6 +6,7 @@ import { SO101 } from "@/lib/so101";
 import { commandMessage, toHex } from "@/lib/robot-command";
 import { useSession } from "@/components/session";
 import type { Ed25519SigningSession } from "@category-labs/mera";
+import { leaderFromRelay, relayLeaderGone } from "@/components/station/leader";
 
 /**
  * Mirror the station's SO-101 onto a real one, through the arm relay on this
@@ -69,7 +70,12 @@ export function connectRelay() {
   ws.onmessage = (e) => {
     try {
       const m = JSON.parse(String(e.data));
-      if (m.type === "status") publish({ follower: m.follower, leader: m.leader, owner: m.owner ?? null });
+      if (m.type === "status") {
+        publish({ follower: m.follower, leader: m.leader, owner: m.owner ?? null });
+        if (!m.leader?.streaming) relayLeaderGone();
+      }
+      // A leader plugged into the relay drives the arm on screen as well as the follower.
+      if (m.type === "leader") leaderFromRelay(m.q);
     } catch {
       /* not ours */
     }
@@ -77,6 +83,7 @@ export function connectRelay() {
   ws.onerror = () => publish({ error: "No arm relay answered on this machine. Start it with: node scripts/arm-relay.mjs" });
   ws.onclose = () => {
     link.ws = null;
+    relayLeaderGone();
     endSigner();
     setPhase("off");
   };

@@ -1,0 +1,69 @@
+# Postgres + Hasura for the Thenar indexer, and nothing else.
+#
+# Deliberately NOT the containers `envio dev` makes. The Envio CLI creates
+# fixed global names (envio-postgres, envio-hasura, envio-network,
+# envio-postgres-data), and on this machine those belong to another project.
+# Everything here has its own name, port, network and volume, under its own
+# compose project, so `pnpm db:up` / `pnpm db:down` can only ever touch these.
+#
+#   Postgres  thenar-envio-pg      host port 55441  (db envio-dev, user postgres)
+#   Hasura    thenar-envio-hasura  host port 8089   (GraphQL at /v1/graphql)
+#
+# Same images as Envio's own local stack, already pulled by `envio dev`.
+name: thenar-envio
+
+services:
+  postgres:
+    image: postgres:18.3
+    container_name: thenar-envio-pg
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${THENAR_ENVIO_PG_PASSWORD:-thenar-envio}
+      POSTGRES_DB: envio-dev
+    ports:
+      - "${THENAR_ENVIO_PG_PORT:-55441}:5432"
+    volumes:
+      - pg-data:/var/lib/postgresql
+    networks: [net]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d envio-dev"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  hasura:
+    image: hasura/graphql-engine:v2.43.0
+    container_name: thenar-envio-hasura
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      # The indexer tracks its tables on the "default" source, so this must be
+      # the same database the indexer writes to.
+      HASURA_GRAPHQL_DATABASE_URL: postgres://postgres:${THENAR_ENVIO_PG_PASSWORD:-thenar-envio}@thenar-envio-pg:5432/envio-dev
+      HASURA_GRAPHQL_ADMIN_SECRET: ${THENAR_ENVIO_HASURA_SECRET:-thenar-admin}
+      HASURA_GRAPHQL_ENABLE_CONSOLE: "true"
+      HASURA_GRAPHQL_UNAUTHORIZED_ROLE: public
+      HASURA_GRAPHQL_STRINGIFY_NUMERIC_TYPES: "true"
+      HASURA_GRAPHQL_CORS_DOMAIN: "*"
+      HASURA_GRAPHQL_NO_OF_RETRIES: "10"
+      HASURA_GRAPHQL_ENABLED_LOG_TYPES: startup, http-log, webhook-log, websocket-log
+      PORT: "8080"
+    ports:
+      - "${THENAR_ENVIO_HASURA_PORT:-8089}:8080"
+    networks: [net]
+    healthcheck:
+      test: ["CMD-SHELL", "timeout 1s bash -c ':> /dev/tcp/127.0.0.1/8080' || exit 1"]
+      interval: 2s
+      timeout: 3s
+      retries: 60
+
+networks:
+  net:
+    name: thenar-envio-net
+
+volumes:
+  pg-data:
+    name: thenar-envio-pg-data

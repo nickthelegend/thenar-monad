@@ -1,0 +1,381 @@
+# Thenar — indexed entities.
+#
+# Units. Every BigInt amount is the contract's own integer: MON amounts (run
+# payouts, top-ups, refunds, dividends, subscriptions) are wei (18 decimals);
+# a sale's `amount` is in atomic units of its `asset` (USDC: 6 decimals; zero
+# for a free pull). Shares are whole units (CorpusShares.decimals() is 0).
+# Timestamps are unix seconds. Envio's GraphQL returns BigInt as a string and
+# Int as a number.
+#
+# Addresses are EIP-55 checksummed, so filter with checksummed values.
+#
+# Rows are per chain (`disable_default_cross_chain: true`): every entity also
+# has a generated `chainId`, and the same id on two chains is two rows. Add
+# `chainId: {_eq: 10143}` (or 31337) to a `where` when both chains are on.
+
+"How a corpus pull was granted (SalesLog.Terms)."
+enum SaleTerms {
+  "Paid: an x402 payment settled on chain."
+  X402
+  "Free: a verified human's agent, under World AgentBook."
+  AgentKit
+}
+
+"""
+Chain-wide totals. One row per chain; its id is the chain id ("10143", "31337").
+"""
+type Stats {
+  "The chain id, as a string."
+  id: ID!
+  tasks: Int!
+  tasksFilled: Int!
+  tasksExpired: Int!
+  "Accepted runs (TrajectoryAccepted)."
+  runs: Int!
+  "Runs signed with the operator's passkey (PasskeyRun)."
+  passkeyRuns: Int!
+  "Addresses with at least one accepted run."
+  operators: Int!
+  "Wei of MON credited to operators for runs (pushed or deferred)."
+  paidTotal: BigInt!
+  "Sum of every accepted run's score."
+  scoreTotal: BigInt!
+  "Wei added to task escrows by TaskFunded top-ups."
+  fundedTotal: BigInt!
+  "Wei returned to funders by TaskExpired."
+  refundedTotal: BigInt!
+  "Wei the contract could not push and parked as claimable (PaymentDeferred)."
+  deferredTotal: BigInt!
+  "Wei withdrawn from that claimable balance (Claimed)."
+  claimedTotal: BigInt!
+  "Corpus sales (CorpusSold)."
+  sales: Int!
+  "Sales under X402 terms."
+  paidSales: Int!
+  "Sales under AgentKit terms (free pulls)."
+  freeSales: Int!
+  "Sum of every sale's amount in atomic units. Only meaningful while every sale uses one asset; see SaleAsset for per-asset volume."
+  salesVolume: BigInt!
+  "CorpusShares total supply."
+  shareSupply: BigInt!
+  "Addresses holding more than zero shares."
+  shareHolders: Int!
+  "Addresses on the CorpusShares control list."
+  admitted: Int!
+  "Addresses whose passkey is currently registered."
+  passkeys: Int!
+  "Every PasskeyRegistered event, re-registrations included."
+  passkeyRegistrations: Int!
+  dividends: Int!
+  "Wei escrowed across all declared dividends."
+  dividendsDeclared: BigInt!
+  "Wei paid out by DividendClaimed."
+  dividendsClaimed: BigInt!
+  subscriptions: Int!
+  subscribers: Int!
+  "Wei paid to CorpusAccess."
+  subscriptionRevenue: BigInt!
+  "Block of the last event indexed on this chain."
+  lastBlock: BigInt!
+  "Timestamp of the last event indexed on this chain."
+  lastEventAt: BigInt!
+}
+
+"""
+One UTC day, for charts. id is the date, "YYYY-MM-DD".
+"""
+type DailyStat {
+  id: ID!
+  "Same as id: the UTC date, YYYY-MM-DD."
+  date: String!
+  "Unix seconds at 00:00 UTC."
+  dayStart: BigInt! @index
+  runs: Int!
+  "Wei credited to operators for that day's runs."
+  paid: BigInt!
+  scoreTotal: BigInt!
+  bestScore: Int!
+  "Distinct operators with a run that day."
+  activeOperators: Int!
+  "Operators whose first ever run was that day."
+  newOperators: Int!
+  tasksCreated: Int!
+  sales: Int!
+  salesVolume: BigInt!
+}
+
+"Which operators ran on which day: backs DailyStat.activeOperators."
+type DailyOperator {
+  "`${date}-${operator}`"
+  id: ID!
+  date: String! @index
+  operator: Operator!
+  runs: Int!
+}
+
+"""
+A funded task bounty on AxonProtocolV2. id is the task id in decimal.
+"""
+type Task {
+  id: ID!
+  taskId: BigInt!
+  name: String!
+  funder: String! @index
+  "Slots the bounty pays for."
+  slots: Int!
+  "Wei of MON a perfect-score run earns; a run earns reward × score / 10000."
+  rewardPerTrajectory: BigInt!
+  "Index into the app's scenario vocabulary."
+  scenario: Int!
+  "1..5"
+  difficulty: Int!
+  "Accepted runs on this task."
+  runCount: Int!
+  runs: [Run!]! @derivedFrom(field: "task")
+  "Distinct operators with a run on this task."
+  contributorCount: Int!
+  contributors: [TaskContributor!]! @derivedFrom(field: "task")
+  "Wei paid for this task's runs."
+  paidTotal: BigInt!
+  scoreTotal: BigInt!
+  bestScore: Int!
+  "The run that set bestScore (the first to reach it)."
+  bestRun: Run
+  lastRunAt: BigInt
+  "Wei added by TaskFunded after creation (the creation escrow is not in the event)."
+  toppedUp: BigInt!
+  fundings: Int!
+  filled: Boolean!
+  filledAt: BigInt
+  filledTx: String
+  expired: Boolean!
+  expiredAt: BigInt
+  expiredTx: String
+  "Wei returned to the funder at expiry."
+  refunded: BigInt
+  saleCount: Int!
+  sales: [Sale!]! @derivedFrom(field: "task")
+  "Sum of this task's sale amounts, in atomic units."
+  salesVolume: BigInt!
+  createdBlock: BigInt!
+  createdAt: BigInt! @index
+  createdTx: String!
+}
+
+"""
+An accepted run (a trajectory). id is the trajectory id in decimal.
+"""
+type Run {
+  id: ID!
+  trajectoryId: BigInt!
+  task: Task!
+  taskId: BigInt! @index
+  "The operator; filter with contributor_id."
+  contributor: Operator!
+  trajHash: String! @index
+  cid: String!
+  "0..10000"
+  score: Int! @index
+  "Wei of MON credited for this run."
+  paid: BigInt!
+  "Submitted through submitTrajectoryWithPasskey."
+  viaPasskey: Boolean!
+  "Shares CorpusShares issued against this run's trajHash."
+  sharesIssued: BigInt!
+  blockNumber: BigInt! @index
+  timestamp: BigInt! @index
+  txHash: String!
+  logIndex: Int!
+}
+
+"""
+An address that drove the arm, holds shares, is admitted, has a passkey, or is
+owed MON by the protocol. id is the checksummed address.
+"""
+type Operator {
+  id: ID!
+  runCount: Int!
+  runs: [Run!]! @derivedFrom(field: "contributor")
+  passkeyRunCount: Int!
+  "Distinct tasks this operator has a run on."
+  tasksContributed: Int!
+  taskContributions: [TaskContributor!]! @derivedFrom(field: "operator")
+  "Wei credited for runs."
+  paidTotal: BigInt!
+  scoreTotal: BigInt!
+  bestScore: Int!
+  firstRunAt: BigInt
+  lastRunAt: BigInt
+  hasPasskey: Boolean!
+  passkey: Passkey
+  "On the CorpusShares control list."
+  admitted: Boolean!
+  admittedAt: BigInt
+  admittedTx: String
+  "Current CorpusShares balance."
+  shareBalance: BigInt!
+  "Shares ever issued to this address (Issued)."
+  sharesIssued: BigInt!
+  shareIssues: [ShareIssue!]! @derivedFrom(field: "holder")
+  "Wei received from dividends."
+  dividendsClaimed: BigInt!
+  dividendClaims: [DividendClaim!]! @derivedFrom(field: "holder")
+  "Wei parked as claimable because a push failed (PaymentDeferred)."
+  deferredTotal: BigInt!
+  "Wei withdrawn with claim()."
+  claimedTotal: BigInt!
+  "deferredTotal − claimedTotal: what claim() would pay now."
+  owed: BigInt!
+}
+
+"One operator's share of one task: the on-chain weightOnTask is scoreTotal."
+type TaskContributor {
+  "`${taskId}-${operator}`"
+  id: ID!
+  task: Task!
+  operator: Operator!
+  runCount: Int!
+  scoreTotal: BigInt!
+  paidTotal: BigInt!
+  bestScore: Int!
+  firstRunAt: BigInt!
+  lastRunAt: BigInt!
+}
+
+"A P-256 passkey bound to an address in PasskeyRegistry. id is the owner."
+type Passkey {
+  id: ID!
+  owner: Operator!
+  x: String!
+  y: String!
+  "Registered and not revoked (and not the zero key)."
+  active: Boolean!
+  "PasskeyRegistered events for this owner; a re-registration replaces the key."
+  registrations: Int!
+  registeredAt: BigInt!
+  registeredBlock: BigInt!
+  registeredTx: String!
+  revokedAt: BigInt
+  revokedTx: String
+}
+
+"""
+A corpus sale logged in SalesLog. id is the sale's sequence number in decimal.
+"""
+type Sale {
+  id: ID!
+  seq: BigInt!
+  "The x402 settlement tx hash, or keccak256(\"agentkit:<nonce>\")."
+  saleId: String! @index
+  task: Task!
+  taskId: BigInt! @index
+  terms: SaleTerms!
+  buyer: String! @index
+  "Token paid in; the zero address for a free pull."
+  asset: String! @index
+  "Atomic units of asset."
+  amount: BigInt!
+  "sha256 of the bytes served."
+  sha256: String!
+  blockNumber: BigInt!
+  timestamp: BigInt! @index
+  txHash: String!
+  logIndex: Int!
+}
+
+"Sales volume per payment asset. id is the asset address."
+type SaleAsset {
+  id: ID!
+  sales: Int!
+  volume: BigInt!
+}
+
+"Shares issued for one run (CorpusShares.Issued)."
+type ShareIssue {
+  "`${txHash}-${logIndex}`"
+  id: ID!
+  holder: Operator!
+  value: BigInt!
+  trajHash: String! @index
+  "The run with this trajHash, when it is indexed."
+  run: Run
+  blockNumber: BigInt!
+  timestamp: BigInt!
+  txHash: String!
+  logIndex: Int!
+}
+
+"Every CorpusShares Transfer, mints included."
+type ShareTransfer {
+  "`${txHash}-${logIndex}`"
+  id: ID!
+  from: String! @index
+  to: String! @index
+  value: BigInt!
+  isMint: Boolean!
+  blockNumber: BigInt!
+  timestamp: BigInt!
+  txHash: String!
+  logIndex: Int!
+}
+
+"A dividend declared from corpus sales. id is the dividend id (numbered from 1)."
+type Dividend {
+  id: ID!
+  dividendId: BigInt!
+  recordDate: BigInt!
+  executionDate: BigInt!
+  "Wei escrowed."
+  amount: BigInt!
+  "Wei claimed so far."
+  claimed: BigInt!
+  claimCount: Int!
+  "Wei the issuer took back (only possible when nobody held at the record date)."
+  reclaimed: BigInt!
+  "Share supply when it was declared (the payout uses supply at recordDate)."
+  supplyAtDeclaration: BigInt!
+  declaredAt: BigInt!
+  declaredBlock: BigInt!
+  declaredTx: String!
+  claims: [DividendClaim!]! @derivedFrom(field: "dividend")
+}
+
+"One holder's dividend claim. id is `${dividendId}-${holder}`."
+type DividendClaim {
+  id: ID!
+  dividend: Dividend!
+  holder: Operator!
+  amount: BigInt!
+  blockNumber: BigInt!
+  timestamp: BigInt!
+  txHash: String!
+}
+
+"One CorpusAccess purchase or extension."
+type Subscription {
+  "`${txHash}-${logIndex}`"
+  id: ID!
+  subscriber: Subscriber!
+  days: Int!
+  "Wei paid."
+  paid: BigInt!
+  "When access runs out after this purchase (unix seconds)."
+  until: BigInt!
+  blockNumber: BigInt!
+  timestamp: BigInt! @index
+  txHash: String!
+  logIndex: Int!
+}
+
+"An address that has bought CorpusAccess time. id is the address."
+type Subscriber {
+  id: ID!
+  "Access runs out at this time (unix seconds); active while it is in the future."
+  until: BigInt!
+  totalPaid: BigInt!
+  totalDays: Int!
+  subscriptionCount: Int!
+  firstAt: BigInt!
+  lastAt: BigInt!
+  subscriptions: [Subscription!]! @derivedFrom(field: "subscriber")
+}

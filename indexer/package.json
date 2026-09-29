@@ -1,0 +1,33 @@
+{
+  "name": "thenar-indexer",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Envio HyperIndex indexer for the Thenar protocol on Monad: tasks, runs, operators, corpus sales, shares, dividends, passkeys and subscriptions.",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "db:up": "docker compose -f db.compose.yaml up -d --wait",
+    "db:down": "docker compose -f db.compose.yaml down",
+    "db:status": "docker compose -f db.compose.yaml ps",
+    "codegen": "envio codegen",
+    "start": "sh scripts/start.sh",
+    "start:bg": "sh scripts/start.sh --bg",
+    "reindex": "sh scripts/stop.sh && sh scripts/start.sh --bg -r",
+    "stop": "sh scripts/stop.sh",
+    "logs": "tail -n 100 -f .run/indexer.log",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --test-timeout=20000",
+    "verify:local": "node scripts/verify.mjs"
+  },
+  "dependencies": {
+    "envio": "3.12.1"
+  },
+  "devDependencies": {
+    "@types/node": "24.12.2",
+    "typescript": "6.0.3",
+    "vitest": "4.1.0"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  }
+}
