@@ -28,7 +28,9 @@ export async function recordSale(s: CorpusSale): Promise<void> {
   await run(
     `INSERT INTO corpus_sale (id, task_id, method, buyer, network, amount, asset, created_at)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT (id) DO NOTHING`,
-    [s.id, s.task_id, s.method, s.buyer, s.network, s.amount, s.asset, s.created_at],
+    // Lowercased: x402 reports the payer checksummed, and an address is one
+    // address however it is cased.
+    [s.id, s.task_id, s.method, s.buyer?.toLowerCase() ?? null, s.network, s.amount, s.asset, s.created_at],
   );
 }
 
@@ -74,7 +76,7 @@ export async function salesTo(buyer: string, limit = 50): Promise<ListedSale[]> 
     `SELECT s.id, s.task_id, s.method, s.buyer, s.network, s.amount, s.asset, s.created_at,
             a.sha256, a.log_contract, a.log_seq, a.transaction_id AS log_tx, a.error AS audit_error
        FROM corpus_sale s LEFT JOIN corpus_sale_audit a ON a.sale_id = s.id
-      WHERE s.buyer = ?
+      WHERE lower(s.buyer) = ?
       ORDER BY s.created_at DESC LIMIT ?`,
     [buyer.toLowerCase(), limit],
   );

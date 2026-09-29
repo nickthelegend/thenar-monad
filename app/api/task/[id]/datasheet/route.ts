@@ -69,6 +69,10 @@ async function handleGET(_req: Request, ctx: { params: Promise<{ id: string }> }
     task = null;
   }
 
+  // What the recordings are of: the SO-101 unless the task needs two arms.
+  const arm = task ? armOf(task.name) : null;
+  const armName = arm === "thenar6" ? "a THENAR-6, a six-axis arm" : "an SO-101 (MG996R build), a five-axis arm with a jaw";
+
   const scores = accepted.map((r) => r.score);
   const contributors = new Set(accepted.map((r) => r.contributor.toLowerCase()));
   const counts = { paid: 0, failed: 0, unsubmitted: 0 };
@@ -81,7 +85,7 @@ async function handleGET(_req: Request, ctx: { params: Promise<{ id: string }> }
     generated_at: new Date().toISOString(),
     motivation: {
       purpose:
-        "Recordings of a six-axis arm performing one manipulation instruction, " +
+        `Recordings of ${armName} performing one manipulation instruction, ` +
         "collected to train and evaluate manipulation policies.",
       funded_by: task?.funder ?? null,
       note:
@@ -91,14 +95,14 @@ async function handleGET(_req: Request, ctx: { params: Promise<{ id: string }> }
     },
     composition: {
       instruction: task ? instructionOf(task.name) : null,
-      arm: task ? armOf(task.name) : null,
+      arm,
       scan: task ? parseScan(task.name) : null,
       episodes: accepted.length,
       contributors: contributors.size,
       frames_per_second: 20,
       per_frame: [
         "t — seconds since the run began",
-        "q — six joint angles, radians",
+        arm === "thenar6" ? "q — six joint angles, radians" : "q — five joint angles and the jaw's angle, radians",
         "grip — jaw opening, mm",
         "object — payload pose, metres",
         "object2, q2, grip2 — present only on scenes that have them",
@@ -110,11 +114,11 @@ async function handleGET(_req: Request, ctx: { params: Promise<{ id: string }> }
         "array, never mixed into the demonstrations.",
     },
     collection: {
-      instrument: "A browser station driving a simulated THENAR-6 at true scale.",
+      instrument: `A browser station (or a Quest headset through it) driving a simulated ${arm === "thenar6" ? "THENAR-6" : "SO-101"} at true scale.`,
       recorded: "Joint angles and payload pose per frame, written by the station.",
       selection:
-        "Any address may drive any open task, capped per operator by the contract. " +
-        "No screening, no invitation.",
+        "Any address with a passkey registered on chain may drive any open task for pay, " +
+        "capped per operator by the contract. No other screening, no invitation.",
       scoring:
         `Placement (55%), efficiency (20%) and smoothness (25%), each computed ` +
         `from the samples by a verifier that holds a key the web service does not. ` +

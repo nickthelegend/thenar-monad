@@ -164,7 +164,6 @@ const usdc = dep.match(/usdc: "(0x[0-9a-fA-F]{40})"/)[1];
 writeFileSync(".env.localnet", `# Written by scripts/localnet.mjs. Anvil's published test accounts only.
 NEXT_PUBLIC_CHAIN=local
 NEXT_PUBLIC_LOCAL_RPC=${RPC}
-NEXT_PUBLIC_LOCAL_USDC=${usdc}
 NEXT_PUBLIC_SITE_ORIGIN=http://localhost:3336
 LOCAL_APP_URL=http://localhost:3336
 AXON_DB_PATH=.data/localnet.db

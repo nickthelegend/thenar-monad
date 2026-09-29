@@ -48,7 +48,7 @@ const payer = x402Client.fromConfig({
 const fetchPaid = wrapFetchWithPayment(fetch, payer);
 
 const url = `${BASE}${AGENT_CORPUS.path}?taskId=${TASK}`;
-console.log(`agent     ${wallet.address}  ${formatUnits(usdc, AGENT_CORPUS.decimals)} USDC on Monad`);
+console.log(`agent     ${wallet.address}  ${formatUnits(usdc, AGENT_CORPUS.decimals)} USDC on ${appChain.name}`);
 console.log(`get       ${url}`);
 
 const t0 = Date.now();
@@ -59,7 +59,7 @@ const receipt = res.headers.get("PAYMENT-RESPONSE");
 if (receipt) {
   const s = decodePaymentResponseHeader(receipt);
   console.log(`settled   ${s.success}  tx ${s.transaction}  payer ${s.payer ?? "-"}  ${s.network}`);
-  if (s.transaction) console.log(`monadscan ${txUrl(s.transaction)}`);
+  if (s.transaction) console.log(`explorer  ${txUrl(s.transaction)}`);
 }
 
 const bytes = Buffer.from(await res.arrayBuffer());

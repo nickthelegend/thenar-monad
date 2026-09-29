@@ -13,19 +13,21 @@
  * Shared by the route that enforces these terms and the pages that state them,
  * so the price on the page is the price the server asks for.
  *
- * No imports: scripts/agent-buy.mjs loads this file with Node.
+ * One import, of a file with none: scripts/agent-buy.mjs loads this with Node.
  *
  * On the local chain (NEXT_PUBLIC_CHAIN=local) the same terms hold on chain
  * 31337: the local USDC scripts/localnet.mjs deployed, and the facilitator
  * scripts/x402-facilitator.mjs runs beside it.
  */
+import { LOCAL_DEPLOYMENT } from "./deployment-local";
+
 const LOCAL = process.env.NEXT_PUBLIC_CHAIN === "local";
 
 export const AGENT_CORPUS = {
   path: "/api/agent/corpus",
   network: LOCAL ? "eip155:31337" : "eip155:10143",
   /** Circle's USDC on Monad testnet, or the local chain's. */
-  asset: LOCAL ? (process.env.NEXT_PUBLIC_LOCAL_USDC ?? "") : "0x534b2f3A21130d7a60830c2Df862319e593943A3",
+  asset: LOCAL ? LOCAL_DEPLOYMENT.usdc : "0x534b2f3A21130d7a60830c2Df862319e593943A3",
   /** The token's EIP-712 domain, which the agent signs the authorisation under. */
   assetDomain: { name: "USDC", version: "2" },
   /** Atomic units: one cent of USDC per task corpus. */

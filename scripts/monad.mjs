@@ -31,7 +31,7 @@ export const monadTestnet = defineChain({
 export const LOCALNET = process.env.NEXT_PUBLIC_CHAIN === "local";
 export const LOCAL_RPC = process.env.NEXT_PUBLIC_LOCAL_RPC || "http://127.0.0.1:8645";
 /** Where the local app serves its explorer, for the links scripts print. */
-const LOCAL_APP = process.env.LOCAL_APP_URL || "http://127.0.0.1:3336";
+const LOCAL_APP = process.env.LOCAL_APP_URL || "http://localhost:3336";
 
 export const thenarLocalnet = defineChain({
   id: 31337,
