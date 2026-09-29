@@ -1,0 +1,6 @@
+# Never uploaded to Railway: the Envio indexer runs on its own, and local-chain
+# state and builds stay on the machine that made them.
+indexer/
+.localnet/
+.next-local/
+.next/

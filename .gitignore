@@ -72,3 +72,7 @@ demo/out/check/
 /public/vision/wasm/
 .localnet/
 .next-local/
+
+# The Envio indexer's own install and generated code
+indexer/node_modules/
+indexer/generated/
