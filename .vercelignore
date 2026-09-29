@@ -16,3 +16,9 @@
 *.db
 *.db-wal
 *.db-shm
+
+# The local chain, its env, its build, and the Envio indexer: none of them are the frontend.
+.env.localnet
+/.localnet/
+/.next-local/
+/indexer/
