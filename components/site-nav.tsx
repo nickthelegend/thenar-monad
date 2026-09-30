@@ -57,7 +57,7 @@ const GROUPS: { label: string; items: { href: string; label: string; hint: strin
 const inGroup = (pathname: string | null, g: (typeof GROUPS)[number]) =>
   g.items.some((i) => pathname === i.href || pathname?.startsWith(`${i.href}/`) || (i.href === "/spec/so101" && pathname === "/spec"));
 
-export function SiteNav() {
+export function SiteNav({ force = false }: { force?: boolean } = {}) {
   const pathname = usePathname();
   const s = useSession();
   const { data: block } = useBlockNumber({ watch: true, query: { enabled: IS_DEPLOYED } });
@@ -77,7 +77,9 @@ export function SiteNav() {
   // Hooks above, early returns below: a hook after a conditional return is a
   // hook that does not always run. The company pages and the app's home carry
   // their own nav, and the station is a full-screen instrument.
-  if (pathname === "/" || pathname === "/thenar" || pathname?.startsWith("/products")) return null;
+  // The app's home renders this nav itself (force): on app.thenar.io its path
+  // is "/", the same as the company's home, which carries its own.
+  if (!force && (pathname === "/" || pathname === "/thenar" || pathname?.startsWith("/products"))) return null;
   if (pathname?.startsWith("/station/")) return null;
 
   const item = (i: (typeof GROUPS)[number]["items"][number]) => {
