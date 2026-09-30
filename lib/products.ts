@@ -31,6 +31,8 @@ export type Product = {
   model?: string;
   /** A render of the model, for a product with no pictures of its own yet. */
   poster?: string;
+  /** The model was exported from CAD with Z up; the viewer stands it upright. */
+  zUp?: boolean;
 };
 
 export const PRODUCTS: Product[] = [

@@ -7,12 +7,12 @@ const ModelViewer = dynamic(() => import("@/components/labs/model-viewer").then(
 const ModelStage = dynamic(() => import("@/components/labs/model-viewer").then((m) => m.ModelStage), { ssr: false });
 
 /** The model itself as a cover, for a product with no pictures yet. */
-export function InlineModel({ url }: { url: string }) {
-  return <ModelStage url={url} className="aspect-[16/9] w-full" />;
+export function InlineModel({ url, zUp }: { url: string; zUp?: boolean }) {
+  return <ModelStage url={url} zUp={zUp} className="aspect-[16/9] w-full" />;
 }
 
 /** A button that opens the product's model to turn and look at. */
-export function View3D({ url, name }: { url: string; name: string }) {
+export function View3D({ url, name, zUp }: { url: string; name: string; zUp?: boolean }) {
   const [open, setOpen] = useState(false);
   return (
     <>
@@ -23,7 +23,7 @@ export function View3D({ url, name }: { url: string; name: string }) {
       >
         View in 3D
       </button>
-      {open ? <ModelViewer url={url} name={name} onClose={() => setOpen(false)} /> : null}
+      {open ? <ModelViewer url={url} name={name} zUp={zUp} onClose={() => setOpen(false)} /> : null}
     </>
   );
 }

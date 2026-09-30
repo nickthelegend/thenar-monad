@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { InstallShell } from "@/components/install";
 import { LocaleReady } from "@/components/locale-ready";
 import { Pulse } from "@/components/pulse";
-import { DM_Mono, IBM_Plex_Mono, Poppins } from "next/font/google";
+import { DM_Mono, Poppins } from "next/font/google";
 import { Providers } from "@/components/providers";
 import { SiteNav } from "@/components/site-nav";
 import { Conditions } from "@/components/conditions";
@@ -21,27 +21,18 @@ import "./globals.css";
  */
 const poppins = Poppins({
   subsets: ["latin"],
-  weight: ["300", "400", "500", "600"],
+  weight: ["400", "500", "600"],
   variable: "--font-poppins",
   display: "swap",
 });
 
+// Data only, so it is fetched when a page shows data rather than preloaded on every page.
 const dmMono = DM_Mono({
   subsets: ["latin"],
-  weight: ["300", "400", "500"],
+  weight: ["400", "500"],
   variable: "--font-dm-mono",
   display: "swap",
-});
-
-// The landing page's metadata voice. Plex Mono is drawn for technical setting
-// and holds up at 10-12px with wide positive tracking, which is the entire job
-// it does there: a constant layer of small type pinned to edges, counterweight
-// to poster-scale display.
-const plexMono = IBM_Plex_Mono({
-  subsets: ["latin"],
-  weight: ["400", "500"],
-  variable: "--font-plex-mono",
-  display: "swap",
+  preload: false,
 });
 
 export const metadata: Metadata = {
@@ -88,7 +79,7 @@ export default function RootLayout({
     <html
       lang="en"
       data-theme="dark"
-      className={`${poppins.variable} ${dmMono.variable} ${plexMono.variable}`}
+      className={`${poppins.variable} ${dmMono.variable}`}
     >
       <body className="min-h-dvh bg-ink-0 antialiased">
         <a

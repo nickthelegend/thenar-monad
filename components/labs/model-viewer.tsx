@@ -1,6 +1,7 @@
 "use client";
 
-import { Suspense, useEffect } from "react";
+import { Suspense, useEffect, useMemo } from "react";
+import * as THREE from "three";
 import { Canvas } from "@react-three/fiber";
 import { Bounds, ContactShadows, OrbitControls, useGLTF } from "@react-three/drei";
 
@@ -8,9 +9,16 @@ import { Bounds, ContactShadows, OrbitControls, useGLTF } from "@react-three/dre
  * One robot, to turn and look at. A single canvas is open at a time on the
  * products page, so the browser's WebGL context limit is never in play.
  */
-function Model({ url }: { url: string }) {
+function Model({ url, zUp }: { url: string; zUp?: boolean }) {
   const { scene } = useGLTF(url);
-  return <primitive object={scene} />;
+  // Some exports are trimmed for the web and carry no normals; light needs them.
+  useMemo(() => {
+    scene.traverse((o) => {
+      const m = o as THREE.Mesh;
+      if (m.isMesh && !m.geometry.attributes.normal) m.geometry.computeVertexNormals();
+    });
+  }, [scene]);
+  return zUp ? <group rotation={[-Math.PI / 2, 0, 0]}><primitive object={scene} /></group> : <primitive object={scene} />;
 }
 
 /** Studio light from this page alone: no environment map fetched from a CDN. */
@@ -26,7 +34,7 @@ export function Lights() {
 }
 
 /** A model on its own stage, inline: a product with no pictures shows its CAD. */
-export function ModelStage({ url, className }: { url: string; className?: string }) {
+export function ModelStage({ url, className, zUp }: { url: string; className?: string; zUp?: boolean }) {
   return (
     <div className={className}>
       <Canvas camera={{ position: [1.6, 1.1, 1.8], fov: 35 }} dpr={[1, 2]}>
@@ -34,7 +42,7 @@ export function ModelStage({ url, className }: { url: string; className?: string
         <Lights />
         <Suspense fallback={null}>
           <Bounds fit clip observe margin={1.7}>
-            <Model url={url} />
+            <Model url={url} zUp={zUp} />
           </Bounds>
           <ContactShadows position={[0, 0, 0]} opacity={0.45} scale={4} blur={2.4} far={2} />
         </Suspense>
@@ -44,7 +52,7 @@ export function ModelStage({ url, className }: { url: string; className?: string
   );
 }
 
-export function ModelViewer({ url, onClose, name }: { url: string; name: string; onClose: () => void }) {
+export function ModelViewer({ url, onClose, name, zUp }: { url: string; name: string; onClose: () => void; zUp?: boolean }) {
   useEffect(() => {
     const esc = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
     window.addEventListener("keydown", esc);
@@ -58,7 +66,7 @@ export function ModelViewer({ url, onClose, name }: { url: string; name: string;
           <Lights />
           <Suspense fallback={null}>
             <Bounds fit clip observe margin={1.4}>
-              <Model url={url} />
+              <Model url={url} zUp={zUp} />
             </Bounds>
             <ContactShadows position={[0, 0, 0]} opacity={0.5} scale={4} blur={2.4} far={2} />
           </Suspense>

@@ -85,7 +85,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
                 {product.hrefLabel ?? "Open"}
               </Link>
             ) : null}
-            {model && cover ? <View3D url={model} name={product.name} /> : null}
+            {model && cover ? <View3D url={model} name={product.name} zUp={product.zUp} /> : null}
           </div>
         </Reveal>
       </section>
@@ -93,7 +93,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
       {!cover && model ? (
         <Reveal className="mx-auto max-w-[1200px] px-6">
           <figure className="overflow-hidden rounded-3xl border border-white/10 bg-[#08080A]">
-            <InlineModel url={model} />
+            <InlineModel url={model} zUp={product.zUp} />
             <figcaption className="px-6 py-4 text-sm text-scribe-3">{product.name}, from its CAD. Drag to turn it.</figcaption>
           </figure>
         </Reveal>
