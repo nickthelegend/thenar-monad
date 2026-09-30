@@ -101,7 +101,7 @@ export function SiteNav({ force = false }: { force?: boolean } = {}) {
   return (
     <>
       <header className="sticky top-0 z-40 px-4 pt-4">
-        <div ref={bar} className="glass relative mx-auto flex h-14 max-w-[1200px] items-center gap-3 rounded-2xl px-4 sm:gap-6 sm:px-5">
+        <div ref={bar} className="glass relative mx-auto flex h-14 backdrop-blur-xl backdrop-saturate-150 max-w-[1200px] items-center gap-3 rounded-2xl px-4 sm:gap-6 sm:px-5">
           <Link href={APP_HOME} className="flex shrink-0 items-center" aria-label="Thenar home">
             <ThenarWordmark />
           </Link>

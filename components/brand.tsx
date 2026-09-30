@@ -1,52 +1,27 @@
 import { cn } from "@/lib/cn";
 
 /**
- * The Thenar mark.
+ * The ThenarLabs mark.
  *
- * The thenar is the muscle at the base of the thumb — the one that makes a
- * hand able to oppose and grip at all. So the mark is a gripper on a post:
- * two opposed jaws on a yoke, with the datum line crossing them where a
- * measurement would be taken. The pivot is the only closed form in it, so the
- * mark reads as a machine rather than a letterform at small sizes, and it
- * survives at 16 px because every stroke is the same weight.
+ * The thenar is the muscle at the base of the thumb: the one that lets a hand
+ * grip. So the mark is a grip: two opposed gripper jaws, cut from the halves
+ * of a hexagon, cradling a crescent that is the palm. One stroke weight, so
+ * it holds at 16 px.
  */
 export function ThenarMark({
   className,
-  title = "Thenar",
+  title = "ThenarLabs",
 }: {
   className?: string;
   title?: string;
 }) {
   return (
-    <svg
-      viewBox="0 0 32 32"
-      className={cn("text-signal", className)}
-      role="img"
-      aria-label={title}
-      fill="none"
-    >
-      {/* base rail — what the arm is bolted to */}
-      <path d="M3 28.5h26" stroke="currentColor" strokeWidth="2" strokeLinecap="butt" />
-
-      {/* the post, rising to the pivot */}
-      <path d="M16 28.5V19.6" stroke="currentColor" strokeWidth="2.6" strokeLinecap="butt" />
-
-      {/* the yoke and the two opposed jaws */}
-      <path d="M9.6 11.2h12.8" stroke="currentColor" strokeWidth="2" strokeLinecap="butt" />
-      <path
-        d="M9.6 11.2V4.8M22.4 11.2V4.8"
-        stroke="currentColor"
-        strokeWidth="2.6"
-        strokeLinecap="butt"
-      />
-
-      {/* datum line — where the measurement is taken */}
-      <path d="M13 7.6h6" stroke="currentColor" strokeWidth="2" strokeLinecap="butt" />
-
-      {/* the pivot: the one closed form, punched out of the post */}
-      <circle cx="16" cy="15.4" r="4.2" fill="var(--color-ink-0)" />
-      <circle cx="16" cy="15.4" r="4.2" stroke="currentColor" strokeWidth="2.6" />
-      <circle cx="16" cy="15.4" r="1" fill="currentColor" />
+    <svg viewBox="0 0 64 64" className={cn("text-white", className)} role="img" aria-label={title}>
+      <g fill="none" stroke="currentColor" strokeWidth="7" strokeLinejoin="round">
+        <path d="M26.5 6.5 L11 19.5 V44.5 L26.5 57.5" />
+        <path d="M37.5 6.5 L53 19.5 V44.5 L37.5 57.5" />
+      </g>
+      <path fill="currentColor" d="M18 26 A14 17 0 0 0 46 26 A3.5 3.5 0 0 0 39 26 A7 7 0 0 1 25 26 A3.5 3.5 0 0 0 18 26 Z" />
     </svg>
   );
 }
@@ -58,7 +33,7 @@ export function ThenarMark({
 export function ThenarWordmark({ className, labs = false }: { className?: string; labs?: boolean }) {
   return (
     <span className={cn("flex items-center gap-2", className)}>
-      <ThenarMark className="size-5 shrink-0 text-white" />
+      <ThenarMark className="size-6 shrink-0 text-white" />
       <span className="wordmark text-sm text-white">
         Thenar{labs ? <span className="text-scribe-3">Labs</span> : null}
       </span>

@@ -90,6 +90,8 @@ const FAQ = [
 
 export default async function LabsHome() {
   const figures = await monadFigures();
+  // The animated hero, once it exists; its first frame until then.
+  const heroFilm = existsSync(path.join(process.cwd(), "public", "labs", "hero.mp4"));
   // Hardware with real pictures, then the app: what a visitor can hold, and where they can earn.
   const featured = ["arms", "hotaru", "jx1", "duck", "gt240", "thenar"]
     .map((id) => PRODUCTS.find((p) => p.id === id)!)
@@ -99,10 +101,28 @@ export default async function LabsHome() {
     <div className="relative overflow-hidden bg-black text-white">
       <LabsNav />
 
-      {/* Hero. The words on pure black, and the glass hand beneath them carrying
-          its own spectrum. Nothing hazes the ground. */}
-      <section className="relative flex flex-col items-center px-4 pb-10 pt-40 text-center">
-        <div className="relative z-10">
+      {/* Hero. The film (or its first frame) fills the section; the words sit in
+          the black the render leaves above the arm. */}
+      <section className="relative flex min-h-[100svh] flex-col items-center overflow-hidden px-4 pb-16 text-center">
+        <div aria-hidden className="absolute inset-x-0 bottom-0 top-[38%] [mask-image:linear-gradient(to_bottom,transparent,black_12%,black_80%,transparent)]">
+          {heroFilm ? (
+            <video
+              className="absolute inset-0 h-full w-full object-cover object-[center_40%]"
+              autoPlay
+              muted
+              loop
+              playsInline
+              preload="auto"
+              poster="/labs/hero.webp"
+            >
+              <source src="/labs/hero.webm" type="video/webm" />
+              <source src="/labs/hero.mp4" type="video/mp4" />
+            </video>
+          ) : (
+            <Image src="/labs/hero.webp" alt="" fill priority sizes="100vw" className="object-cover object-[center_40%]" />
+          )}
+        </div>
+        <div className="relative z-10 pt-36 sm:pt-40">
           <Reveal fade>
             <h1 className="heading-glow mx-auto max-w-[680px] text-5xl font-medium leading-none tracking-tight sm:text-7xl">
               We build
@@ -110,13 +130,13 @@ export default async function LabsHome() {
               physical AI
             </h1>
           </Reveal>
-          <Reveal delay={150}>
+          <Reveal fade delay={150}>
             <p className="mx-auto mt-6 max-w-[560px] text-base text-scribe-2 sm:text-lg">
               Robots you can print, the rigs that drive them, and a market that pays people on Monad for every run they
               record.
             </p>
           </Reveal>
-          <Reveal delay={300} className="mt-8 flex flex-wrap items-center justify-center gap-3">
+          <Reveal fade delay={300} className="mt-8 flex flex-wrap items-center justify-center gap-3">
             <Link
               href={APP_HOME}
               className="rounded-lg bg-lilac px-5 py-3 text-base font-semibold text-black transition duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-white active:scale-[0.98]"
@@ -131,18 +151,9 @@ export default async function LabsHome() {
             </Link>
           </Reveal>
         </div>
-        <Reveal fade delay={200} className="relative mt-2 w-full max-w-[1100px]">
-          <Image
-            src="/labs/hand.webp"
-            alt="A robotic hand in prismatic glass"
-            width={1600}
-            height={900}
-            priority
-            className="glass-art mx-auto w-full"
-          />
-        </Reveal>
+        <div className="flex-1" />
 
-        <Reveal delay={450} className="relative z-10 -mt-10 w-full max-w-[900px]">
+        <Reveal delay={450} className="relative z-10 w-full max-w-[900px]">
           <p className="text-xs text-scribe-3">Built with</p>
           <div className="relative mt-4 overflow-hidden [mask-image:linear-gradient(90deg,transparent,black_15%,black_85%,transparent)]">
             <div className="flex w-max animate-[labs-marquee_28s_linear_infinite] gap-12 motion-reduce:animate-none">

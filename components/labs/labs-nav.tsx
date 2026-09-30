@@ -25,7 +25,7 @@ export function LabsNav() {
     <header className="fixed inset-x-0 top-0 z-50 px-4 pt-4">
       <nav
         aria-label="ThenarLabs"
-        className="glass mx-auto flex h-14 max-w-[1100px] items-center justify-between gap-4 rounded-2xl px-4 sm:px-5"
+        className="glass mx-auto flex h-14 backdrop-blur-xl backdrop-saturate-150 max-w-[1100px] items-center justify-between gap-4 rounded-2xl px-4 sm:px-5"
       >
         <Link href="/" className="flex items-center gap-3" aria-label="ThenarLabs home">
           <ThenarWordmark labs />
