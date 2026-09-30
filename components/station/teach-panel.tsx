@@ -44,7 +44,7 @@ export function TeachPanel({ taskId, arm, skill, onSkill, repeating, onRepeat }:
   return (
     <div className="mt-2 flex flex-col gap-1.5">
       <div className="flex gap-2">
-        <button type="button" onClick={teach} className="flex-1 border border-rule px-3 py-2 text-left font-mono text-[12px] uppercase tracking-[0.14em] text-scribe-3 transition-colors hover:border-rule-strong hover:text-scribe">
+        <button type="button" onClick={teach} className="flex-1 border border-rule px-3 py-2 text-left text-[12px] text-scribe-3 transition-colors hover:border-rule-strong hover:text-scribe">
           {skill ? "Teach again" : "Teach"}
         </button>
         <button
@@ -53,7 +53,7 @@ export function TeachPanel({ taskId, arm, skill, onSkill, repeating, onRepeat }:
           onClick={() => onRepeat(!repeating)}
           aria-pressed={repeating}
           className={cn(
-            "flex-1 border px-3 py-2 text-left font-mono text-[12px] uppercase tracking-[0.14em] transition-colors disabled:opacity-40",
+            "flex-1 border px-3 py-2 text-left text-[12px] transition-colors disabled:opacity-40",
             repeating ? "border-probe text-probe" : "border-rule text-scribe-3 hover:border-rule-strong hover:text-scribe",
           )}
         >

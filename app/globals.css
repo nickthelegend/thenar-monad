@@ -1,129 +1,60 @@
 @import "tailwindcss";
 
 /* ==========================================================================
-   THENAR — graphite on paper, with one blue.
+   THENARLABS — black glass.
 
-   A cool achromatic ground, near-black ink, and a single saturated blue that
-   carries every figure of value and every live state. Depth is a hairline and
-   a value step: never a shadow, never a gradient, never a blur.
+   One theme. A black stage, white type set in Poppins, and light that comes
+   from the objects themselves: prismatic glass renders whose spectra are the
+   only colour on a page. Controls are pale lilac pills and translucent glass;
+   figures of value take the lavender accent; the verdict pair stays green and
+   rose so a payout is never read by hue against the accent alone.
 
-   The ground is paper by default and ink when asked. That is the reverse of
-   what this project shipped for months, and it is deliberate: the landing page
-   commits to a light achromatic world, and a visitor who presses "Find a task"
-   should not have the world invert underneath them. The dark theme is the same
-   system read against the opposite ground, with the accent lifted so it still
-   separates from what it sits on.
-
-   Colour means data. Controls take no colour — they get their state from rule
-   weight, relief, and inversion. A coloured button would make colour mean two
-   things.
+   The token names are the product's old ones (ink, rule, scribe, signal), so
+   every page moved to this world by changing values, not markup.
    ========================================================================== */
 
 @theme {
-  /* Ground. Paper, opened up in five steps. */
-  --color-ink-0: #EFEFEE;
-  --color-ink-1: #E4E4E2;
-  --color-ink-2: #DAD9D7;
-  --color-ink-3: #CECDCA;
-  --color-ink-4: #C0BFBB;
+  /* Ground: black, and four lifts for panels and wells. */
+  --color-ink-0: #000000;
+  --color-ink-1: #0B0B0D;
+  --color-ink-2: #131316;
+  --color-ink-3: #1C1C20;
+  --color-ink-4: #26262B;
 
-  /* Rules. Depth is a hairline and a value step, never a shadow. */
-  --color-rule: #D6D6D4;
-  --color-rule-strong: #B2B2AE;
+  /* Hairlines, as they read on black glass. */
+  --color-rule: #1E1E23;
+  --color-rule-strong: #34343B;
 
-  /* Ink. The muted step is measured against the deepest panel it is ever set
-     on, not against the page: #6E6F76 reads 4.15:1 on the ground and #62636A
-     still only 4.24:1 on ink-2, and this step carries dimensions, file sizes
-     and prop names — labels, not ornament. #5A5B62 clears 4.5 on all three. */
-  --color-scribe: #0D0D0F;
-  --color-scribe-2: #43444A;
-  --color-scribe-3: #5A5B62;
+  /* Type. */
+  --color-scribe: #FFFFFF;
+  --color-scribe-2: #B6B6BE;
+  --color-scribe-3: #83838C;
 
-  /* Signal — the brand, and every figure of value.
-     The poster's blue is #2F5BFF, and on a hero at 74px it is unimpeachable:
-     large text only owes 3:1. But this token also sets 12px AVAX figures on
-     the hub, the floor and the leaderboard, and there it measured 4.49:1 on
-     the page ground and less on a panel — under AA, on the number that tells
-     an operator what they earned. Four per cent darker clears 4.5 on the
-     ground, on the panel and on the deepest panel, and at poster size the two
-     are not tellable apart. One blue, and it is this one. */
-  --color-signal: #2B50E0;
-  --color-signal-hi: #1B3CB8;
-  --color-signal-dim: #E3E8FF;
+  /* The accent: lavender, lifted enough to read as a figure on black. */
+  --color-signal: #B9A2FF;
+  --color-signal-hi: #DCCFFF;
+  --color-signal-dim: #1B1530;
 
-  /* The verdict pair. An operator reading a run result must never have to tell
-     a reject from a payout by hue alone against the accent, so these sit well
-     away from the blue and are always paired with a shape change. */
-  --color-go: #0B6B41;
-  --color-go-dim: #DBEFE4;
-  --color-reject: #B60D33;
-  --color-reject-dim: #F8DEE4;
+  /* The pale lilac of the primary pill. Text on it is black. */
+  --color-lilac: #EEE6FF;
 
-  /* Probe — the reference edge a measurement is taken from. Quiet on purpose. */
-  --color-probe: #3A5578;
-  --color-probe-dim: #E1E6ED;
+  --color-go: #4ADE80;
+  --color-go-dim: #0B2817;
+  --color-reject: #FB7185;
+  --color-reject-dim: #2E0B14;
 
-  /* Display is its own face now. It used to be the body face at a larger size,
-     which is why headlines had no more voice than paragraphs did. */
-  --font-display: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
-  --font-sans: var(--font-grotesk), ui-sans-serif, system-ui, sans-serif;
+  --color-probe: #A9B6FF;
+  --color-probe-dim: #141729;
+
+  --font-display: var(--font-poppins), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-poppins), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-dm-mono), ui-monospace, monospace;
 
-  /* Hard corners. A radius above 2px belongs to a different world. */
   --radius-edge: 0px;
   --radius-cut: 2px;
-}
 
-/* ==========================================================================
-   The same instrument under a lamp instead of in the dark.
-   ==========================================================================
-
-   A toggle was on the rejected list because the design world is deliberately
-   single-theme, and that reasoning confused a preference with a constraint.
-   What actually matters is that the second theme is designed rather than
-   inverted: every relationship the dark world encodes has to survive.
-
-   So this is not a flip. The ground is warm paper rather than white, because
-   pure white under the same hairline rules reads as a form to fill in. The
-   accent darkens — #FF6A00 sits at 2.9:1 on paper, which fails as text — while
-   keeping its hue, so a figure of value is still the same orange it was. The
-   verdict pair stays on its own side of the wheel: the mint goes deep enough
-   to be read as green rather than as a highlight, the reject stays pink-red
-   rather than sliding to brick, and neither approaches the accent's hue.
-
-   The viewport keeps its black in both. It is a lit stage, not a page, and a
-   workspace that changed value with the chrome around it would make two runs
-   recorded in different themes look like two different scenes.
-   ========================================================================== */
-
-:root[data-theme="dark"] {
-  --color-ink-0: #0D0D0F;
-  --color-ink-1: #141416;
-  --color-ink-2: #1C1C20;
-  --color-ink-3: #26262B;
-  --color-ink-4: #313137;
-
-  --color-rule: #2A2A2E;
-  --color-rule-strong: #45454C;
-
-  --color-scribe: #EFEFEE;
-  --color-scribe-2: #C3C4C8;
-  --color-scribe-3: #8A8B92;
-
-  /* The lift. #2F5BFF against a near-black ground measures 2.6:1 — it reads as
-     a dark blue sitting on dark, not as emphasis. This is the same accent
-     carried to the other side of the ground. */
-  --color-signal: #7C97FF;
-  --color-signal-hi: #A9BCFF;
-  --color-signal-dim: #141B33;
-
-  --color-go: #3DD68C;
-  --color-go-dim: #062315;
-  --color-reject: #FF4D6A;
-  --color-reject-dim: #2B0611;
-
-  --color-probe: #8FA6C4;
-  --color-probe-dim: #121722;
+  /* The one motion curve: mass and spring, never linear. */
+  --ease-glass: cubic-bezier(0.32, 0.72, 0, 1);
 }
 
 @layer base {
@@ -133,12 +64,9 @@
   }
 
   html {
-    color-scheme: light;
-    -webkit-text-size-adjust: 100%;
-  }
-
-  html[data-theme="dark"] {
     color-scheme: dark;
+    -webkit-text-size-adjust: 100%;
+    background-color: #000000;
   }
 
   body {
@@ -158,7 +86,7 @@
 
   h1, h2, h3, h4 {
     font-family: var(--font-display);
-    font-weight: 700;
+    font-weight: 500;
     letter-spacing: -0.02em;
     text-wrap: balance;
   }
@@ -169,20 +97,6 @@
 
   code, kbd, samp, pre {
     font-family: var(--font-mono);
-  }
-
-  /*
-     The ground crosses over on a theme change, and at no other time.
-     Scoped to the attribute the toggle sets for the length of the press: a
-     standing transition on background-color would also catch every hover,
-     every focus ring and every panel that changes tone under the pointer, and
-     make the whole interface feel like it is trailing behind the cursor.
-  */
-  @media (prefers-reduced-motion: no-preference) {
-    :root[data-theme-shifting] body,
-    :root[data-theme-shifting] body * {
-      transition: background-color 260ms ease, border-color 260ms ease, color 260ms ease;
-    }
   }
 
   /* The surfaces the browser draws still belong to the design. */
@@ -210,6 +124,7 @@
   ::-webkit-scrollbar-thumb {
     background: var(--color-rule-strong);
     border: 3px solid var(--color-ink-0);
+    border-radius: 9999px;
   }
   ::-webkit-scrollbar-thumb:hover { background: var(--color-signal); }
 }
@@ -247,18 +162,49 @@
   }
 
   .panel {
-    background-color: var(--color-ink-2);
+    background-color: var(--color-ink-1);
     border: 1px solid var(--color-rule);
+    border-radius: 16px;
+  }
+
+  /* Translucent glass: the nav pill and floating controls. */
+  .glass {
+    background-color: rgb(255 255 255 / 0.04);
+    border: 1px solid rgb(255 255 255 / 0.08);
+    backdrop-filter: blur(20px) saturate(140%);
+    -webkit-backdrop-filter: blur(20px) saturate(140%);
+  }
+
+  /* The hero heading: white into grey, left to right, on the text only. */
+  .heading-glow {
+    background-image: linear-gradient(90deg, #FFFFFF 0%, #FFFFFF 35%, #9B9B9B 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  /* The accent word, as the reference sets it: violet into orchid. */
+  .text-prism {
+    background-image: linear-gradient(90deg, #A78BFA, #E879F9);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  /* Renders on black blend into the page: black is transparent under screen. */
+  .glass-art {
+    mix-blend-mode: screen;
+    pointer-events: none;
+    user-select: none;
   }
 
   /* Uppercase and letterspaced costs legibility, so labels sit a step above
      the 11px functional floor rather than on it. */
   .label {
-    font-family: var(--font-mono);
+    font-family: var(--font-sans);
     font-size: 12px;
-    font-weight: 500;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
+    font-weight: 400;
+    letter-spacing: 0;
     color: var(--color-scribe-3);
   }
 
@@ -267,9 +213,9 @@
      name, and it sits against a drawn mark whose strokes are all one weight. */
   .wordmark {
     font-family: var(--font-display);
-    font-weight: 800;
-    /* The landing's tracking, so the two lockups are one lockup. */
-    letter-spacing: -0.035em;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
     line-height: 1;
   }
 }
@@ -323,4 +269,14 @@
 
   /* Nothing should be split across a page break mid-figure. */
   li, dl, table, section { break-inside: avoid; }
+}
+
+@keyframes labs-rise {
+  from { transform: translateY(48px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes labs-marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
 }

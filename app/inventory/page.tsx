@@ -69,7 +69,7 @@ export default function InventoryPage() {
       <p className="mt-3 max-w-[64ch] text-[15px] leading-relaxed text-scribe-2">
         Every object a task can be built from. The rooms and most props are
         generated from named dimensions by the same kernel that makes the arm;
-        the ones marked <span className="font-mono text-[13px] uppercase tracking-[0.12em] text-go">scan</span> are
+        the ones marked <span className="text-[13px] text-go">scan</span> are
         photoscans of real objects from Poly Haven, released CC0. Pick a room and
         two objects when you post a task and the station draws exactly these, at
         these sizes.
@@ -113,7 +113,7 @@ export default function InventoryPage() {
                 <span className="flex items-baseline justify-between gap-2">
                   <span className="block truncate font-mono text-[12px] leading-tight text-scribe">{i.label}</span>
                   {i.scan ? (
-                    <span className="shrink-0 font-mono text-[10px] uppercase tracking-[0.12em] text-go" title={i.source}>scan</span>
+                    <span className="shrink-0 text-[10px] text-go" title={i.source}>scan</span>
                   ) : null}
                 </span>
                 <span className="mt-0.5 flex items-baseline justify-between gap-2 font-mono text-[12px] tabular-nums text-scribe-3">

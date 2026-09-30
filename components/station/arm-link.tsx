@@ -221,14 +221,14 @@ export function MirrorPanel() {
           type="button"
           onClick={() => (on ? disconnectRelay() : connectRelay())}
           className={cn(
-            "border px-3 py-1.5 font-mono text-[12px] uppercase tracking-[0.14em] transition-colors",
+            "border px-3 py-1.5 text-[12px] transition-colors",
             on ? "border-signal text-signal hover:bg-signal hover:text-ink-0" : "border-rule-strong text-scribe hover:border-scribe",
           )}
         >
           {on ? "Stop mirroring" : "Mirror to my SO-101"}
         </button>
         {on && f && !f.armed && f.canArm && s.phase === "live" ? (
-          <button type="button" onClick={rehome} className="border border-rule-strong px-3 py-1.5 font-mono text-[12px] uppercase tracking-[0.14em] text-scribe hover:border-scribe">
+          <button type="button" onClick={rehome} className="border border-rule-strong px-3 py-1.5 text-[12px] text-scribe hover:border-scribe">
             Send home
           </button>
         ) : null}
@@ -240,7 +240,7 @@ export function MirrorPanel() {
             This arm only moves for its owner&rsquo;s passkey. Unlock it to send signed commands.
           </p>
           <button type="button" disabled={keyBusy} onClick={() => withPasskey((a) => unlockWithPasskey(a))}
-            className="self-start border border-signal px-3 py-1.5 font-mono text-[12px] uppercase tracking-[0.14em] text-signal hover:bg-signal hover:text-ink-0 disabled:opacity-60">
+            className="self-start border border-signal px-3 py-1.5 text-[12px] text-signal hover:bg-signal hover:text-ink-0 disabled:opacity-60">
             {keyBusy ? "Waiting for your passkey…" : "Unlock with your passkey"}
           </button>
         </div>
@@ -259,7 +259,7 @@ export function MirrorPanel() {
       {!on ? (
         <div className="flex flex-col gap-1.5">
           <button type="button" disabled={keyBusy} onClick={() => withPasskey(async (a) => setKey(await armKeyFor(a)))}
-            className="self-start font-mono text-[12px] uppercase tracking-[0.12em] text-scribe-3 hover:text-signal disabled:opacity-60">
+            className="self-start text-[12px] text-scribe-3 hover:text-signal disabled:opacity-60">
             {keyBusy ? "Waiting for your passkey…" : "Pair the arm with my passkey"}
           </button>
           {key ? (

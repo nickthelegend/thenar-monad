@@ -41,7 +41,7 @@ export function TaskTeam({ taskId }: { taskId: number }) {
             <a href={`/operator/${m.member}`} className="font-mono text-[13px] text-scribe-2 hover:text-probe">
               {shortHash(m.member)}
             </a>
-            <span className="font-mono text-[12px] uppercase tracking-[0.12em] text-scribe">{m.role}</span>
+            <span className="text-[12px] text-scribe">{m.role}</span>
             <span className="font-mono text-[12px] text-scribe-3">{fmtDate(m.added_at)}</span>
             <span title={`Signed by the funder: ${m.signature}`} className="font-mono text-[12px] text-go">
               signed

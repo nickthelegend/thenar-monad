@@ -65,7 +65,7 @@ export default function SpacePage() {
           </p>
           <Link
             href="/post"
-            className="mt-5 inline-block border border-scribe bg-scribe px-4 py-2 font-mono text-[12px] uppercase tracking-[0.14em] text-ink-0 transition-colors hover:border-signal-hi hover:bg-signal-hi"
+            className="mt-5 inline-block border border-scribe bg-scribe px-4 py-2 text-[12px] text-ink-0 transition-colors hover:border-signal-hi hover:bg-signal-hi"
           >
             Post a task
           </Link>
@@ -116,15 +116,15 @@ export default function SpacePage() {
                   <span
                     className={
                       here > 0
-                        ? "font-mono text-[12px] uppercase tracking-[0.12em] text-signal"
-                        : "font-mono text-[12px] uppercase tracking-[0.12em] text-scribe-3"
+                        ? "text-[12px] text-signal"
+                        : "text-[12px] text-scribe-3"
                     }
                   >
                     {here > 0 ? `${here} here` : "empty"}
                   </span>
                   <Link
                     href={`/station/${t.id}`}
-                    className="ml-3 border border-rule-strong px-3.5 py-1.5 font-mono text-[12px] uppercase tracking-[0.14em] text-scribe transition-colors hover:border-scribe"
+                    className="ml-3 border border-rule-strong px-3.5 py-1.5 text-[12px] text-scribe transition-colors hover:border-scribe"
                   >
                     {left === 0 ? "Watch" : here > 0 ? "Join" : "Open"}
                   </Link>

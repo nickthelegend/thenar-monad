@@ -71,7 +71,7 @@ export function InCorpus({ taskId, trajHash }: { taskId: number; trajHash: strin
         verified ? "border-go/40 bg-go/5" : "border-rule bg-ink-1",
       )}
     >
-      <p className="font-mono text-[12px] uppercase tracking-[0.12em]">
+      <p className="text-[12px]">
         <span className={verified ? "text-go" : "text-scribe-3"}>
           {verified ? "In the committed corpus" : "Not in the committed corpus"}
         </span>

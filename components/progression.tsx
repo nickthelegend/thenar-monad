@@ -44,7 +44,7 @@ export function Progression({ runs, className }: { runs: ScoredRun[]; className?
                 <span className="flex items-baseline justify-between gap-2">
                   <span className="label">Run {i + 1}</span>
                   {s.best && p.steps.length > 1 ? (
-                    <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-signal">
+                    <span className="text-[10px] text-signal">
                       best
                     </span>
                   ) : null}

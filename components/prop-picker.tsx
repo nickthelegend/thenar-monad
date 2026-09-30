@@ -31,7 +31,7 @@ export function PropPicker({
 }) {
   return (
     <div className="border-t border-rule py-5">
-      <div className="mb-1 font-mono text-[12px] uppercase tracking-[0.14em] text-scribe-3">{label}</div>
+      <div className="mb-1 text-[12px] text-scribe-3">{label}</div>
       <p className="mb-3 max-w-[62ch] text-[14px] leading-relaxed text-scribe-3">{hint}</p>
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-6">
         {options.map((p) => {

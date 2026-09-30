@@ -125,7 +125,7 @@ export default function OperatorPage() {
       <div className="mx-auto max-w-md px-5 py-24 text-center">
         <h1 className="font-display text-3xl">Not an address</h1>
         <p className="mt-2 text-scribe-2">&ldquo;{String(address)}&rdquo; is not a 20-byte address.</p>
-        <Link href="/leaderboard" className="mt-6 inline-block border border-rule-strong px-4 py-2 font-mono text-[12px] uppercase tracking-[0.14em]">
+        <Link href="/leaderboard" className="mt-6 inline-block border border-rule-strong px-4 py-2 text-[12px]">
           Back to the standings
         </Link>
       </div>
@@ -229,7 +229,7 @@ export default function OperatorPage() {
               />
             ) : null}
             <span className="relative flex items-baseline justify-between gap-2">
-              <span className="font-mono text-[12px] uppercase tracking-[0.12em] text-scribe">
+              <span className="text-[12px] text-scribe">
                 {b.label}
               </span>
               {b.earned ? (
@@ -323,7 +323,7 @@ export default function OperatorPage() {
             <li key={c.txHash} className="grid grid-cols-[1fr_auto] items-center gap-4 border-b border-rule py-3 sm:grid-cols-[minmax(0,1fr)_repeat(3,minmax(72px,auto))]">
               <span className="truncate font-mono text-[13px] text-scribe">{c.method}</span>
               <span className="hidden font-mono text-[12px] tabular-nums text-scribe-3 sm:block">{new Date(c.at).toLocaleDateString()}</span>
-              <span className={cn("font-mono text-[12px] uppercase tracking-[0.12em]", c.succeeded ? "text-scribe-3" : "text-reject")}>
+              <span className={cn("text-[12px]", c.succeeded ? "text-scribe-3" : "text-reject")}>
                 {c.succeeded ? "ok" : "reverted"}
               </span>
               <a href={txUrlOn(appChain.id, c.txHash)} target="_blank" rel="noreferrer"

@@ -189,7 +189,7 @@ export function Tour() {
             onClick={() => prev !== null && goto(prev)}
             disabled={prev === null}
             className={cn(
-              "border px-3 py-1.5 font-mono text-[12px] uppercase tracking-[0.12em] transition-colors",
+              "border px-3 py-1.5 text-[12px] transition-colors",
               prev === null
                 ? "border-rule text-scribe-3"
                 : "border-rule-strong text-scribe hover:border-signal hover:text-signal",
@@ -205,7 +205,7 @@ export function Tour() {
             // skipped with the reason said above, not made a dead end.
             disabled={next === null}
             className={cn(
-              "border px-3 py-1.5 font-mono text-[12px] uppercase tracking-[0.12em] transition-colors",
+              "border px-3 py-1.5 text-[12px] transition-colors",
               next === null
                 ? "border-rule text-scribe-3"
                 : "border-signal bg-signal-dim text-signal-hi hover:bg-signal/20",
@@ -228,7 +228,7 @@ export function StartTour({ className }: { className?: string }) {
       type="button"
       onClick={() => router.push("/hub?tour=1")}
       className={cn(
-        "border border-rule px-3 py-2 font-mono text-[12px] uppercase tracking-[0.12em] text-scribe-3 transition-colors hover:border-signal hover:text-signal",
+        "border border-rule px-3 py-2 text-[12px] text-scribe-3 transition-colors hover:border-signal hover:text-signal",
         className,
       )}
     >

@@ -34,7 +34,7 @@ export function PropStrip() {
                 will not share a tile this narrow without one of them truncating. */}
             <div className="border-t border-rule px-2 py-1.5">
               <span className="block truncate font-mono text-[12px] text-scribe-2">{p.label}</span>
-              <span className="block font-mono text-[12px] uppercase tracking-[0.14em] text-scribe-3">
+              <span className="block text-[12px] text-scribe-3">
                 {p.role === "target" ? "landmark" : p.scenario}
               </span>
             </div>

@@ -68,7 +68,7 @@ export function PhysicsCheck({ hash }: { hash: string }) {
             onClick={run}
             disabled={busy}
             className={cn(
-              "border px-3 py-2 font-mono text-[12px] uppercase tracking-[0.12em] transition-colors",
+              "border px-3 py-2 text-[12px] transition-colors",
               busy ? "border-rule text-scribe-3" : "border-rule-strong text-scribe hover:border-signal hover:text-signal",
             )}
           >

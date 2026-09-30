@@ -138,7 +138,7 @@ export function Notify() {
           onClick={state === "on" ? disable : enable}
           disabled={state === "working"}
           className={cn(
-            "border px-3 py-2 font-mono text-[12px] uppercase tracking-[0.12em] transition-colors",
+            "border px-3 py-2 text-[12px] transition-colors",
             state === "on"
               ? "border-signal text-signal"
               : "border-rule-strong text-scribe hover:border-signal hover:text-signal",

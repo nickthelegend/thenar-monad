@@ -301,5 +301,5 @@ export function ScanPanel({ onScene }: { onScene: (r: ScanResult | null) => void
   );
 }
 
-const btn = "border border-rule-strong px-3 py-1.5 font-mono text-[12px] uppercase tracking-[0.14em] text-scribe transition-colors hover:border-signal hover:text-signal";
-const chip = "border border-rule px-2 py-1 font-mono text-[12px] uppercase tracking-[0.12em] text-scribe-3 transition-colors hover:border-rule-strong hover:text-scribe disabled:opacity-40";
+const btn = "border border-rule-strong px-3 py-1.5 text-[12px] text-scribe transition-colors hover:border-signal hover:text-signal";
+const chip = "border border-rule px-2 py-1 text-[12px] text-scribe-3 transition-colors hover:border-rule-strong hover:text-scribe disabled:opacity-40";

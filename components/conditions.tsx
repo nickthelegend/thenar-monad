@@ -198,7 +198,7 @@ export function Conditions() {
               type="button"
               onClick={() => void switchToApp()}
               disabled={isPending || adding}
-              className="ml-2 border border-scribe bg-scribe px-2.5 py-1 font-mono text-[12px] uppercase tracking-[0.14em] text-ink-0 transition-colors hover:border-signal-hi hover:bg-signal-hi disabled:opacity-60"
+              className="ml-2 border border-scribe bg-scribe px-2.5 py-1 text-[12px] text-ink-0 transition-colors hover:border-signal-hi hover:bg-signal-hi disabled:opacity-60"
             >
               {isPending || adding ? "Asking your wallet…" : `Switch to ${appChain.name}`}
             </button>

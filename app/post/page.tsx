@@ -166,14 +166,14 @@ export default function PostTaskPage() {
               <ScanPanel onScene={onScene} />
             </div>
           ) : (
-            <button type="button" onClick={() => setScanning(true)} className="mt-1 self-start border border-rule-strong px-3 py-1.5 font-mono text-[12px] uppercase tracking-[0.14em] text-scribe transition-colors hover:border-signal hover:text-signal">
+            <button type="button" onClick={() => setScanning(true)} className="mt-1 self-start border border-rule-strong px-3 py-1.5 text-[12px] text-scribe transition-colors hover:border-signal hover:text-signal">
               Scan with a camera
             </button>
           )}
           {scan ? (
             <span className="flex flex-wrap items-center gap-x-3 font-mono text-[12px] text-go">
               Scanned: starts at {Math.round(scan.scene.pick[0] * 1000)}, {Math.round(scan.scene.pick[1] * 1000)} mm; goal at {Math.round(scan.scene.place[0] * 1000)}, {Math.round(scan.scene.place[1] * 1000)} mm from the base.
-              <button type="button" onClick={() => { setScan(null); setScanning(false); }} className="uppercase tracking-[0.12em] text-scribe-3 hover:text-reject">
+              <button type="button" onClick={() => { setScan(null); setScanning(false); }} className="text-scribe-3 hover:text-reject">
                 Drop the scan
               </button>
             </span>
@@ -195,7 +195,7 @@ export default function PostTaskPage() {
                   arm === k ? "border-signal bg-ink-2" : "border-rule hover:border-rule-strong",
                 )}
               >
-                <span className={cn("font-mono text-[12px] uppercase tracking-[0.14em]", arm === k ? "text-signal" : "text-scribe")}>
+                <span className={cn("text-[12px]", arm === k ? "text-signal" : "text-scribe")}>
                   {EMBODIMENTS[k].name}
                 </span>
                 <span className="text-[13px] leading-snug text-scribe-3">{EMBODIMENTS[k].blurb}</span>
@@ -249,7 +249,7 @@ export default function PostTaskPage() {
               still free text. */}
           {suggestions.length > 0 ? (
             <div className="mt-1 flex flex-col gap-1.5">
-              <span className="font-mono text-[12px] uppercase tracking-[0.12em] text-scribe-3">
+              <span className="text-[12px] text-scribe-3">
                 Or say it another way
               </span>
               <ul className="flex flex-wrap gap-1.5">
@@ -266,7 +266,7 @@ export default function PostTaskPage() {
                       )}
                     >
                       {s.text}
-                      <span className="ml-2 uppercase tracking-[0.12em] text-scribe-3">{s.skill}</span>
+                      <span className="ml-2 text-scribe-3">{s.skill}</span>
                     </button>
                   </li>
                 ))}

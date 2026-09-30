@@ -82,13 +82,13 @@ export default function AgentsPage() {
 
       <DimRule className="mt-10" note="The terms, as the 402 states them" />
       <dl className="mt-4 grid grid-cols-[max-content_1fr] gap-x-8 gap-y-2 text-[14px]">
-        <dt className="font-mono text-[12px] uppercase tracking-[0.12em] text-scribe-3">Endpoint</dt>
+        <dt className="text-[12px] text-scribe-3">Endpoint</dt>
         <dd className="font-mono text-[13px] text-scribe">GET {AGENT_CORPUS.path}?taskId=N</dd>
 
-        <dt className="font-mono text-[12px] uppercase tracking-[0.12em] text-scribe-3">Price</dt>
+        <dt className="text-[12px] text-scribe-3">Price</dt>
         <dd className="text-scribe">{agentCorpusPrice()} per task corpus, x402 exact scheme</dd>
 
-        <dt className="font-mono text-[12px] uppercase tracking-[0.12em] text-scribe-3">Settles</dt>
+        <dt className="text-[12px] text-scribe-3">Settles</dt>
         <dd className="text-scribe-2">
           On <span className="font-mono text-[13px]">{AGENT_CORPUS.network}</span>, through{" "}
           <a href={AGENT_CORPUS.facilitator + "/supported"} target="_blank" rel="noreferrer" className="text-signal hover:text-signal-hi">
@@ -98,7 +98,7 @@ export default function AgentsPage() {
           nothing recorded answers 404 and charges nothing.
         </dd>
 
-        <dt className="font-mono text-[12px] uppercase tracking-[0.12em] text-scribe-3">Paid to</dt>
+        <dt className="text-[12px] text-scribe-3">Paid to</dt>
         <dd>
           {terms?.payTo ? (
             <a href={explorerAddress(terms.payTo)} target="_blank" rel="noreferrer" className="break-all font-mono text-[13px] text-signal hover:text-signal-hi">
@@ -109,7 +109,7 @@ export default function AgentsPage() {
           )}
         </dd>
 
-        <dt className="font-mono text-[12px] uppercase tracking-[0.12em] text-scribe-3">Sales log</dt>
+        <dt className="text-[12px] text-scribe-3">Sales log</dt>
         <dd className="text-scribe-2">
           {terms?.salesLog && terms.salesLogUrl ? (
             <>
@@ -142,7 +142,7 @@ export default function AgentsPage() {
         <button
           type="submit"
           disabled={checking || address.trim() === ""}
-          className="border border-scribe bg-scribe px-4 py-2 font-mono text-[12px] uppercase tracking-[0.14em] text-ink-0 transition-colors hover:border-signal-hi hover:bg-signal-hi disabled:opacity-60"
+          className="border border-scribe bg-scribe px-4 py-2 text-[12px] text-ink-0 transition-colors hover:border-signal-hi hover:bg-signal-hi disabled:opacity-60"
         >
           {checking ? "Reading the ledger…" : "Look it up"}
         </button>
@@ -176,7 +176,7 @@ export default function AgentsPage() {
         <div className="mt-4 overflow-x-auto">
           <table className="w-full min-w-[760px] text-left text-[13px]">
             <thead>
-              <tr className="font-mono text-[11px] uppercase tracking-[0.12em] text-scribe-3">
+              <tr className="text-[11px] text-scribe-3">
                 <th className="py-2 pr-4 font-normal">When</th>
                 <th className="py-2 pr-4 font-normal">Task</th>
                 <th className="py-2 pr-4 font-normal">Terms</th>

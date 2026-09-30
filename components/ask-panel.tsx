@@ -43,7 +43,7 @@ export function AskPanel() {
         />
         <button
           type="submit"
-          className="border border-rule-strong px-3 py-2 font-mono text-[12px] uppercase tracking-[0.12em] text-scribe hover:border-signal hover:text-signal"
+          className="border border-rule-strong px-3 py-2 text-[12px] text-scribe hover:border-signal hover:text-signal"
         >
           Ask
         </button>
@@ -51,7 +51,7 @@ export function AskPanel() {
 
       {a ? (
         <div className="flex flex-col gap-2 border border-rule bg-ink-1 px-4 py-3">
-          <span className="font-mono text-[12px] uppercase tracking-[0.12em] text-scribe-3">{a.question}</span>
+          <span className="text-[12px] text-scribe-3">{a.question}</span>
           <p className="max-w-[70ch] text-[14px] leading-relaxed text-scribe-2">{a.answer}</p>
           <p className="font-mono text-[12px] text-scribe-3">Read from: {a.source}</p>
         </div>

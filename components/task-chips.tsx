@@ -13,7 +13,7 @@ export function TaskChips({ task, className }: {
   task: { arm: ArmKind; scanned: ScannedScene | null };
   className?: string;
 }) {
-  const chip = "border px-1.5 py-px font-mono text-[11px] uppercase tracking-[0.12em] whitespace-nowrap";
+  const chip = "border px-1.5 py-px text-[11px] whitespace-nowrap";
   return (
     <span className={cn("inline-flex flex-wrap items-center gap-1.5", className)}>
       <span

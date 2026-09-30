@@ -104,7 +104,7 @@ export default function StatusPage() {
             <li key={k} className="flex flex-col gap-1 border-b border-rule py-3.5">
               <span className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
                 <span className="font-mono text-[13px] text-scribe">{k}</span>
-                <span className={cn("font-mono text-[12px] uppercase tracking-[0.12em]", v.ok ? "text-go" : "text-reject")}>
+                <span className={cn("text-[12px]", v.ok ? "text-go" : "text-reject")}>
                   {v.ok ? "pass" : "fail"}
                 </span>
               </span>
@@ -232,7 +232,7 @@ function UsagePanel() {
         onClick={toggle}
         aria-pressed={out}
         className={cn(
-          "mt-5 border px-3 py-2 font-mono text-[12px] uppercase tracking-[0.12em] transition-colors",
+          "mt-5 border px-3 py-2 text-[12px] transition-colors",
           out
             ? "border-rule-strong text-scribe"
             : "border-rule text-scribe-3 hover:border-rule-strong hover:text-scribe",

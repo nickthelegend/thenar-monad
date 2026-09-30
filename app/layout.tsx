@@ -2,8 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { InstallShell } from "@/components/install";
 import { LocaleReady } from "@/components/locale-ready";
 import { Pulse } from "@/components/pulse";
-import { THEME_SCRIPT } from "@/components/theme-toggle";
-import { Archivo, DM_Mono, Hanken_Grotesk, IBM_Plex_Mono } from "next/font/google";
+import { DM_Mono, IBM_Plex_Mono, Poppins } from "next/font/google";
 import { Providers } from "@/components/providers";
 import { SiteNav } from "@/components/site-nav";
 import { Conditions } from "@/components/conditions";
@@ -11,30 +10,19 @@ import { LOCALNET, appChain } from "@/lib/chain";
 import "./globals.css";
 
 /**
- * Three faces, each with one job.
+ * Two faces.
  *
- * Archivo carries display: the headlines and the wordmark. It is a grotesque
- * drawn for signage, so it has weight and tight apertures where a neutral UI
- * face has neither, and at 4rem it reads as something stamped on an instrument
- * rather than set in a template. That is the whole reason it is here — the
- * page previously ran its headlines in the same unopinionated face as its
- * paragraphs, which is why the type had no voice at any size.
- *
- * Hanken Grotesk carries body. Rounder and warmer than Archivo, which is what
- * makes the pairing read as two decisions rather than one face at two sizes.
+ * Poppins carries everything a person reads: headlines, the wordmark, body.
+ * Geometric and round, it is what the ThenarLabs look is set in, from the
+ * company page to the station.
  *
  * DM Mono takes every measured value, label, address and hash. Mono here is
  * for measurement and data, never for prose and never as a costume.
- *
- * There was a fourth: Press Start 2P, an arcade face, setting the wordmark in
- * the corner of every page. A protocol that settles real money and calls
- * itself a measuring instrument does not have a video-game logo. It is gone,
- * and the mark now sits beside its own name set in the display face.
  */
-const grotesk = Hanken_Grotesk({
+const poppins = Poppins({
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700", "800"],
-  variable: "--font-grotesk",
+  weight: ["300", "400", "500", "600"],
+  variable: "--font-poppins",
   display: "swap",
 });
 
@@ -56,23 +44,16 @@ const plexMono = IBM_Plex_Mono({
   display: "swap",
 });
 
-const archivo = Archivo({
-  subsets: ["latin"],
-  weight: ["500", "600", "700", "800"],
-  variable: "--font-archivo",
-  display: "swap",
-});
-
 export const metadata: Metadata = {
   // Without this, Next cannot resolve the image to an absolute URL and
   // silently emits no og:image at all — the card looked configured and
   // unfurled to nothing.
   metadataBase: new URL("https://thenar.io"),
-  title: "Thenar — the data foundry for physical AI",
+  title: "ThenarLabs — we build physical AI",
   description:
-    "Teleoperate a robot arm in the browser. Every accepted trajectory is measured, recorded, and paid in the same Monad transaction.",
+    "ThenarLabs builds robots, the teleoperation that drives them, and Thenar: the data foundry where people are paid on Monad for every run they record.",
   openGraph: {
-    title: "Thenar — the data foundry for physical AI",
+    title: "ThenarLabs — we build physical AI",
     description:
       "Drive a robot arm, get measured against the datum, and get paid on Monad in the transaction that records the run.",
     type: "website",
@@ -89,7 +70,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Thenar — the data foundry for physical AI",
+    title: "ThenarLabs — we build physical AI",
     description:
       "Drive a robot arm, get measured against the datum, and get paid on Monad in the transaction that records the run.",
     images: ["/og.png"],
@@ -106,17 +87,13 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${grotesk.variable} ${dmMono.variable} ${archivo.variable} ${plexMono.variable}`}
+      data-theme="dark"
+      className={`${poppins.variable} ${dmMono.variable} ${plexMono.variable}`}
     >
-      <head>
-        {/* Before the first paint, or the default theme renders for a frame and
-            the chosen one arrives after it. */}
-        <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
-      </head>
       <body className="min-h-dvh bg-ink-0 antialiased">
         <a
           href="#main"
-          className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:bg-signal focus:px-3 focus:py-2 focus:font-mono focus:text-xs focus:uppercase focus:tracking-widest focus:text-ink-0"
+          className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:bg-signal focus:px-3 focus:py-2 focus: focus:text-xs focus: focus:tracking-widest focus:text-ink-0"
         >
           Skip to content
         </a>

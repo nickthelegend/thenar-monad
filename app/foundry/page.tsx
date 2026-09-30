@@ -64,7 +64,7 @@ export default function FoundryPage() {
           </p>
           <Link
             href="/hub"
-            className="mt-5 inline-block border border-scribe bg-scribe px-4 py-2 font-mono text-[12px] uppercase tracking-[0.14em] text-ink-0 transition-colors hover:border-signal-hi hover:bg-signal-hi"
+            className="mt-5 inline-block border border-scribe bg-scribe px-4 py-2 text-[12px] text-ink-0 transition-colors hover:border-signal-hi hover:bg-signal-hi"
           >
             Open the hub
           </Link>
@@ -339,7 +339,7 @@ function DatasetPreview({ taskId }: { taskId: number }) {
 
           <a
             href={`/api/dataset?taskId=${taskId}`}
-            className="mt-4 inline-block font-mono text-[12px] uppercase tracking-[0.14em] text-signal hover:text-signal-hi"
+            className="mt-4 inline-block text-[12px] text-signal hover:text-signal-hi"
           >
             Download the corpus &rarr;
           </a>

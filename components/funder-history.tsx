@@ -72,7 +72,7 @@ export function FunderHistory({ taskId, funder }: { taskId: number; funder: stri
                 {new Date(c.at).toLocaleDateString()}
               </span>
               <span className={cn(
-                "font-mono text-[12px] uppercase tracking-[0.12em]",
+                "text-[12px]",
                 c.succeeded ? "text-scribe-3" : "text-reject",
               )}>
                 {c.succeeded ? "ok" : "reverted"}

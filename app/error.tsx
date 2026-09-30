@@ -27,13 +27,13 @@ export default function GlobalError({
       <div className="mt-6 flex gap-3">
         <button
           onClick={reset}
-          className="border border-scribe bg-scribe px-4 py-2 font-mono text-[12px] uppercase tracking-[0.14em] text-ink-0 transition-colors hover:border-signal-hi hover:bg-signal-hi"
+          className="border border-scribe bg-scribe px-4 py-2 text-[12px] text-ink-0 transition-colors hover:border-signal-hi hover:bg-signal-hi"
         >
           Try again
         </button>
         <a
           href="/hub"
-          className="border border-rule-strong px-4 py-2 font-mono text-[12px] uppercase tracking-[0.14em] text-scribe transition-colors hover:border-scribe"
+          className="border border-rule-strong px-4 py-2 text-[12px] text-scribe transition-colors hover:border-scribe"
         >
           Back to the hub
         </a>

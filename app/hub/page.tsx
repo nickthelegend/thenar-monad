@@ -245,7 +245,7 @@ export default function HubPage() {
           </p>
           <button
             onClick={() => refetch()}
-            className="mt-5 border border-reject px-4 py-2 font-mono text-[12px] uppercase tracking-[0.14em] text-reject transition-colors hover:bg-reject hover:text-ink-0"
+            className="mt-5 border border-reject px-4 py-2 text-[12px] text-reject transition-colors hover:bg-reject hover:text-ink-0"
           >
             Try again
           </button>
@@ -280,13 +280,13 @@ export default function HubPage() {
                 empty after "Clear filters". */}
             <button
               onClick={() => { setScenario("all"); setSkill("all"); setArm("all"); setOpenOnly(false); setQ(""); }}
-              className="border border-rule-strong px-4 py-2 font-mono text-[12px] uppercase tracking-[0.14em] text-scribe transition-colors hover:border-scribe"
+              className="border border-rule-strong px-4 py-2 text-[12px] text-scribe transition-colors hover:border-scribe"
             >
               Clear filters
             </button>
             <Link
               href="/post"
-              className="border border-scribe bg-scribe px-4 py-2 font-mono text-[12px] uppercase tracking-[0.14em] text-ink-0 transition-colors hover:border-signal-hi hover:bg-signal-hi"
+              className="border border-scribe bg-scribe px-4 py-2 text-[12px] text-ink-0 transition-colors hover:border-signal-hi hover:bg-signal-hi"
             >
               Post a task
             </Link>
@@ -386,12 +386,12 @@ export default function HubPage() {
                     {t.open ? (
                       <Link
                         href={`/station/${t.id}`}
-                        className="inline-flex border border-rule-strong px-3 py-1.5 font-mono text-[12px] uppercase tracking-[0.14em] text-scribe transition-colors group-hover:border-scribe group-hover:bg-scribe group-hover:text-ink-0"
+                        className="inline-flex border border-rule-strong px-3 py-1.5 text-[12px] text-scribe transition-colors group-hover:border-scribe group-hover:bg-scribe group-hover:text-ink-0"
                       >
                         Run
                       </Link>
                     ) : (
-                      <span className="font-mono text-[12px] uppercase tracking-[0.14em] text-scribe-3">
+                      <span className="text-[12px] text-scribe-3">
                         {closedBecause(t)}
                       </span>
                     )}
@@ -444,12 +444,12 @@ export default function HubPage() {
                   {t.open ? (
                     <Link
                       href={`/station/${t.id}`}
-                      className="border border-scribe bg-scribe px-3 py-1.5 font-mono text-[12px] uppercase tracking-[0.14em] text-ink-0"
+                      className="border border-scribe bg-scribe px-3 py-1.5 text-[12px] text-ink-0"
                     >
                       Run
                     </Link>
                   ) : (
-                    <span className="font-mono text-[12px] uppercase tracking-[0.14em] text-scribe-3">
+                    <span className="text-[12px] text-scribe-3">
                       {closedBecause(t)}
                     </span>
                   )}
@@ -488,7 +488,7 @@ function MoreToggle({ count, open, onToggle }: { count: number; open: boolean; o
     <button
       type="button"
       onClick={onToggle}
-      className="self-start font-mono text-[11px] uppercase tracking-[0.12em] text-scribe-3 hover:text-signal"
+      className="self-start text-[11px] text-scribe-3 hover:text-signal"
       aria-expanded={open}
     >
       {open ? `Hide ${count} identical` : `+${count} identical from this funder`}

@@ -252,20 +252,20 @@ export function Button({
 }) {
   const variants = {
     primary:
-      "border-scribe bg-scribe text-ink-0 hover:bg-signal-hi hover:border-signal-hi",
+      "border-lilac bg-lilac font-semibold text-black hover:bg-white hover:border-white",
     secondary:
-      "border-rule-strong bg-ink-3 text-scribe hover:border-scribe-3 hover:bg-ink-4",
+      "border-white/15 bg-white/[0.04] text-white hover:border-white/30 hover:bg-white/[0.08]",
     ghost:
-      "border-transparent bg-transparent text-scribe-2 hover:border-rule-strong hover:text-scribe",
+      "border-transparent bg-transparent text-scribe-2 hover:text-white",
   } as const;
 
   return (
     <button
       className={cn(
-        "inline-flex items-center justify-center gap-2 border px-4 py-2",
-        "font-mono text-[12px] font-medium uppercase tracking-[0.14em]",
-        "transition-colors duration-150",
-        "disabled:cursor-not-allowed disabled:border-rule disabled:bg-transparent disabled:text-scribe-3",
+        "inline-flex items-center justify-center gap-2 rounded-lg border px-4 py-2",
+        "text-sm font-medium",
+        "transition duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] active:scale-[0.98]",
+        "disabled:cursor-not-allowed disabled:border-white/10 disabled:bg-transparent disabled:text-scribe-3",
         variants[variant],
         className,
       )}

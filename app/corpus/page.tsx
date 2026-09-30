@@ -204,7 +204,7 @@ export default function CorpusPage() {
               >
                 <span className="font-mono text-[12px] text-scribe-3">#{e.taskId}</span>
                 <span className="font-mono text-[13px] text-scribe-2">{shortHash(e.trajHash)}</span>
-                <span className={cn("font-mono text-[12px] uppercase tracking-[0.12em]", TONE[e.outcome])}>
+                <span className={cn("text-[12px]", TONE[e.outcome])}>
                   {e.outcome === "unsubmitted" ? "not sent" : e.outcome}
                 </span>
                 <span className="text-right font-mono text-[13px] tabular-nums text-scribe">
@@ -330,7 +330,7 @@ function EmptyCorpus({
           <button
             type="button"
             onClick={onShowEverything}
-            className="mt-3 border border-rule-strong px-3 py-1.5 font-mono text-[12px] uppercase tracking-[0.12em] text-scribe transition-colors hover:border-scribe"
+            className="mt-3 border border-rule-strong px-3 py-1.5 text-[12px] text-scribe transition-colors hover:border-scribe"
           >
             Show everything {taskId === "all" ? "" : `on #${taskId}`}
           </button>

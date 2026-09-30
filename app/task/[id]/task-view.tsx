@@ -49,7 +49,7 @@ export default function TaskView() {
       <div className="mx-auto max-w-md px-5 py-24 text-center">
         <h1 className="font-display text-3xl">No such task</h1>
         <p className="mt-2 text-scribe-2">Task {id} is not in the registry.</p>
-        <Link href="/hub" className="mt-6 inline-block border border-rule-strong px-4 py-2 font-mono text-[12px] uppercase tracking-[0.14em]">
+        <Link href="/hub" className="mt-6 inline-block border border-rule-strong px-4 py-2 text-[12px]">
           Back to the hub
         </Link>
       </div>
@@ -79,7 +79,7 @@ export default function TaskView() {
         <Difficulty level={task.difficulty} />
         <StageTrack stage={task.policyMinted ? "post" : task.open ? "pre" : "training"} />
         <span className="font-mono text-[12px] capitalize text-scribe-3">{task.scenario}</span>
-        <span className="border border-rule px-2 py-0.5 font-mono text-[12px] uppercase tracking-[0.12em] text-scribe-2">
+        <span className="border border-rule px-2 py-0.5 text-[12px] text-scribe-2">
           {SKILL_LABEL[task.skill]}
         </span>
         <span className="font-mono text-[12px] text-scribe-3">{task.scene.room.label}</span>
@@ -114,7 +114,7 @@ export default function TaskView() {
       {task.open ? (
         <Link
           href={`/station/${task.id}`}
-          className="mt-6 inline-block border border-scribe bg-scribe px-5 py-2.5 font-mono text-[12px] uppercase tracking-[0.16em] text-ink-0 transition-colors hover:border-signal-hi hover:bg-signal-hi"
+          className="mt-6 inline-block border border-scribe bg-scribe px-5 py-2.5 text-[12px] text-ink-0 transition-colors hover:border-signal-hi hover:bg-signal-hi"
         >
           Run this task
         </Link>

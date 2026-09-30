@@ -298,7 +298,7 @@ export default function RunView() {
           <Link href="/leaderboard" className="text-signal hover:text-signal-hi">/leaderboard</Link>{" "}
           is built from the ledger&rsquo;s own events.
         </p>
-        <Link href="/hub" className="mt-6 inline-block border border-rule-strong px-4 py-2 font-mono text-[12px] uppercase tracking-[0.14em]">
+        <Link href="/hub" className="mt-6 inline-block border border-rule-strong px-4 py-2 text-[12px]">
           Back to the hub
         </Link>
       </div>
@@ -313,7 +313,7 @@ export default function RunView() {
           Nothing on file for {shortHash(hash)}. A run is stored when the verifier
           scores it, before it goes on chain.
         </p>
-        <Link href="/hub" className="mt-6 inline-block border border-rule-strong px-4 py-2 font-mono text-[12px] uppercase tracking-[0.14em]">
+        <Link href="/hub" className="mt-6 inline-block border border-rule-strong px-4 py-2 text-[12px]">
           Back to the hub
         </Link>
       </div>
@@ -561,7 +561,7 @@ export default function RunView() {
       <div className="mt-8">
         <a
           href={`/api/dataset?traj=${data.trajHash}`}
-          className="inline-block border border-rule-strong px-4 py-2 font-mono text-[12px] uppercase tracking-[0.14em] text-scribe transition-colors hover:border-scribe"
+          className="inline-block border border-rule-strong px-4 py-2 text-[12px] text-scribe transition-colors hover:border-scribe"
         >
           Download this run as a LeRobot episode &rarr;
         </a>
@@ -676,7 +676,7 @@ function FailureNote({
       <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
         <span className="label">Where it went wrong</span>
         <span
-          className={`font-mono text-[12px] uppercase tracking-[0.12em] ${clean ? "text-go" : "text-reject"}`}
+          className={`text-[12px] ${clean ?"text-go" : "text-reject"}`}
         >
           {failure.kind === "none" ? "not the placement" : failure.kind.replace(/-/g, " ")}
         </span>
@@ -688,7 +688,7 @@ function FailureNote({
         <button
           type="button"
           onClick={() => onSeek(Math.min(1, Math.max(0, failure.atSample! / (samples.length - 1))))}
-          className="mt-3 border border-rule-strong px-3 py-1.5 font-mono text-[12px] uppercase tracking-[0.12em] text-scribe transition-colors hover:border-scribe"
+          className="mt-3 border border-rule-strong px-3 py-1.5 text-[12px] text-scribe transition-colors hover:border-scribe"
         >
           Go to sample {failure.atSample}
         </button>

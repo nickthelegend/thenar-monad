@@ -496,7 +496,7 @@ export default function StationPage() {
       <header className="flex shrink-0 items-stretch border-b border-rule">
         <Link
           href="/hub"
-          className="flex items-center gap-2 border-r border-rule px-4 font-mono text-[12px] uppercase tracking-[0.14em] text-scribe-3 transition-colors hover:text-scribe"
+          className="flex items-center gap-2 border-r border-rule px-4 text-[12px] text-scribe-3 transition-colors hover:text-scribe"
         >
           ← Hub
         </Link>
@@ -598,7 +598,7 @@ export default function StationPage() {
                   : "border-rule text-scribe-3 hover:border-rule-strong hover:text-scribe",
               )}
             >
-              <span className="font-mono text-[12px] uppercase tracking-[0.14em]">
+              <span className="text-[12px]">
                 {policyOn ? "Policy driving" : "Let the policy drive"}
               </span>
               <span className="font-mono text-[11px] text-scribe-3">
@@ -746,7 +746,7 @@ export default function StationPage() {
                   : "border-rule text-scribe-3 hover:border-rule-strong hover:text-scribe",
               )}
             >
-              <span className="font-mono text-[12px] uppercase tracking-[0.14em]">
+              <span className="text-[12px]">
                 {policyOn ? "Policy driving" : "Let the policy drive"}
               </span>
               <span className="font-mono text-[11px] text-scribe-3">
@@ -778,7 +778,7 @@ export default function StationPage() {
           {phase === "running" ? (
             <button
               onClick={() => tel && finish(tel)}
-              className="absolute right-4 top-4 border border-rule-strong bg-ink-1/90 px-3 py-1.5 font-mono text-[12px] uppercase tracking-[0.14em] text-scribe-2 transition-colors hover:border-scribe hover:text-scribe"
+              className="absolute right-4 top-4 border border-rule-strong bg-ink-1/90 px-3 py-1.5 text-[12px] text-scribe-2 transition-colors hover:border-scribe hover:text-scribe"
             >
               End run
             </button>
@@ -794,7 +794,7 @@ export default function StationPage() {
                 // Stacked above the brief. Side by side in a row they overlapped
                 // it on anything narrower than a desktop.
                 <div className="mt-auto mb-4 max-w-sm border border-signal bg-signal-dim px-4 py-3 text-left">
-                  <p className="font-mono text-[12px] uppercase tracking-[0.14em] text-signal">
+                  <p className="text-[12px] text-signal">
                     An unsent run is waiting
                   </p>
                   <p className="mt-1 text-[13px] leading-relaxed text-scribe-2">
@@ -810,14 +810,14 @@ export default function StationPage() {
                         setPhase("measured");
                         setRecovered(null);
                       }}
-                      className="border border-scribe bg-scribe px-3 py-1.5 font-mono text-[12px] uppercase tracking-[0.14em] text-ink-0 transition-colors hover:border-signal-hi hover:bg-signal-hi"
+                      className="border border-scribe bg-scribe px-3 py-1.5 text-[12px] text-ink-0 transition-colors hover:border-signal-hi hover:bg-signal-hi"
                     >
                       Pick it back up
                     </button>
                     <button
                       type="button"
                       onClick={() => { clearDraft(); setRecovered(null); }}
-                      className="border border-rule-strong px-3 py-1.5 font-mono text-[12px] uppercase tracking-[0.14em] text-scribe-3 transition-colors hover:text-scribe"
+                      className="border border-rule-strong px-3 py-1.5 text-[12px] text-scribe-3 transition-colors hover:text-scribe"
                     >
                       Discard it
                     </button>
@@ -833,7 +833,7 @@ export default function StationPage() {
                 </p>
                 {practice ? (
                   <div className="mt-4 border border-rule-strong bg-ink-2 px-3 py-2 text-left">
-                    <p className="font-mono text-[12px] uppercase tracking-[0.14em] text-scribe-2">
+                    <p className="text-[12px] text-scribe-2">
                       Practice run
                     </p>
                     <p className="mt-1 text-[13px] leading-relaxed text-scribe-3">
@@ -863,7 +863,7 @@ export default function StationPage() {
                       <li key={k} className="flex gap-3">
                         <span className="font-mono text-[12px] tabular-nums text-scribe-3">{i + 1}</span>
                         <span className="flex flex-col gap-0.5">
-                          <span className="font-mono text-[12px] uppercase tracking-[0.14em] text-scribe">{k}</span>
+                          <span className="text-[12px] text-scribe">{k}</span>
                           <span className="text-[13px] leading-relaxed text-scribe-3">{v}</span>
                         </span>
                       </li>
@@ -976,7 +976,7 @@ export default function StationPage() {
                     </span>
                     <span
                       className={cn(
-                        "shrink-0 font-mono text-[12px] uppercase tracking-[0.12em]",
+                        "shrink-0 text-[12px]",
                         g.held ? "text-signal" : "text-scribe-3",
                       )}
                     >
@@ -1108,7 +1108,7 @@ function MeasurementSnap({
               same arithmetic read backwards: what each term gave up, and what those
               points were worth on this task. */}
           <details className="border-t border-rule pt-3">
-            <summary className="cursor-pointer list-none font-mono text-[12px] uppercase tracking-[0.14em] text-scribe-3 hover:text-scribe-2">
+            <summary className="cursor-pointer list-none text-[12px] text-scribe-3 hover:text-scribe-2">
               Where the points went
             </summary>
             <ul className="mt-3 flex flex-col gap-3">
@@ -1286,7 +1286,7 @@ function Missing({ id, reason }: { id: string; reason: "id" | "chain" | "absent"
             ? `Task ${id} is not in the registry. The contract has never been asked to create it.`
             : `"${id}" is not a task id. Tasks are numbered from zero.`}
       </p>
-      <Link href="/hub" className="mt-6 inline-block border border-rule-strong px-4 py-2 font-mono text-[12px] uppercase tracking-[0.14em]">
+      <Link href="/hub" className="mt-6 inline-block border border-rule-strong px-4 py-2 text-[12px]">
         Back to the hub
       </Link>
     </div>
@@ -1428,13 +1428,13 @@ function NoViewport({ taskName }: { taskName: string }) {
           paid.
         </p>
         <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
-          <Link href="/corpus" className="border border-rule-strong px-3 py-1.5 font-mono text-[12px] uppercase tracking-[0.14em] text-scribe transition-colors hover:border-scribe">
+          <Link href="/corpus" className="border border-rule-strong px-3 py-1.5 text-[12px] text-scribe transition-colors hover:border-scribe">
             The corpus
           </Link>
-          <Link href="/contracts" className="border border-rule-strong px-3 py-1.5 font-mono text-[12px] uppercase tracking-[0.14em] text-scribe transition-colors hover:border-scribe">
+          <Link href="/contracts" className="border border-rule-strong px-3 py-1.5 text-[12px] text-scribe transition-colors hover:border-scribe">
             The contracts
           </Link>
-          <Link href="/hub" className="border border-rule-strong px-3 py-1.5 font-mono text-[12px] uppercase tracking-[0.14em] text-scribe transition-colors hover:border-scribe">
+          <Link href="/hub" className="border border-rule-strong px-3 py-1.5 text-[12px] text-scribe transition-colors hover:border-scribe">
             Back to the hub
           </Link>
         </div>

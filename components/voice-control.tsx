@@ -152,7 +152,7 @@ export function VoiceControl({ className }: { className?: string }) {
           on ? "border-signal text-signal" : "border-rule text-scribe-3 hover:border-rule-strong hover:text-scribe",
         )}
       >
-        <span className="font-mono text-[12px] uppercase tracking-[0.14em]">
+        <span className="text-[12px]">
           {on ? "Listening" : "Drive by voice"}
         </span>
         <span aria-hidden className={cn("h-2 w-2 rounded-full", on ? "animate-pulse bg-signal" : "bg-rule-strong")} />

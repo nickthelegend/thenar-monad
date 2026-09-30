@@ -17,13 +17,13 @@ export default function NotFound() {
       <div className="mt-6 flex gap-3">
         <Link
           href="/hub"
-          className="border border-scribe bg-scribe px-4 py-2 font-mono text-[12px] uppercase tracking-[0.14em] text-ink-0 transition-colors hover:border-signal-hi hover:bg-signal-hi"
+          className="border border-scribe bg-scribe px-4 py-2 text-[12px] text-ink-0 transition-colors hover:border-signal-hi hover:bg-signal-hi"
         >
           Open the hub
         </Link>
         <Link
           href="/"
-          className="border border-rule-strong px-4 py-2 font-mono text-[12px] uppercase tracking-[0.14em] text-scribe transition-colors hover:border-scribe"
+          className="border border-rule-strong px-4 py-2 text-[12px] text-scribe transition-colors hover:border-scribe"
         >
           Back to the start
         </Link>

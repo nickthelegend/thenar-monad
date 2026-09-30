@@ -77,7 +77,7 @@ export function TaskEscrow({ task }: { task: ChainTask }) {
             type="button"
             disabled={tx.busy}
             onClick={() => tx.run("closeTask", [BigInt(task.id)])}
-            className="mt-3 border border-scribe bg-scribe px-4 py-2 font-mono text-[12px] uppercase tracking-[0.14em] text-ink-0 transition-colors hover:border-signal-hi hover:bg-signal-hi disabled:opacity-60"
+            className="mt-3 border border-scribe bg-scribe px-4 py-2 text-[12px] text-ink-0 transition-colors hover:border-signal-hi hover:bg-signal-hi disabled:opacity-60"
           >
             {tx.phase === "signing" ? "Confirm in wallet…"
               : tx.phase === "pending" ? "Closing…"

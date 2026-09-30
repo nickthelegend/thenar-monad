@@ -202,7 +202,7 @@ export function Palette() {
               return (
                 <li key={it.id}>
                   {first ? (
-                    <span className="block px-4 pb-1 pt-3 font-mono text-[12px] uppercase tracking-[0.14em] text-scribe-3">
+                    <span className="block px-4 pb-1 pt-3 text-[12px] text-scribe-3">
                       {it.group}
                     </span>
                   ) : null}

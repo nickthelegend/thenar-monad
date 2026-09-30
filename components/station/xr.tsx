@@ -357,7 +357,7 @@ export function EnterXR({ gl, className }: { gl: THREE.WebGLRenderer | null; cla
       onClick={() => enter(mode)}
       disabled={!!inSession}
       className={cn(
-        "border px-3 py-2 font-mono text-[12px] uppercase tracking-[0.12em] transition-colors",
+        "border px-3 py-2 text-[12px] transition-colors",
         inSession === mode ? "border-signal text-signal" : "border-rule-strong bg-ink-1/80 text-scribe hover:border-signal hover:text-signal",
       )}
     >

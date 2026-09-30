@@ -32,7 +32,7 @@ export default function OfflinePage() {
       </p>
       <Link
         href="/hub"
-        className="mt-8 inline-block border border-rule-strong px-4 py-2 font-mono text-[12px] uppercase tracking-[0.14em] hover:border-signal hover:text-signal"
+        className="mt-8 inline-block border border-rule-strong px-4 py-2 text-[12px] hover:border-signal hover:text-signal"
       >
         Try again
       </Link>

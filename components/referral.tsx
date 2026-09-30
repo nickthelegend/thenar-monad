@@ -150,7 +150,7 @@ function ClaimTheirs({ tx }: { tx: ReturnType<typeof useThenarWrite> }) {
         onClick={() =>
           tx.run("claim", [from as `0x${string}`], undefined, { address: REFERRALS, abi: REFERRALS_ABI })
         }
-        className="border border-scribe bg-scribe px-4 py-2 font-mono text-[12px] uppercase tracking-[0.14em] text-ink-0 transition-colors hover:border-signal-hi hover:bg-signal-hi disabled:opacity-60"
+        className="border border-scribe bg-scribe px-4 py-2 text-[12px] text-ink-0 transition-colors hover:border-signal-hi hover:bg-signal-hi disabled:opacity-60"
       >
         {tx.phase === "signing" ? "Confirm in wallet…"
           : tx.phase === "pending" ? "Crediting…"

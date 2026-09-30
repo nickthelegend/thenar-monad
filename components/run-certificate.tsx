@@ -85,7 +85,7 @@ export function RunCertificate({ trajHash }: { trajHash: string }) {
             onClick={() =>
               tx.run("mint", [BigInt(id!)], undefined, { address: CERT, abi: TRAJECTORY_CERTIFICATE_ABI })
             }
-            className="border border-rule-strong px-3 py-1.5 font-mono text-[12px] uppercase tracking-[0.14em] text-scribe transition-colors hover:border-scribe disabled:opacity-60"
+            className="border border-rule-strong px-3 py-1.5 text-[12px] text-scribe transition-colors hover:border-scribe disabled:opacity-60"
           >
             {tx.phase === "signing" ? "Confirm in wallet…"
               : tx.phase === "pending" ? "Minting…"

@@ -33,7 +33,7 @@ export default function LicencePage() {
       <div className="mx-auto max-w-md px-5 py-24 text-center">
         <h1 className="font-display text-3xl">No such licence</h1>
         <p className="mt-2 text-scribe-2">&ldquo;{String(policyId)}&rdquo; is not a policy id.</p>
-        <Link href="/foundry" className="mt-6 inline-block border border-rule-strong px-4 py-2 font-mono text-[12px] uppercase tracking-[0.14em]">
+        <Link href="/foundry" className="mt-6 inline-block border border-rule-strong px-4 py-2 text-[12px]">
           Back to the foundry
         </Link>
       </div>
@@ -49,7 +49,7 @@ export default function LicencePage() {
       <div className="mx-auto max-w-md px-5 py-24 text-center">
         <h1 className="font-display text-3xl">Not minted</h1>
         <p className="mt-2 text-scribe-2">The contract has no policy #{id}.</p>
-        <Link href="/foundry" className="mt-6 inline-block border border-rule-strong px-4 py-2 font-mono text-[12px] uppercase tracking-[0.14em]">
+        <Link href="/foundry" className="mt-6 inline-block border border-rule-strong px-4 py-2 text-[12px]">
           Back to the foundry
         </Link>
       </div>
@@ -144,13 +144,13 @@ export default function LicencePage() {
       <div className="mt-4 flex flex-wrap items-center gap-3">
         <a
           href={`/api/dataset?taskId=${policy.taskId}`}
-          className="border border-scribe bg-scribe px-4 py-2 font-mono text-[12px] uppercase tracking-[0.14em] text-ink-0 transition-colors hover:border-signal-hi hover:bg-signal-hi"
+          className="border border-scribe bg-scribe px-4 py-2 text-[12px] text-ink-0 transition-colors hover:border-signal-hi hover:bg-signal-hi"
         >
           Download the corpus
         </a>
         <a
           href={`/api/dataset/summary?taskId=${policy.taskId}`}
-          className="border border-rule-strong px-4 py-2 font-mono text-[12px] uppercase tracking-[0.14em] text-scribe transition-colors hover:border-scribe"
+          className="border border-rule-strong px-4 py-2 text-[12px] text-scribe transition-colors hover:border-scribe"
         >
           Inspect it first
         </a>

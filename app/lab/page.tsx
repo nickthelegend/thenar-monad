@@ -70,9 +70,9 @@ async function act(payload: object): Promise<Outcome> {
 }
 
 const field = "border border-scribe-3 bg-transparent px-3 py-2 font-mono text-[13px] text-scribe outline-none focus:border-signal";
-const label = "font-mono text-[11px] uppercase tracking-[0.12em] text-scribe-3";
+const label = "text-[11px] text-scribe-3";
 const button =
-  "border border-scribe bg-scribe px-4 py-2 font-mono text-[12px] uppercase tracking-[0.14em] text-ink-0 " +
+  "border border-scribe bg-scribe px-4 py-2 text-[12px] text-ink-0" +
   "transition-colors hover:border-signal-hi hover:bg-signal-hi disabled:opacity-60";
 
 export default function LabPage() {
@@ -215,13 +215,13 @@ export default function LabPage() {
           <ul className="mt-3 space-y-2">
             {ready.policy.rules.map((r) => (
               <li key={r.name} className="border-l-2 border-signal pl-3 text-[14px] text-scribe-2">
-                <span className="font-mono text-[12px] uppercase tracking-[0.12em] text-go">{r.action}</span>{" "}
+                <span className="text-[12px] text-go">{r.action}</span>{" "}
                 <span className="font-mono text-[13px] text-scribe">{r.method}</span> when{" "}
                 {r.conditions.map(describe).join(", and ")}
               </li>
             ))}
             <li className="border-l-2 border-reject pl-3 text-[14px] text-scribe-2">
-              <span className="font-mono text-[12px] uppercase tracking-[0.12em] text-reject">Deny</span> everything
+              <span className="text-[12px] text-reject">Deny</span> everything
               else. A wallet with a policy is refused any request no rule allows.
             </li>
           </ul>
@@ -294,7 +294,7 @@ export default function LabPage() {
         <div className="mt-4 overflow-x-auto">
           <table className="w-full min-w-[640px] text-left text-[13px]">
             <thead>
-              <tr className="font-mono text-[11px] uppercase tracking-[0.12em] text-scribe-3">
+              <tr className="text-[11px] text-scribe-3">
                 <th className="py-2 pr-4 font-normal">Task</th>
                 <th className="py-2 pr-4 font-normal">What</th>
                 <th className="py-2 pr-4 font-normal">Per run</th>

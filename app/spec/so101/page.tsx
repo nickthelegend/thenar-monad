@@ -20,7 +20,7 @@ export default function So101SpecPage() {
   const e = EMBODIMENTS.so101;
   return (
     <div className="mx-auto max-w-[1000px] px-5 py-10">
-      <span className="font-mono text-[12px] uppercase tracking-[0.14em] text-scribe-3">
+      <span className="text-[12px] text-scribe-3">
         <Link href="/spec" className="hover:text-scribe">THENAR-6</Link> <span className="text-rule-strong">/</span> SO-101
       </span>
       <h1 className="mt-2 font-display text-[clamp(2.4rem,6vw,3.6rem)] font-700 leading-[0.96] tracking-[-0.02em]">
@@ -86,7 +86,7 @@ export default function So101SpecPage() {
           Start the relay on this computer:{" "}
           <code className="font-mono text-[13px] text-scribe">node scripts/arm-relay.mjs --follower /dev/cu.usbserial-… --arm</code>
         </li>
-        <li>Press <span className="font-mono text-[13px] uppercase tracking-[0.12em]">Mirror to my SO-101</span> above, or on any SO-101 task&rsquo;s station.</li>
+        <li>Press <span className="text-[13px]">Mirror to my SO-101</span> above, or on any SO-101 task&rsquo;s station.</li>
       </ol>
       <p className="mt-4 max-w-[70ch] text-[14px] leading-relaxed text-scribe-3">
         The relay listens on loopback only and accepts no other website. It arms
@@ -105,7 +105,7 @@ export default function So101SpecPage() {
 
       <Link
         href="/hub"
-        className="mt-10 inline-block border border-scribe bg-scribe px-5 py-2.5 font-mono text-[12px] uppercase tracking-[0.16em] text-ink-0 transition-colors hover:border-signal-hi hover:bg-signal-hi"
+        className="mt-10 inline-block border border-scribe bg-scribe px-5 py-2.5 text-[12px] text-ink-0 transition-colors hover:border-signal-hi hover:bg-signal-hi"
       >
         Find a task
       </Link>

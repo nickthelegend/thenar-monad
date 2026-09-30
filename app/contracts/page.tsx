@@ -153,7 +153,7 @@ export default async function ContractsPage() {
 
             {r.monad ? (
               <p className="mt-2 max-w-[74ch] border-l-2 border-signal pl-3 text-[13px] leading-relaxed text-scribe-2">
-                <span className="font-mono text-[12px] uppercase tracking-[0.12em] text-signal">Monad</span>{" "}
+                <span className="text-[12px] text-signal">Monad</span>{" "}
                 {r.monad}
               </p>
             ) : null}
@@ -174,7 +174,7 @@ export default async function ContractsPage() {
               <dl className="mt-3 flex flex-wrap gap-x-8 gap-y-1 border-t border-rule pt-3">
                 {reads[r.key].map(([k, v]) => (
                   <div key={k} className="flex items-baseline gap-2">
-                    <dt className="font-mono text-[12px] uppercase tracking-[0.12em] text-scribe-3">{k}</dt>
+                    <dt className="text-[12px] text-scribe-3">{k}</dt>
                     <dd className="m-0 font-mono text-[13px] tabular-nums text-scribe">{v}</dd>
                   </div>
                 ))}

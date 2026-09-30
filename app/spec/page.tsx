@@ -100,7 +100,7 @@ export default function SpecPage() {
       </div>
 
       <details className="mt-5 border border-rule">
-        <summary className="cursor-pointer px-4 py-2.5 font-mono text-[12px] uppercase tracking-[0.12em] text-scribe-3 hover:text-scribe">
+        <summary className="cursor-pointer px-4 py-2.5 text-[12px] text-scribe-3 hover:text-scribe">
           Per-part validation
         </summary>
         <ul className="grid grid-cols-2 gap-x-6 border-t border-rule px-4 py-3 sm:grid-cols-3">
@@ -138,7 +138,7 @@ export default function SpecPage() {
 
       <Link
         href="/hub"
-        className="mt-8 inline-block border border-scribe bg-scribe px-5 py-2.5 font-mono text-[12px] uppercase tracking-[0.16em] text-ink-0 transition-colors hover:border-signal-hi hover:bg-signal-hi"
+        className="mt-8 inline-block border border-scribe bg-scribe px-5 py-2.5 text-[12px] text-ink-0 transition-colors hover:border-signal-hi hover:bg-signal-hi"
       >
         Put it to work
       </Link>
@@ -171,7 +171,7 @@ export default function SpecPage() {
       <ul className="mt-5 flex flex-col">
         {NON_CAPABILITIES.map((n) => (
           <li key={n.title} className="flex flex-col gap-1 border-b border-rule py-3.5">
-            <span className="font-mono text-[13px] uppercase tracking-[0.12em] text-reject">
+            <span className="text-[13px] text-reject">
               {n.title}
             </span>
             <span className="max-w-[70ch] text-[14px] leading-relaxed text-scribe-3">{n.body}</span>

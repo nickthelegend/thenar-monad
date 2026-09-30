@@ -46,7 +46,7 @@ export function Sitting({ className }: { className?: string }) {
           {tally.taskId !== undefined ? (
             <Link
               href={`/station/${tally.taskId}`}
-              className="font-mono text-[12px] uppercase tracking-[0.12em] text-signal hover:text-signal-hi"
+              className="text-[12px] text-signal hover:text-signal-hi"
             >
               Back to #{tally.taskId} &rarr;
             </Link>
@@ -57,7 +57,7 @@ export function Sitting({ className }: { className?: string }) {
           <button
             type="button"
             onClick={() => { clearTally(); setTally(readTally()); }}
-            className="font-mono text-[12px] uppercase tracking-[0.12em] text-scribe-3 transition-colors hover:text-scribe"
+            className="text-[12px] text-scribe-3 transition-colors hover:text-scribe"
           >
             End sitting
           </button>

@@ -1237,7 +1237,7 @@ export function StationViewport(props: ViewportProps) {
             </p>
             <button
               onClick={() => location.reload()}
-              className="mt-5 border border-scribe bg-scribe px-4 py-2 font-mono text-[12px] uppercase tracking-[0.14em] text-ink-0"
+              className="mt-5 border border-scribe bg-scribe px-4 py-2 text-[12px] text-ink-0"
             >
               Reload
             </button>

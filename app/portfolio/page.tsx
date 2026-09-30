@@ -94,7 +94,7 @@ export default function PortfolioPage() {
           <p className="text-[15px] text-reject">Could not read your runs from the chain.</p>
           <button
             onClick={() => refetch()}
-            className="mt-4 border border-reject px-4 py-2 font-mono text-[12px] uppercase tracking-[0.14em] text-reject transition-colors hover:bg-reject hover:text-ink-0"
+            className="mt-4 border border-reject px-4 py-2 text-[12px] text-reject transition-colors hover:bg-reject hover:text-ink-0"
           >
             Try again
           </button>
@@ -112,7 +112,7 @@ export default function PortfolioPage() {
           </p>
           <Link
             href="/hub"
-            className="mt-5 inline-block border border-scribe bg-scribe px-4 py-2 font-mono text-[12px] uppercase tracking-[0.14em] text-ink-0 transition-colors hover:border-signal-hi hover:bg-signal-hi"
+            className="mt-5 inline-block border border-scribe bg-scribe px-4 py-2 text-[12px] text-ink-0 transition-colors hover:border-signal-hi hover:bg-signal-hi"
           >
             Find a task
           </Link>
@@ -242,7 +242,7 @@ function Settlements({ address }: { address?: string | null }) {
               </span>
               <span
                 className={cn(
-                  "font-mono text-[12px] uppercase tracking-[0.12em]",
+                  "text-[12px]",
                   r.succeeded ? "text-scribe-3" : "text-reject",
                 )}
               >

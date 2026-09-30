@@ -108,7 +108,7 @@ export function OperatorGate({ onAdmitted }: { onAdmitted?: () => void }) {
   if (status?.operator) {
     return (
       <div className="flex flex-col gap-1.5 border border-rule p-3">
-        <span className="font-mono text-[12px] uppercase tracking-[0.14em] text-signal">Passkey set · you can earn</span>
+        <span className="text-[12px] text-signal">Passkey set · you can earn</span>
         <span className="text-[13px] leading-relaxed text-scribe-3">
           Your runs are signed and paid, and each paid run issues your share of the corpus.
         </span>
@@ -125,7 +125,7 @@ export function OperatorGate({ onAdmitted }: { onAdmitted?: () => void }) {
   const label = !status ? "Checking…" : status.passkey && local ? "Sign in with your passkey" : "Set up your passkey";
   return (
     <div className="flex flex-col gap-2 border border-rule p-3">
-      <span className="font-mono text-[12px] uppercase tracking-[0.14em] text-scribe">One step before you earn</span>
+      <span className="text-[12px] text-scribe">One step before you earn</span>
       <span className="text-[13px] leading-relaxed text-scribe-2">
         Use Face ID, your fingerprint or a PIN to create a passkey. Its public key is registered on {CHAIN_SHORT}{" "}
         and checked there, so paid runs always come from a person. No seed phrase, and nothing about you

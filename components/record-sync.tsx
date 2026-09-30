@@ -74,7 +74,7 @@ export function RecordSync({ address }: { address: `0x${string}` }) {
             onClick={() =>
               tx.run("sync", [address], undefined, { address: RECORD, abi: CONTRIBUTION_RECORD_ABI })
             }
-            className="mt-3 border border-rule-strong px-3 py-1.5 font-mono text-[12px] uppercase tracking-[0.14em] text-scribe transition-colors hover:border-scribe disabled:opacity-60"
+            className="mt-3 border border-rule-strong px-3 py-1.5 text-[12px] text-scribe transition-colors hover:border-scribe disabled:opacity-60"
           >
             {tx.phase === "signing" ? "Confirm in wallet…"
               : tx.phase === "pending" ? "Syncing…"

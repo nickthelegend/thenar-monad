@@ -198,7 +198,7 @@ export default function HandheldPage() {
             onClick={start}
             disabled={phase === "recording"}
             className={cn(
-              "self-start border px-4 py-2 font-mono text-[12px] uppercase tracking-[0.14em] transition-colors",
+              "self-start border px-4 py-2 text-[12px] transition-colors",
               phase === "recording"
                 ? "border-signal text-signal"
                 : "border-rule-strong text-scribe hover:border-signal hover:text-signal",
@@ -228,7 +228,7 @@ export default function HandheldPage() {
             <button
               type="button"
               onClick={download}
-              className="self-start border border-rule-strong px-4 py-2 font-mono text-[12px] uppercase tracking-[0.14em] hover:border-signal hover:text-signal"
+              className="self-start border border-rule-strong px-4 py-2 text-[12px] hover:border-signal hover:text-signal"
             >
               Download the episode
             </button>

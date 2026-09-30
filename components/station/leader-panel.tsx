@@ -51,7 +51,7 @@ export function LeaderPanel() {
     }, `${LEADER_JOINTS[j]} now turns the other way.`);
   };
 
-  const btn = "border px-3 py-1.5 font-mono text-[12px] uppercase tracking-[0.14em] transition-colors disabled:opacity-60";
+  const btn = "border px-3 py-1.5 text-[12px] transition-colors disabled:opacity-60";
 
   if (!on) {
     return (
@@ -63,7 +63,7 @@ export function LeaderPanel() {
           </button>
         ) : null}
         <button type="button" onClick={connectRelay}
-          className="self-start font-mono text-[12px] uppercase tracking-[0.12em] text-scribe-3 hover:text-signal">
+          className="self-start text-[12px] text-scribe-3 hover:text-signal">
           My leader is on the arm relay
         </button>
         <p className="text-[13px] leading-relaxed text-scribe-3">
@@ -117,7 +117,7 @@ export function LeaderPanel() {
                 {usb ? (
                   <td className="py-0.5 pl-2 text-right">
                     <button type="button" disabled={busy} onClick={() => flip(j)} title="This joint turns the wrong way"
-                      className="text-[11px] uppercase tracking-[0.1em] text-scribe-3 hover:text-signal disabled:opacity-60">
+                      className="text-[11px] text-scribe-3 hover:text-signal disabled:opacity-60">
                       reverse
                     </button>
                   </td>

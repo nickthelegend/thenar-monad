@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { ThemeToggle } from "@/components/theme-toggle";
 import { usePathname } from "next/navigation";
 import { useBlockNumber } from "wagmi";
 import { useEffect, useRef, useState } from "react";
@@ -10,6 +9,7 @@ import { ThenarWordmark } from "@/components/brand";
 import { useSession } from "@/components/session";
 import { addressUrl, IS_DEPLOYED, CURRENCY, appChain } from "@/lib/chain";
 import { fmtMon, shortHash } from "@/lib/format";
+import { APP_HOME } from "@/lib/site";
 
 /**
  * Every page, in three groups a person can read.
@@ -75,9 +75,9 @@ export function SiteNav() {
   }, [open]);
 
   // Hooks above, early returns below: a hook after a conditional return is a
-  // hook that does not always run. The landing page carries its own nav, and
-  // the station is a full-screen instrument.
-  if (pathname === "/") return null;
+  // hook that does not always run. The company pages and the app's home carry
+  // their own nav, and the station is a full-screen instrument.
+  if (pathname === "/" || pathname === "/thenar" || pathname?.startsWith("/products")) return null;
   if (pathname?.startsWith("/station/")) return null;
 
   const item = (i: (typeof GROUPS)[number]["items"][number]) => {
@@ -88,41 +88,43 @@ export function SiteNav() {
         href={i.href}
         onClick={() => setOpen(null)}
         aria-current={active ? "page" : undefined}
-        className={cn("flex flex-col gap-0.5 px-4 py-2.5 transition-colors hover:bg-ink-2", active && "bg-ink-2")}
+        className={cn("flex flex-col gap-0.5 rounded-xl px-3 py-2.5 transition-colors duration-300 hover:bg-white/5", active && "bg-white/5")}
       >
-        <span className={cn("text-[14px]", active ? "text-signal" : "text-scribe")}>{i.label}</span>
-        <span className="text-[12px] leading-snug text-scribe-3">{i.hint}</span>
+        <span className={cn("text-sm", active ? "text-signal" : "text-white")}>{i.label}</span>
+        <span className="text-xs text-scribe-3">{i.hint}</span>
       </Link>
     );
   };
 
   return (
     <>
-      <header className="sticky top-0 z-40 border-b border-rule bg-ink-1">
-        <div ref={bar} className="relative mx-auto flex h-14 max-w-[1400px] items-stretch gap-3 px-4 sm:gap-6 sm:px-5">
-          <Link href="/" className="flex shrink-0 items-center self-center" aria-label="Thenar home">
+      <header className="sticky top-0 z-40 px-4 pt-4">
+        <div ref={bar} className="glass relative mx-auto flex h-14 max-w-[1200px] items-center gap-3 rounded-2xl px-4 sm:gap-6 sm:px-5">
+          <Link href={APP_HOME} className="flex shrink-0 items-center" aria-label="Thenar home">
             <ThenarWordmark />
           </Link>
 
-          <nav className="hidden min-w-0 flex-1 items-stretch sm:flex" aria-label="Sections">
+          <nav className="hidden min-w-0 flex-1 items-center justify-center gap-1 sm:flex" aria-label="Sections">
             {GROUPS.map((g) => (
-              <div key={g.label} className="relative flex">
+              <div key={g.label} className="relative">
                 <button
                   type="button"
                   aria-expanded={open === g.label}
                   aria-haspopup="true"
                   onClick={() => setOpen(open === g.label ? null : g.label)}
                   className={cn(
-                    "flex items-center gap-1.5 whitespace-nowrap px-3 font-mono text-[12px] font-medium uppercase tracking-[0.14em] transition-colors sm:px-4",
-                    inGroup(pathname, g) || open === g.label ? "text-scribe" : "text-scribe-3 hover:text-scribe-2",
+                    "flex items-center gap-1.5 whitespace-nowrap rounded-lg px-3 py-1.5 text-sm transition-colors duration-300",
+                    inGroup(pathname, g) || open === g.label ? "text-white" : "text-scribe-2 hover:text-white",
                   )}
                 >
                   {g.label}
-                  <span aria-hidden className={cn("text-[9px] transition-transform", open === g.label && "rotate-180")}>▼</span>
+                  <svg aria-hidden viewBox="0 0 10 6" className={cn("size-2.5 transition-transform duration-300", open === g.label && "rotate-180")}>
+                    <path d="M1 1l4 4 4-4" fill="none" stroke="currentColor" strokeWidth="1.5" />
+                  </svg>
                 </button>
-                {inGroup(pathname, g) ? <span aria-hidden className="pointer-events-none absolute inset-x-3 bottom-0 h-[2px] bg-signal sm:inset-x-4" /> : null}
+                {inGroup(pathname, g) ? <span aria-hidden className="pointer-events-none absolute inset-x-3 -bottom-[9px] h-px bg-signal" /> : null}
                 {open === g.label ? (
-                  <div className="absolute left-0 top-full z-50 mt-px w-[290px] border border-rule bg-ink-1 py-1 shadow-lg">
+                  <div className="absolute left-1/2 top-full z-50 mt-3 w-[300px] -translate-x-1/2 rounded-2xl border border-white/10 bg-ink-1/95 p-2 shadow-2xl backdrop-blur-xl">
                     {g.items.map(item)}
                   </div>
                 ) : null}
@@ -134,52 +136,52 @@ export function SiteNav() {
             type="button"
             aria-expanded={open === "all"}
             onClick={() => setOpen(open === "all" ? null : "all")}
-            className="flex flex-1 items-center justify-start font-mono text-[12px] uppercase tracking-[0.14em] text-scribe-2 sm:hidden"
+            className="flex flex-1 items-center justify-start text-sm text-scribe-2 sm:hidden"
           >
-            Menu {open === "all" ? "✕" : "▼"}
+            Menu {open === "all" ? "✕" : ""}
           </button>
           {open === "all" ? (
-            <div className="absolute inset-x-0 top-full z-50 max-h-[80vh] overflow-y-auto border-b border-rule bg-ink-1 sm:hidden">
+            <div className="absolute inset-x-0 top-full z-50 mt-2 max-h-[80vh] overflow-y-auto rounded-2xl border border-white/10 bg-ink-1/95 p-2 backdrop-blur-xl sm:hidden">
               {GROUPS.map((g) => (
-                <div key={g.label} className="border-t border-rule py-1">
-                  <span className="block px-4 pt-2 font-mono text-[11px] uppercase tracking-[0.14em] text-scribe-3">{g.label}</span>
+                <div key={g.label} className="py-1">
+                  <span className="block px-3 pt-2 text-xs text-scribe-3">{g.label}</span>
                   {g.items.map(item)}
                 </div>
               ))}
             </div>
           ) : null}
 
-          <div className="flex shrink-0 items-center gap-3 sm:gap-4">
-            <span className="hidden items-baseline gap-2 font-mono text-[12px] text-scribe-3 xl:flex">
+          <div className="flex shrink-0 items-center gap-3">
+            <span className="hidden items-center gap-2 rounded-full border border-white/10 px-3 py-1 font-mono text-xs text-scribe-3 xl:flex">
+              <span aria-hidden className="size-1.5 rounded-full bg-go" />
               {appChain.name}
               {block ? (
-                <span className="text-scribe-2 tabular-nums" title="Latest block">
+                <span className="tabular-nums text-scribe-2" title="Latest block">
                   #{block.toString()}
                 </span>
               ) : null}
             </span>
 
-            <span className="hidden sm:flex"><ThemeToggle /></span>
-
             {s.connected ? (
-              <div className="flex items-stretch border border-rule-strong">
-                <span className="flex items-center border-r border-rule-strong px-2.5 font-mono text-[12px] tabular-nums text-signal sm:px-3">
+              <div className="flex items-center overflow-hidden rounded-lg border border-white/10">
+                <span className="flex items-center px-3 py-1.5 font-mono text-xs tabular-nums text-signal">
                   {fmtMon(s.balance, 3)}
-                  <span className="ml-1 text-[12px] text-scribe-3">{CURRENCY}</span>
+                  <span className="ml-1 text-scribe-3">{CURRENCY}</span>
                 </span>
                 <a
                   href={s.address ? addressUrl(s.address) : "#"}
                   target="_blank"
                   rel="noreferrer"
-                  className="hidden items-center px-3 font-mono text-[12px] text-scribe-2 transition-colors hover:text-scribe sm:flex"
+                  className="hidden border-l border-white/10 px-3 py-1.5 font-mono text-xs text-scribe-2 transition-colors hover:text-white sm:flex"
                   title="View on the explorer"
                 >
                   {s.address ? shortHash(s.address) : ""}
                 </a>
                 <button
                   onClick={() => s.disconnect()}
-                  className="border-l border-rule-strong px-2.5 font-mono text-[12px] uppercase tracking-[0.1em] text-scribe-3 transition-colors hover:text-reject"
+                  className="border-l border-white/10 px-2.5 py-1.5 text-xs text-scribe-3 transition-colors hover:text-reject"
                   title="Sign out"
+                  aria-label="Sign out"
                 >
                   ✕
                 </button>
@@ -188,7 +190,7 @@ export function SiteNav() {
               <button
                 onClick={s.connect}
                 disabled={s.connecting}
-                className="border border-scribe bg-scribe px-4 py-1.5 font-mono text-[12px] font-medium uppercase tracking-[0.14em] text-ink-0 transition-colors hover:border-signal-hi hover:bg-signal-hi disabled:opacity-60"
+                className="rounded-lg bg-lilac px-4 py-2 text-sm font-semibold text-black transition duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-white active:scale-[0.98] disabled:opacity-60"
               >
                 {s.connecting ? "Signing in…" : "Sign in"}
               </button>
@@ -217,7 +219,7 @@ function Banner({ tone, children }: { tone: "reject" | "signal"; children: React
     <div
       role="status"
       className={cn(
-        "flex flex-wrap items-center gap-y-1 border-b px-5 py-2 text-[13px]",
+        "mx-auto mt-3 flex max-w-[1200px] flex-wrap items-center gap-y-1 rounded-xl border px-5 py-2 text-sm",
         tone === "reject"
           ? "border-reject bg-reject-dim text-reject"
           : "border-signal bg-signal-dim text-signal",
