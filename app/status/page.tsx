@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Notify } from "@/components/notify";
 import { DimRule } from "@/components/primitives";
 import { appChain, addressUrl, AXON_ADDRESS } from "@/lib/chain";
 import { cn } from "@/lib/cn";
@@ -120,17 +119,6 @@ export default function StatusPage() {
           ) : null}
         </ul>
       )}
-
-      <DimRule className="mt-10" note="Being told" />
-      <p className="mt-3 max-w-[64ch] text-[15px] leading-relaxed text-scribe-2">
-        No email, because there are no accounts here and nothing to send one to.
-        Web push needs neither: your browser issues the subscription, the keys
-        were generated for this deployment, and there is no third party in the
-        path.
-      </p>
-      <div className="mt-5">
-        <Notify />
-      </div>
 
       <UsagePanel />
     </div>

@@ -43,6 +43,17 @@ const TONE: Record<Episode["outcome"], string> = {
 export default function CorpusPage() {
   const [outcome, setOutcome] = useState<(typeof OUTCOMES)[number]["key"]>("all");
   const [taskId, setTaskId] = useState<number | "all">("all");
+  // /corpus?task=N opens on that task, so a licence's "Download the corpus"
+  // lands where the signed download is. Read after mount: the page is
+  // prerendered without the query.
+  useEffect(() => {
+    const t = new URLSearchParams(location.search).get("task");
+    if (t !== null && /^(0|[1-9]\d*)$/.test(t)) {
+      const id = Number(t);
+      const timer = setTimeout(() => setTaskId(id), 0);
+      return () => clearTimeout(timer);
+    }
+  }, []);
   /**
    * The answer, tagged with the question it answers.
    *

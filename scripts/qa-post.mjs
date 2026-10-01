@@ -23,12 +23,6 @@ const check = (id, ok, detail) => { total++; if (ok) pass++; console.log(`${ok?"
   const jg = await gpc.json().catch(()=>({}));
   check("B35b", gpc.status === 200 && jg.counted === false, `GPC honoured → counted=${jg.counted}`);
 }
-// B36 — notify must validate a subscription rather than store anything shaped.
-{
-  const r = await post("/api/notify", { nonsense: true });
-  const j = await r.json().catch(()=>({}));
-  check("B36", r.status >= 400 && r.status < 500 && !!j.error, `invalid subscription → ${r.status} ${JSON.stringify(j).slice(0,60)}`);
-}
 // B26 — verify must refuse a caller-supplied score (re-checked here as a POST item).
 {
   const r = await post("/api/verify", { taskId: 1, contributor: "0x909d9318d602Cb4Ba84D2851Ab9BFf60DB7077C0",

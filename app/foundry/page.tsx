@@ -198,7 +198,7 @@ function PolicyCard({ policy: p, taskName, onDone }: { policy: ChainPolicy; task
         <span className="text-[13px] text-scribe-2">
           {tx.phase === "confirmed" && tx.txHash ? (
             <>
-              Paid {cap?.length ?? 0} contributors in one transaction ·{" "}
+              Paid {cap?.length ?? 0} {(cap?.length ?? 0) === 1 ? "contributor" : "contributors"} in one transaction ·{" "}
               <a href={txUrl(tx.txHash)} target="_blank" rel="noreferrer" className="font-mono text-probe hover:underline">
                 {shortHash(tx.txHash)}
               </a>
@@ -345,7 +345,7 @@ function DatasetPreview({ taskId }: { taskId: number }) {
           </p>
 
           <a
-            href={`/api/dataset?taskId=${taskId}`}
+            href={`/corpus?task=${taskId}`}
             className="mt-4 inline-block text-[12px] text-signal hover:text-signal-hi"
           >
             Download the corpus &rarr;

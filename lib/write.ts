@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { usePublicClient, useWriteContract } from "wagmi";
 import { AXON_ABI } from "./abi";
 import { AXON_ADDRESS } from "./chain";
@@ -11,6 +12,7 @@ export type TxPhase = "idle" | "signing" | "pending" | "confirmed" | "error";
 /** One shared write path so every transaction reports the same way. */
 export function useThenarWrite() {
   const client = usePublicClient();
+  const queryClient = useQueryClient();
   const { writeContractAsync } = useWriteContract();
   const [phase, setPhase] = useState<TxPhase>("idle");
   const [txHash, setTxHash] = useState<`0x${string}` | undefined>();
@@ -66,6 +68,11 @@ export function useThenarWrite() {
           return null;
         }
         setPhase("confirmed");
+        // Everything on the page reads the chain through the query cache, and
+        // nothing told it the chain had just changed: a minted certificate
+        // kept offering its mint, a closed task its close. Every read is
+        // marked stale, and the ones on screen re-read now.
+        void queryClient.invalidateQueries();
         return receipt;
       } catch (e) {
         setPhase("error");
@@ -73,7 +80,7 @@ export function useThenarWrite() {
         return null;
       }
     },
-    [client, writeContractAsync],
+    [client, writeContractAsync, queryClient],
   );
 
   return { phase, txHash, error, elapsedMs, run, reset, busy: phase === "signing" || phase === "pending" };

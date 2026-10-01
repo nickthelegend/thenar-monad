@@ -82,9 +82,12 @@ export function RunCertificate({ trajHash }: { trajHash: string }) {
           <button
             type="button"
             disabled={tx.busy}
-            onClick={() =>
-              tx.run("mint", [BigInt(id!)], undefined, { address: CERT, abi: TRAJECTORY_CERTIFICATE_ABI })
-            }
+            onClick={async () => {
+              const r = await tx.run("mint", [BigInt(id!)], undefined, { address: CERT, abi: TRAJECTORY_CERTIFICATE_ABI });
+              // Read the token back: the panel kept saying "not minted" and
+              // offering a mint the contract would now refuse.
+              if (r) await minted.refetch();
+            }}
             className="border border-rule-strong px-3 py-1.5 text-[12px] text-scribe transition-colors hover:border-scribe disabled:opacity-60"
           >
             {tx.phase === "signing" ? "Confirm in wallet…"

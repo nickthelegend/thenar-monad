@@ -199,7 +199,7 @@ export async function GET() {
         ok: missing === 0,
         detail:
           gap === 0
-            ? `${stored} runs stored, ${onchain} on chain${other ? ` (plus ${other}, not shown)` : ""}`
+            ? `${stored} ${stored === 1 ? "run" : "runs"} stored, ${onchain} on chain${other ? ` (plus ${other}, not shown)` : ""}`
             : gap > 0
               ? missing === 0
                 ? `${stored} station runs stored and all retrievable; ${unbacked} record` +

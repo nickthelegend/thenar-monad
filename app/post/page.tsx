@@ -419,7 +419,7 @@ export default function PostTaskPage() {
             {fmtMon(total, 4)}<span className="ml-1.5 text-[12px] text-scribe-3">{CURRENCY}</span>
           </span>
           <span className="mt-1 font-mono text-[12px] text-scribe-3">
-            {validSlots ? slotsN : 0} runs × {validReward ? fmtMon(rewardN, 4) : "0"} {CURRENCY}
+            {validSlots ? slotsN : 0} {validSlots && slotsN === 1 ? "run" : "runs"} × {validReward ? fmtMon(rewardN, 4) : "0"} {CURRENCY}
           </span>
         </div>
         <div className="flex flex-col items-end gap-1">

@@ -114,7 +114,7 @@ export default function LicencePage() {
             task #{task.id} &mdash; {task.name}
           </Link>
           , recorded in the {task.scene.room.label.toLowerCase()}.{" "}
-          <a href={`/api/dataset?taskId=${task.id}`} className="text-signal hover:text-signal-hi">
+          <a href={`/corpus?task=${task.id}`} className="text-signal hover:text-signal-hi">
             Download it &rarr;
           </a>
         </p>
@@ -151,11 +151,11 @@ export default function LicencePage() {
       <p className="mt-4 max-w-[64ch] text-[14px] leading-relaxed text-scribe-2">
         The corpus recorded against task #{policy.taskId} — {fmtInt(policy.trajectories)}{" "}
         {policy.trajectories === 1 ? "trajectory" : "trajectories"} of joint states,
-        gripper state and object poses at 20 Hz, as newline-delimited JSON.
+        gripper state and object poses at 20 Hz, as one JSON file.
       </p>
       <div className="mt-4 flex flex-wrap items-center gap-3">
         <a
-          href={`/api/dataset?taskId=${policy.taskId}`}
+          href={`/corpus?task=${policy.taskId}`}
           className="border border-scribe bg-scribe px-4 py-2 text-[12px] text-ink-0 transition-colors hover:border-signal-hi hover:bg-signal-hi"
         >
           Download the corpus
@@ -170,9 +170,10 @@ export default function LicencePage() {
       <p className="mt-3 max-w-[64ch] font-mono text-[12px] leading-relaxed text-scribe-3">
         The bulk download needs an active subscription on{" "}
         <Link href="/contracts" className="text-signal hover:text-signal-hi">CorpusAccess</Link>{" "}
-        and answers 402 without one — it sells time, not rights. The summary is
-        open, and so is any single episode by hash, so a buyer can see what they
-        would be getting before paying for it.
+        and a signature from the subscribing wallet, which the corpus page asks
+        for when you download; without a subscription it answers 402 — it sells
+        time, not rights. The summary is open, and so is any single episode by
+        hash, so a buyer can see what they would be getting before paying for it.
       </p>
 
       <p className="mt-8 font-mono text-[12px] text-scribe-3">

@@ -192,14 +192,52 @@ console.log(`agent     ${wallet.address} on ${appChain.name}, budget ${usdc(BUDG
 console.log(`model     ${LLM.model} at ${LLM.url}${cloud ? " (Alibaba Cloud Model Studio)" : " (Ollama, this machine)"}`);
 console.log(`goal      ${GOAL}\n`);
 
-for (let step = 1; step <= MAX_STEPS; step++) {
+/**
+ * One turn of the model, streamed.
+ *
+ * A model on this machine's CPU writes a few tokens a second, and a turn with
+ * the tools in it takes longer than fetch will wait for response headers
+ * (five minutes), so the agent died with HeadersTimeoutError before the model
+ * had answered. Streaming sends the headers at once and a chunk every token;
+ * the turn is put back together from the deltas, tool calls included.
+ */
+async function turn() {
   const r = await fetch(`${LLM.url}/chat/completions`, {
     method: "POST",
     headers: { "content-type": "application/json", authorization: `Bearer ${LLM.key}` },
-    body: JSON.stringify({ model: LLM.model, messages, tools, tool_choice: "auto", temperature: 0.2 }),
+    body: JSON.stringify({ model: LLM.model, messages, tools, tool_choice: "auto", temperature: 0.2, stream: true }),
   });
   if (!r.ok) throw new Error(`the model answered ${r.status}: ${(await r.text()).slice(0, 400)}`);
-  const msg = (await r.json()).choices[0].message;
+  const msg = { role: "assistant", content: "", tool_calls: [] };
+  const decoder = new TextDecoder();
+  let buffer = "";
+  for await (const chunk of r.body) {
+    buffer += decoder.decode(chunk, { stream: true });
+    let nl;
+    while ((nl = buffer.indexOf("\n")) >= 0) {
+      const line = buffer.slice(0, nl).trim();
+      buffer = buffer.slice(nl + 1);
+      if (!line.startsWith("data:")) continue;
+      const data = line.slice(5).trim();
+      if (data === "[DONE]") continue;
+      const delta = JSON.parse(data).choices?.[0]?.delta ?? {};
+      if (delta.content) msg.content += delta.content;
+      for (const t of delta.tool_calls ?? []) {
+        const at = msg.tool_calls[t.index ?? 0] ??= { id: t.id, type: "function", function: { name: "", arguments: "" } };
+        if (t.id) at.id = t.id;
+        if (t.function?.name) at.function.name += t.function.name;
+        if (t.function?.arguments) {
+          at.function.arguments += typeof t.function.arguments === "string" ? t.function.arguments : JSON.stringify(t.function.arguments);
+        }
+      }
+    }
+  }
+  if (!msg.tool_calls.length) delete msg.tool_calls;
+  return msg;
+}
+
+for (let step = 1; step <= MAX_STEPS; step++) {
+  const msg = await turn();
   messages.push({ role: "assistant", content: msg.content ?? "", tool_calls: msg.tool_calls });
   // One tool per turn, so every call is made knowing the last one's answer. A
   // small model asked to plan will otherwise buy and verify in one breath,

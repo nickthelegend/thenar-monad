@@ -2,7 +2,7 @@
 
 import { useCallback, useState } from "react";
 import { useAccount, usePublicClient, useWriteContract } from "wagmi";
-import { BaseError, ContractFunctionRevertedError, UserRejectedRequestError } from "viem";
+import { BaseError, ContractFunctionRevertedError, UserRejectedRequestError, toFunctionSelector } from "viem";
 import { AXON_ABI } from "./abi";
 import { AXON_ADDRESS } from "./chain";
 import type { Sample } from "./types";
@@ -34,12 +34,109 @@ export type SubmitState = {
 };
 
 /** Turn any wallet or contract failure into a sentence an operator can act on. */
+/**
+ * Every custom error the deployed contracts declare, by selector.
+ *
+ * A write made with a pruned ABI that leaves a contract's errors out reverts
+ * as a bare selector, and the page showed it as such: "The contract function
+ * "mint" reverted with the following signature: 0xddefae28". The selector is
+ * enough to name the error, and the name is enough to say what happened.
+ */
+const ERROR_SIGNATURES = [
+  "AccountIsNotInControlList(address)",
+  "AlreadyClaimed()",
+  "AlreadyClaimed(uint256,address)",
+  "AlreadyClosed()",
+  "AlreadyEntered()",
+  "AlreadyExecuted()",
+  "AlreadyLogged(bytes32)",
+  "AlreadyMinted()",
+  "AlreadySettled()",
+  "AlreadySubmitted()",
+  "AlreadyUsed()",
+  "AlreadyVoted()",
+  "BadDuration()",
+  "BadPasskeySignature()",
+  "BadSignature()",
+  "CannotReferYourself()",
+  "CapReached()",
+  "DividendNotPayable(uint256,uint64)",
+  "EmptyCorpus()",
+  "EntryClosed()",
+  "EscrowEmpty()",
+  "ExecutionBeforeRecord(uint64,uint64)",
+  "Expired()",
+  "InsufficientAllowance(uint256,uint256)",
+  "InsufficientBalance(uint256,uint256)",
+  "KeyAlreadySet()",
+  "NoCommitment()",
+  "NoKey()",
+  "NoPasskey()",
+  "NoPolicy()",
+  "NoRecordedWork()",
+  "NoSlots()",
+  "NoStanding()",
+  "NoSuchDividend(uint256)",
+  "NoSuchPolicy()",
+  "NoSuchProposal()",
+  "NoSuchSale(uint256)",
+  "NoSuchTrajectory()",
+  "NoToken()",
+  "NotClosedYet()",
+  "NotEnoughWork()",
+  "NotExpired()",
+  "NotFilled()",
+  "NotFunder()",
+  "NotIssuer()",
+  "NotMessenger()",
+  "NotOnCurve()",
+  "NotSeller()",
+  "NotTheAdder()",
+  "NotTheContributor()",
+  "NotTransferable()",
+  "NotVerifier()",
+  "NothingOwed(uint256,address)",
+  "NothingToClaim()",
+  "NothingToReclaim(uint256)",
+  "NothingToSplit()",
+  "NothingToSync()",
+  "PaymentFailed(address,uint256)",
+  "PotEmpty()",
+  "PrecompileUnavailable()",
+  "RecordDateNotInFuture(uint64)",
+  "ReferrerAtCap()",
+  "ReferrerHasNoWork()",
+  "Rejected()",
+  "ScoreTooHigh()",
+  "ScoreTooLow()",
+  "ShardFull()",
+  "Soulbound()",
+  "StillOpen()",
+  "TaskClosed()",
+  "TooManyContributors()",
+  "TransferFailed()",
+  "TreasuryTooSmall()",
+  "Unchanged()",
+  "Underfunded()",
+  "Underpaid()",
+  "VotingClosed()",
+  "WrongAnnouncer(address)",
+  "WrongFee()",
+  "WrongSourceChain(bytes32)",
+  "ZeroAmount()",
+  "ZeroReward()",
+  "ZeroSlots()",
+];
+const ERROR_BY_SELECTOR = new Map(ERROR_SIGNATURES.map((s) => [toFunctionSelector(s), s.slice(0, s.indexOf("("))]));
+
 export function explainTxError(e: unknown): string {
   if (e instanceof UserRejectedRequestError) return "You rejected the transaction in your wallet.";
   if (e instanceof BaseError) {
     const reverted = e.walk((x) => x instanceof ContractFunctionRevertedError);
     if (reverted instanceof ContractFunctionRevertedError) {
-      const name = reverted.data?.errorName ?? "";
+      const name = reverted.data?.errorName
+        ?? (reverted.signature ? ERROR_BY_SELECTOR.get(reverted.signature) : undefined)
+        ?? "";
       const map: Record<string, string> = {
         NoSlots: "This task filled its last slot while you were running. Pick another.",
         CapReached: "You have already submitted the maximum of 5 runs for this task.",
@@ -54,6 +151,26 @@ export function explainTxError(e: unknown): string {
         ZeroReward: "A task needs a reward above zero.",
         WrongFee: "The licence fee sent did not match the price.",
         TooManyContributors: "This task has reached its contributor limit.",
+        AlreadyMinted: "This run's certificate has already been minted.",
+        NoSuchTrajectory: "The protocol has no run with that number.",
+        Expired: "This task is past its deadline. It takes no more runs.",
+        NotExpired: "This task's deadline has not passed yet, so it cannot be closed.",
+        NotFunder: "Only the address that funded this task can close it.",
+        AlreadyClosed: "This task is already closed.",
+        NotFilled: "This task has not filled every slot yet, so its policy cannot be minted.",
+        NoSuchPolicy: "There is no policy with that number.",
+        AlreadyVoted: "You have already voted on this proposal.",
+        VotingClosed: "Voting on this proposal has closed.",
+        NotEnoughWork: "Voting needs recorded, paid work on this protocol.",
+        NoStanding: "Voting needs recorded, paid work on this protocol.",
+        AlreadyExecuted: "This proposal has already been executed.",
+        StillOpen: "Voting on this proposal is still open.",
+        BadDuration: "Choose between 1 and 365 days.",
+        Underpaid: "The payment sent was less than the price.",
+        CannotReferYourself: "You cannot credit yourself as your own referrer.",
+        AlreadyUsed: "That has already been used.",
+        NothingToSync: "There is no new work to sync.",
+        AccountIsNotInControlList: "This address is not on the corpus shares whitelist. Set up your passkey first.",
       };
       if (name && map[name]) return map[name];
       if (name) return `The contract rejected this: ${name}.`;

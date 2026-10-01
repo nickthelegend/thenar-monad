@@ -5,13 +5,11 @@
   "installCommand": "pnpm install --no-frozen-lockfile",
   "build": {
     "env": {
-      "BACKEND_ORIGIN": "https://web-production-0093f.up.railway.app",
-      "NEXT_PUBLIC_VAPID_PUBLIC_KEY": "BIgFs-Q13qBP3bFpIs9yrxS_ZWRRU3cDcV8gQOeKu50orZiTA6c8iyMX8yiHY52v6XHmWGlmy7EFhN0Rz2siDXk"
+      "BACKEND_ORIGIN": "https://web-production-0093f.up.railway.app"
     }
   },
   "env": {
-    "BACKEND_ORIGIN": "https://web-production-0093f.up.railway.app",
-    "NEXT_PUBLIC_VAPID_PUBLIC_KEY": "BIgFs-Q13qBP3bFpIs9yrxS_ZWRRU3cDcV8gQOeKu50orZiTA6c8iyMX8yiHY52v6XHmWGlmy7EFhN0Rz2siDXk"
+    "BACKEND_ORIGIN": "https://web-production-0093f.up.railway.app"
   },
   "crons": [
     {
