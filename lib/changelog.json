@@ -1,5 +1,149 @@
 [
   {
+    "hash": "a81386f",
+    "date": "2026-10-01T23:48:39+05:30",
+    "subject": "Close what a full browser pass of the app found",
+    "body": "Security and correctness on the API:\n- /api/submitted settles a run only when the transaction's own\n  TrajectoryAccepted log carries that run's hash; any successful protocol\n  transaction used to settle any stored hash and issue it shares. The\n  hash is normalised once, and an unknown run is a 404.\n- The verifier refuses to sign for a task that is closed, past its\n  deadline or minted (the contract records a signed run regardless), and\n  answers 404 for a task id past the registry, 400 for a non-integer id.\n- A whole-task dataset pull needs the subscriber's own signature, good\n  for ten minutes; naming a subscriber's public address no longer\n  downloads. An unreadable subscription contract now fails closed (503).\n- The scheduled routes (reconcile GET and POST, snapshot, drill) close\n  when CRON_SECRET is unset instead of opening to anyone.\n- The x402 offer names the public URL, not the backend's localhost:8080.\n- /api/feed clamps limit to 1..50 (−1 and 2.5 were 500s) and serves one\n  contributor's whole history; /api/corpus bounds minScore; team POST on\n  an unknown task is a 404, not a 500; the lab checks its receipt and\n  reads the task id from its own TaskCreated log.\n\nPages:\n- The company home drew the app's nav under its own: on Vercel the\n  prerendered \"/\" hydrates as \"/index\". One normalised path hook now\n  serves every component that asks where it is.\n- Home, hub and floor agree on what is open: tasks taking runs now, not\n  every unfilled slot on closed or expired tasks.\n- /run/<unknown hash> and /task/007 are real 404s; 404 tabs say \"Not\n  found\"; /localnet has its own title; an address in any letter case\n  opens its operator page, which reads that operator's own runs.\n- Corpus subscribers get a signed \"Download task #N\" and an honest time\n  left (\"24 h left\", not \"0 days\"); /post computes escrow in wei, so a\n  tiny reward posts instead of dying in parseEther; tiny MON amounts no\n  longer print as 0.000; the practice button cannot open sign-in; the gas\n  note names the floor it is raised at.\n- Read failures say so on /task, /foundry, /licence and /space instead\n  of \"no such task\", \"no policy\" or \"every task is full\".\n- Copy that had drifted from the code: /contracts, the app home, the\n  inventory's upload line, the corpus panel, /status explanations,\n  README and SUBMISSION (Envio does not drive the feed).\n\ntest/live-station-gates.mjs drives the station's refusals in a real\nbrowser; e2e expects a subscriber's bare address to be refused.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+  },
+  {
+    "hash": "32de412",
+    "date": "2026-10-01T21:54:06+05:30",
+    "subject": "Say how to drive from a Quest 3S: the short link, placing on the table, testing without a headset",
+    "body": "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+  },
+  {
+    "hash": "1621800",
+    "date": "2026-10-01T21:48:58+05:30",
+    "subject": "Shadows on the real table, and headset buttons that wait for the arm",
+    "body": "- In mixed reality a shadow-only plane catches the arm's and the\n  objects' shadows on the operator's own table, so nothing floats.\n- The Quest panel's buttons stay disabled (\"Loading the arm…\") until\n  the scene can actually start a session; a tap before that used to do\n  nothing at all.\n- While the operator is in the headset the desktop page drops the brief\n  for a small \"In the headset. Press A to begin.\" On a Quest the first\n  visit hint names the headset controls, not W A S D.\n\nThe headset tests now check where the bench lands, from the head pose\nthe renderer is given: 0.3 m behind and 0.5 m above the base in VR, and\non the hit-tested table in MR. That check exposed an IWER 2.5 bug: its\ngetOffsetReferenceSpace drops the offset (it copies the transform\nobject, not its matrix), so in the emulator every bench sat at the\nfloor. The tests patch that before the page loads. The VR probe now\ntries each axis both ways, since pulling straight in from the home pose\nruns into the SO-101's IK limit.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+  },
+  {
+    "hash": "7c0150b",
+    "date": "2026-10-01T21:20:34+05:30",
+    "subject": "Keep the local production build out of deploy uploads",
+    "body": "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+  },
+  {
+    "hash": "8ddc8e1",
+    "date": "2026-10-01T21:15:30+05:30",
+    "subject": "Put the arm on your real table from a Quest 3S, and say less on the station",
+    "body": "In mixed reality the headset now finds your table with hit testing: the\nbench follows where the right controller points (or where you look, with\nhands), a ring marks the spot, and the trigger or a pinch sets it down.\nIf the room was never scanned, the trigger keeps the bench where it\nstands after a moment. B picks it up again. The trigger that placed the\narm does not close the jaws until it is let go.\n\nThe station's left column is now the goal and one \"Drive with\" choice:\nKeyboard, Leader or Quest 3S. On a headset the Quest panel opens with\n\"Put it on my table\" and \"Enter in VR\"; anywhere else it shows a short\nlink, app.thenar.io/q/<task>, to type into the Quest browser. Voice,\npolicy, teaching and sound sit under More; the right column is the pay,\nthe live placement and how it is scored.\n\ntest/live-station-mr.mjs places the arm on an emulated table and runs.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+  },
+  {
+    "hash": "580f521",
+    "date": "2026-10-01T19:02:44+05:30",
+    "subject": "Start the hero film after hydration, muted",
+    "body": "React leaves muted out of the server HTML, so Chrome treated the film as\nhaving sound and would not autoplay it on thenar.io. It is muted and\nplayed on mount now; reduced motion keeps the poster.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+  },
+  {
+    "hash": "defb54e",
+    "date": "2026-10-01T19:00:39+05:30",
+    "subject": "The hero moves: a glass arm lifting a cube, on a seamless loop",
+    "body": "Made with Google Veo in Gemini from the hero's own description, cropped\nclear of the corner mark, and played forward then back so the loop has\nno seam: 20 seconds, 1.4 MB as WebM with an MP4 fallback, no audio, its\nfirst frame as the poster. The footer credits Veo and ChatGPT.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+  },
+  {
+    "hash": "78ad5cb",
+    "date": "2026-10-01T18:56:23+05:30",
+    "subject": "Point people at app.thenar.io",
+    "body": "The sitemap lists both sites, the contract API names the app's registry\npage, and the README, the submission and the Quest guide say where to\ntry it.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+  },
+  {
+    "hash": "b56ade4",
+    "date": "2026-10-01T18:49:35+05:30",
+    "subject": "Let the arm relay take Thenar's own sites without --origin",
+    "body": "The station now runs on app.thenar.io, and a relay started without the\nflag refused it, so the leader and the mirror did nothing from the real\nsite. Thenar's two origins are let in by default; every other site still\nhas to be named.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+  },
+  {
+    "hash": "ecf8ce3",
+    "date": "2026-10-01T02:25:39+05:30",
+    "subject": "The ThenarLabs mark, a solid nav, and a new hero",
+    "body": "The mark is a grip: two opposed gripper jaws cut from a hexagon's halves\ncradling a crescent palm, drawn as one-weight SVG from the ChatGPT concept\nand used in the nav, the favicon and the app icons. The nav pill is now\nnear-opaque dark glass with a real backdrop blur, so nothing scrolling\nbeneath reads through it. The hero is a new render (a prismatic glass arm\nlifting a glass cube), anchored under the headline and ready to swap for\nits animated film.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+  },
+  {
+    "hash": "a1d8068",
+    "date": "2026-10-01T02:12:54+05:30",
+    "subject": "Real Hotaru in 3D, and lighter fonts",
+    "body": "Hotaru's model is its own web export, stood upright and scaled to metres\n(the rig GLB it replaces is posed by another app's code and lies in\npieces on its own). The viewer computes normals a trimmed export leaves\nout, and stands Z-up CAD upright where a product says so. Plex Mono is\ngone and DM Mono is no longer preloaded on pages that show no data.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+  },
+  {
+    "hash": "7641cec",
+    "date": "2026-10-01T02:05:57+05:30",
+    "subject": "A short app home: teach a robot, get paid on Monad",
+    "body": "The old poster page (a giant wordmark, the THENAR-6, spaced capitals and\nfigures everywhere) becomes six plain sections: the line, live figures\nfrom the chain, the open tasks as cards, the three ways to drive, how\npayment works, and a pointer for agents. It renders the app's nav\nitself, since on app.thenar.io its path is the company home's.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+  },
+  {
+    "hash": "c728598",
+    "date": "2026-10-01T02:03:45+05:30",
+    "subject": "ThenarLabs: the company site, its products, and one dark theme",
+    "body": "thenar.io is now ThenarLabs, a physical AI lab: a landing page in black\nglass (Poppins, a floating glass nav, a lilac action, a statement that\nlights word by word) and /products with every robot the lab has built or\nis building, from its own repositories: Thenar, Quest capture, Thenar\nArms, Hotaru, Thenar Band, JX1, JX0, Thenar Duck and the GT240 wheel.\nEach has /products/<id> with its real renders, its GitHub repository and\nits CAD as a meshopt GLB to turn in the browser.\n\nThe Thenar app moves to its own home at /thenar, served at the root of\napp.thenar.io by proxy.ts once NEXT_PUBLIC_APP_ORIGIN names it. The whole\napp takes the same theme through its tokens: black ground, white type,\nlavender accent, rounded lilac and glass controls, and labels in Poppins\ninstead of spaced capitals. The light theme and its toggle are gone.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+  },
+  {
+    "hash": "4c3c09c",
+    "date": "2026-09-30T02:10:56+05:30",
+    "subject": "Keep the local chain and the indexer out of Vercel uploads",
+    "body": "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+  },
+  {
+    "hash": "1ab6b0d",
+    "date": "2026-09-30T02:10:43+05:30",
+    "subject": "Drive the task's SO-101 with a physical AS5600 leader",
+    "body": "Plug the leader (six AS5600 encoders on an ESP32, thenar-arms firmware)\ninto a computer and press Drive with my leader arm: Web Serial reads its\nL lines at 50 Hz and the SO-101 on screen takes each pose joint for joint,\nno inverse kinematics, with the jaw from the trigger. The panel zeroes an\nuncalibrated leader at home and reverses a joint that turns the wrong\nway. A leader on the arm relay drives the page the same way while it\ndrives the physical follower.\n\ntest/live-localnet.mjs DRIVE=leader plays a hand's pick-and-place through\na stand-in for the leader firmware on a pseudo-terminal and the real\nrelay: placed in tolerance, submitted, paid and issued its shares, with\nevery recorded sample a pose the leader sent.\n\nAlso the Envio HyperIndex indexer over Axon, SalesLog, CorpusShares,\nPasskeyRegistry and CorpusAccess: Monad testnet over HyperSync once an\nAPI token exists, the local chain over RPC today, matching the chain on\nevery field checked.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+  },
+  {
+    "hash": "f503343",
+    "date": "2026-09-30T01:41:45+05:30",
+    "subject": "Keep the indexer out of the app's type-check and Railway uploads",
+    "body": "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+  },
+  {
+    "hash": "d7ecd2e",
+    "date": "2026-09-30T01:02:50+05:30",
+    "subject": "A Qwen agent that shops for robot data and pays for it on chain",
+    "body": "scripts/qwen-agent.mjs gives Qwen six tools over the real API and chain:\nlist the tasks, read a datasheet, ask a price, buy over x402 with its\nown key, verify the bytes against SalesLog, inspect what it bought. Qwen\non Alibaba Cloud with DASHSCOPE_API_KEY, Qwen 3 through Ollama without.\nOne tool per turn, task ids checked against the list, the budget held in\ncode, and a ledger of what actually happened printed beside the model's\nown report, flagged if the two disagree.\n\nFixed on the way: an agent's purchases were never found (stored\nchecksummed, looked up lowercased), and the datasheet called every\ncorpus a THENAR-6's and said no screening where a passkey is required.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+  },
+  {
+    "hash": "61de8d5",
+    "date": "2026-09-30T00:52:34+05:30",
+    "subject": "Run every flow end to end on a local chain with Monad's shape",
+    "body": "scripts/localnet.mjs starts anvil with the Osaka hardfork, which has the\nP-256 precompile at 0x0100 that Monad has, copies Multicall3 from Monad,\nand deploys the same DeployMonad.s.sol plus a USDC with Circle's EIP-3009\ninterface. NEXT_PUBLIC_CHAIN=local builds the app against it into\n.next-local: a browser-held local wallet in place of Privy, a local faucet,\n/explorer for transactions and addresses, and a banner on every page saying\nit is not Monad. scripts/x402-facilitator.mjs settles corpus sales there\nwith x402's own facilitator library.\n\ntest/live-localnet.mjs drives the whole first day in a real browser:\nwallet, passkey registered and admitted, a keyboard-driven SO-101 run\nplaced in tolerance, submitted, paid and issued its corpus shares.\n\nFixed on the way: /passkey kept saying 'not registered' after setup until\na reload, and a page opened at an IP address now says passkeys need a\nname instead of 'creation failed'.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+  },
+  {
+    "hash": "d191768",
+    "date": "2026-09-24T08:32:13+05:30",
+    "subject": "Sign the gate test's assertions for the site under test, not localhost",
+    "body": "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+  },
+  {
+    "hash": "0883a2d",
+    "date": "2026-09-24T08:19:33+05:30",
+    "subject": "Replace World ID with a passkey on Monad; the passkey also owns the robot; plain-language menus",
+    "body": "Operators are admitted by a passkey instead of World ID. The device makes\nthe passkey (Face ID, a fingerprint, a PIN) through Mera, Monad's passkey\nlibrary. Its P-256 key is registered in PasskeyRegistry from the operator's\nown wallet. To join the CorpusShares whitelist, the passkey signs a\none-time challenge (/api/operator). The server checks the challenge,\norigin, relying party and user verification. PasskeyRegistry then verifies\nthe signature on Monad through the P-256 precompile. /api/verify,\n/api/sign and /api/submitted all read that whitelist.\n\n- World AgentKit and AgentBook are gone. Agents pay per pull over x402 in\n  USDC on Monad, and /api/agent/status now reports what a wallet bought.\n- The old /passkey page used a WebCrypto key, not a passkey. It is now\n  the real one, with a \"prove it on Monad\" read.\n- The per-run passkey path is retired. The deployed Axon verifies\n  sha256(trajHash), which a WebAuthn passkey cannot sign.\n- The passkey owns the arm (the Mera \"One Passkey, Many Keys\" bounty). A\n  PRF salt for \"SO-101 commands\" derives, via HKDF, an Ed25519 key in a\n  Mera signing session. scripts/arm-relay.mjs --owner <key> moves the\n  physical arm only for frames signed by it. An unsigned frame, another\n  key, a stale timestamp or a replayed sequence gets STOP instead.\n- The nav keeps every page, grouped into three menus (Earn, Data,\n  Protocol) with a line on what each page is. On phones it is one Menu\n  button. \"Connect\" is now \"Sign in\".\n- README and SUBMISSION describe the passkey, and list the four bounties\n  entered: Privy, Mera, Qwen 3.8 Max and Envio.\n\nTests:\n- test/webauthn.test.mjs: the digest and DER arithmetic. With LIVE=1,\n  PasskeyRegistry on Monad accepts a real assertion and refuses a\n  tampered one.\n- test/live-operator.mjs: every refusal the gate makes, over HTTP.\n- test/live-passkey.mjs: Mera plus Chromium's WebAuthn authenticator. It\n  checks the key, user verification, stable and separated PRF, and\n  verification on Monad.\n- test/live-arm-owner.mjs: the owner's passkey moves the follower;\n  another passkey's frames stop it.\n- test/arm-relay.test.mjs covers --owner.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+  },
+  {
+    "hash": "6cea426",
+    "date": "2026-09-24T07:47:44+05:30",
+    "subject": "Record the full test pass: every item, what failed, what fixed it",
+    "body": "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+  },
+  {
+    "hash": "91dedf6",
+    "date": "2026-09-24T07:38:18+05:30",
+    "subject": "Fix what the full test pass found: scan positions, the hub toggle, phone widths, honest inventory",
+    "body": "The scan measured detected objects at their front edge. On rendered\nphotos with a known layout, a 98 mm apple came out 38 mm short, outside\nthe 25 mm placement band. The sheet's homography now also yields the\ncamera's pose (one-view calibration). The footprint centre is the bottom\nedge pushed back by r·tan(θ/2). The apple now lands 17 mm and 12 mm from\nwhere it stands, from two viewpoints; objects added by a click land\nwithin 2 mm. test/live-scan.mjs runs this against fixtures rendered from\nthe photoscanned props.\n\n- The hub's \"+N identical\" toggle was declared inside the page, so it\n  remounted on every six-second refetch and swallowed clicks. It is now a\n  component of its own.\n- At 375 px, /agents overflowed on an unbroken address (475 px), and\n  /spec/so101's joint table overflowed too (403 px). Every page now fits.\n- /inventory said every object is generated with \"no asset file to lose\".\n  Seventeen are now photoscans, so the copy says so and each one is\n  marked \"scan\", with its source.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+  },
+  {
+    "hash": "8d3d629",
+    "date": "2026-09-24T01:49:12+05:30",
+    "subject": "Add a script that closes the lab's expired bounties through Privy",
+    "body": "The demo takes posted the same lab bounty four times (tasks 7 to 10).\nAxonProtocolV2 lets a funder close a task only after its deadline, so the\nduplicates can come back on 30 September. closeTask carries no value, so\nthe lab wallet's Privy policy (to AxonProtocolV2, chain 10143, at most\n0.1 MON) already allows it; this signs it there, broadcasts it, and reads\nthe task back.\n\nEvery id is checked first and skipped with the reason unless the lab\nfunded it, it is open, and its deadline has passed. --check reports only.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+  },
+  {
+    "hash": "30aa570",
+    "date": "2026-09-24T01:17:07+05:30",
+    "subject": "Regenerate the changelog from git",
+    "body": "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+  },
+  {
     "hash": "91e0ccf",
     "date": "2026-09-24T00:49:18+05:30",
     "subject": "Put the SO-101 on the bench and give the props real models",
@@ -214,149 +358,5 @@
     "date": "2026-09-06T09:20:27+05:30",
     "subject": "Fix the settled migration order",
     "body": "The index on the new column sat in the create block, which runs before the\nALTER that adds it. On any database that predated the column the index threw,\nthe whole exec aborted, and the migration below it was never reached — the\nlive backend answered every read with 'no such column: settled'.\n\nThe index now runs after the migration, where the column exists either way.\nVerified against a database built without the column: it migrates and the\nunverified legacy row is correctly excluded."
-  },
-  {
-    "hash": "43865c0",
-    "date": "2026-09-06T08:45:41+05:30",
-    "subject": "Only show runs the chain actually accepted",
-    "body": "/api/submitted took any well-formed transaction hash on trust and wrote it\nto the ledger. A reverted transaction has a valid hash too, so a batch of\nreplayed submissions that the contract correctly refused were recorded as if\nthey had settled — task #9 showed twenty submissions against four filled\nslots, five of them the same score.\n\nThe receipt is now read back and has to say success, against this contract,\nbefore anything is written, and a new settled column gates every read so an\nunverified row can never reach a page. /api/reconcile holds the existing\nrows to the same standard; it only reads the chain, so it can confirm or\nretract but never invent, and running it twice changes nothing."
-  },
-  {
-    "hash": "3b8af26",
-    "date": "2026-09-06T08:10:55+05:30",
-    "subject": "Fix the deploy env, the footer wordmark and the stale control copy",
-    "body": "Three separate misses.\n\nThe Vercel env vars were empty strings — 'printf value | vercel env add' does\nnot pipe a value through, so both were created blank and every chain figure\non the deployed site read 0 while the same build read 11/9/3 locally. They\nare public values, so they now live in vercel.json where they are version\ncontrolled and inlined at build time rather than set by hand.\n\nThe footer wordmark is uppercase AXON, which the \\bAxon\\b rename never\nmatched.\n\nThe landing still told operators to use the arrow keys and E/D after the\nstation moved to drag plus WASD and E/Q."
-  },
-  {
-    "hash": "74fcbed",
-    "date": "2026-09-06T07:36:08+05:30",
-    "subject": "Prove money movement on chain, and record the locked-escrow finding",
-    "body": "scripts/money.mjs measures balances either side of every step against the\nlive contract: escrow funded, each run paid, policy minted, licence bought,\nevery contributor's share checked to the wei.\n\nTwo things it turned up. The payout is reward x score / 10000, not the whole\nslot — a run is worth what it scored. And because of that, a completed task\nkeeps whatever the runs did not earn, with no refund, sweep or reclaim\nfunction anywhere in the contract, so that remainder is locked permanently.\nFixing it means a new contract, which would orphan the policies and cap\ntables now on chain, so it is recorded rather than done."
-  },
-  {
-    "hash": "bd4db31",
-    "date": "2026-09-06T07:01:22+05:30",
-    "subject": "Fix: the rebrand broke every signature; guard the domain on chain",
-    "body": "The rename swept lib/server/verifier.ts and changed the EIP-712 domain from\nAxon to Thenar. The deployed contract hardcodes keccak256(\"Axon\"), so every\nsubmitTrajectory started reverting with BadSignature — the whole submission\nflow was dead in production and /api/health still reported ok, because it\nonly compared the verifier address, never the domain.\n\nThe domain is restored and moved behind runDomain(), which now carries the\nwarning that it is not the product name. /api/health computes the domain\nseparator and compares it against the contract's own domainSeparator(),\nwhich is added to the shipped ABI, so this class of break is caught by the\nhealth check instead of by a reverted transaction."
-  },
-  {
-    "hash": "0e5851d",
-    "date": "2026-09-06T06:26:35+05:30",
-    "subject": "Deploy the frontend to Vercel at thenar.io",
-    "body": "The pre-existing thenar project was set to framework Other with output\npublic/, so it served static files and 404'd every route. vercel.json pins\nthe framework instead of relying on detection against those settings.\n\n.vercelignore keeps the deployer and verifier keys, the contracts, the CAD\nkernel and the database off the upload entirely — the verifier key belongs\nto the Railway backend and nothing else needs it."
-  },
-  {
-    "hash": "6d93fde",
-    "date": "2026-09-06T05:51:49+05:30",
-    "subject": "Proxy /api to the backend origin when one is configured",
-    "body": "The API routes own a SQLite file on a persistent volume, which a serverless\nhost cannot keep. Splitting the deployment means the frontend has to reach\nthe backend's routes rather than its own copies of them.\n\nbeforeFiles, not afterFiles: the default phase only runs when nothing on the\nfilesystem matched, and the route files exist in both deployments, so the\nlocal copies would answer and the proxy would never fire."
-  },
-  {
-    "hash": "6111428",
-    "date": "2026-09-06T05:17:03+05:30",
-    "subject": "Remove passkeys, move wallet connect to RainbowKit",
-    "body": "The passkey surface is gone: the page, its ABI, the registry address and the\nscript. The deployed PasskeyRegistry and the contract's ABI entries stay as\nthey are, because both are real and already on chain.\n\nWallet connect is RainbowKit, themed onto the product's palette rather than\nleft on the default purple. WalletConnect-backed wallets only appear when a\nproject id is configured, so the modal never offers a wallet that cannot\npair. hasWallet is gone with the branches it guarded — the modal handles\ndiscovery and install links itself."
-  },
-  {
-    "hash": "745023a",
-    "date": "2026-09-06T04:42:16+05:30",
-    "subject": "Station: pointer drag and WASD; seed a fanned-out cap table",
-    "body": "The 3D viewport ignored both the mouse and WASD, so the first two things\nanyone tries in a robot teleop view did nothing. Dragging now moves the tool\nin the camera's ground plane, and WASD drives the same target as the arrows.\nRaise/lower moves from E/D to E/Q so D can mean right.\n\nAlso adds the seed scripts that filled task #9 from four distinct operators\nand minted its policy, so the foundry shows a cap table that actually fans\nout rather than a single 100% contributor."
-  },
-  {
-    "hash": "daa340a",
-    "date": "2026-09-06T04:07:30+05:30",
-    "subject": "docs: second Monad audit after the v2 deploy",
-    "body": "The first audit's honest verdict was that this used only Monad's EVM-compatible\nhalf and could run on any fast EVM chain. Three of the four capabilities it\nnamed as missed have since shipped — the P256 precompile, parallel-execution-safe\nwrites, and Multicall3 batching — so that verdict no longer holds and this\nrecords why.\n\nFifty further features, ranked by how load-bearing Monad is to each. The two\ncapabilities still idle are the 150M gas limit and the 128 KB contract size,\nand everything at the top of the list attacks them.\n\nCo-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
-  },
-  {
-    "hash": "cd6cd84",
-    "date": "2026-09-06T03:32:44+05:30",
-    "subject": "feat(contracts): v2 — sharded slot accounting and passkey-authorised runs",
-    "body": "AxonProtocol redeployed at 0x89384f46e430F37DB61Afb98810eba995C0d6Ed4,\nverified exact_match, seeded with eight funded tasks.\n\nSharded slot accounting closes the contention bug this project's own audit had\nbeen carrying. A single slotsFilled counter is one storage slot every operator\non a task writes to, which on an optimistically parallel chain forces them to\nre-execute serially. Each operator now writes only the shard their address maps\nto, each shard carries its own quota so the common path needs no cross-shard\nread, and a caller whose shard is spent falls back to a scan — the only path\nthat can contend, and only at the margin.\n\nWriting it surfaced a real flaw first: address-based sharding confines an\noperator to one shard, so a four-slot quota could block the five-run allowance\nthe product promises. The tests caught it; the shard floor now sits above the\nper-account cap.\n\nsubmitTrajectoryWithPasskey lets an operator authorise a run with a secp256r1\nsignature over the trajectory instead of their wallet, composing with the\nalready-deployed PasskeyRegistry rather than duplicating the precompile call.\nThe verifier still signs the score, so an operator still cannot mint their own.\n\nAlso fixes a README bug that had been in the repo since the deployment table\nwas written: it contained literal {axon} and {verifier} placeholders from an\nf-string that never interpolated.\n\nCo-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
-  },
-  {
-    "hash": "d1d9bd4",
-    "date": "2026-09-06T02:57:57+05:30",
-    "subject": "docs: describe what the project actually ships, and prove the passkey path on chain",
-    "body": "The docs had drifted badly. README, PRODUCT.md, DESIGN.md and TESTPLAN.md\ncontained no mention of the passkey work at all, README still claimed six\nroutes when there are eleven, and MONAD.md called the P256 precompile 'verified\nworking, entirely unused' — which stopped being true when it shipped.\n\nMONAD.md now marks that miss closed and updates its verdict: the audit was\nwritten when this could have run on any fast EVM chain, and the precompile\nmakes that no longer so. The two remaining misses, the staking precompile and\nEIP-7702, are still named as open, as is the parallel-execution contention bug,\nwhich needs a redeploy that would orphan the trajectories already recorded.\n\nscripts/passkey-onchain.mjs closes the last verification gap: register() and\nauthorise() had never executed on chain, only the view path. Both now have,\nwith replay and forgery refused.\n\nCo-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
-  },
-  {
-    "hash": "82e54be",
-    "date": "2026-09-06T02:23:11+05:30",
-    "subject": "docs: give every one of the 100 ideas its own disposition",
-    "body": "The previous version summarised tiers 2 to 4 as prose runs, which meant 76 of\nthe ideas had no individual reason attached. Each now carries its own status\nand a reason code: time, redundant, gas, scope, money, or clutter.\n\nAlso corrects the count. Nine of the hundred ideas were built; they landed as\ntwelve artifacts because the SEO item is three files, and reporting twelve\nideas overstated it.\n\nCo-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
-  },
-  {
-    "hash": "77a8aed",
-    "date": "2026-09-06T01:48:25+05:30",
-    "subject": "fix(passkey): the call to action was 34 characters of uppercase",
-    "body": "Button labels are set in caps in this system, so they have to stay short\nenough to read by word shape.\n\nCo-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
-  },
-  {
-    "hash": "1c90dd2",
-    "date": "2026-09-06T01:13:38+05:30",
-    "subject": "feat: ghost trail, reach envelope, context recovery, clipboard, keyboard help",
-    "body": "The ghost trail draws the path the payload actually travelled, which is the\nexact line the smoothness term scores — the difference between 'you lost 40%\non smoothness' and seeing why.\n\nThe reach envelope appears only when the operator hits the limit, which was\npreviously a text readout with nothing to point at.\n\nA lost WebGL context left a black rectangle and no error anyone could see; it\nis now caught and explained, and nothing recorded is affected.\n\nHashes and addresses are copyable, the submit flow announces itself to a\nscreen reader, a fast double click can no longer send two transactions, and\nthe station's controls are on ? because it is a keyboard-driven surface.\n\nPlus robots.txt, a sitemap and a web manifest.\n\nCo-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
-  },
-  {
-    "hash": "3deebb8",
-    "date": "2026-09-06T00:38:52+05:30",
-    "subject": "feat(passkey): verify secp256r1 signatures through Monad's P256 precompile",
-    "body": "PasskeyRegistry is deployed at 0xD6dE823EE979c4aAD3ba8eDe05f6E363DE65E165 and\nverified on the explorer. It binds a secp256r1 public key to an address and\nchecks signatures against EIP-7951's precompile at 0x0100 — the same curve and\nencoding a passkey uses, and something Ethereum mainnet cannot do at all.\n\nTen tests run against a fork of Monad testnet rather than a local chain,\nbecause the precompile is the whole point and etching over a precompile\naddress is not permitted. The vector is a genuine WebCrypto signature. The\ncheck costs about 16k gas.\n\n/passkey proves it live: the browser generates a real key, signs a message, the\nchain accepts the signature and refuses the same one with a bit flipped.\n\nThis is the answer to the product's actual bottleneck — operators are gig\nworkers and the seed phrase is where that funnel dies.\n\nCo-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
-  },
-  {
-    "hash": "e49bc90",
-    "date": "2026-09-06T00:04:05+05:30",
-    "subject": "docs: a second hundred ideas, ranked against the remaining gas budget",
-    "body": "Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
-  },
-  {
-    "hash": "b9b5e18",
-    "date": "2026-09-05T23:29:19+05:30",
-    "subject": "docs: record the test plan and its results",
-    "body": "56 of 57 items pass against the live deployment. E8's connected-wallet half is\nthe one item that cannot be exercised here: judging affordability needs a\nwallet whose balance is below the escrow, and the only funded account has more\nthan any escrow this form will accept.\n\nCo-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
-  },
-  {
-    "hash": "2eb0e4c",
-    "date": "2026-09-05T22:54:33+05:30",
-    "subject": "fix: refresh DESIGN.md for the rebrand, and stop setting a sentence in caps",
-    "body": "DESIGN.md still documented the layout-dye palette and the Saira/Archivo/Plex\nstack, so the detector read every colour in the shipped product as drift. It\nnow records the orange-on-black tokens and the Hanken Grotesk / DM Mono /\nPress Start 2P stack that actually ships.\n\nThe station's loading line — 'Reading task #999 from the chain…' — used the\nuppercase label style for a 33-character sentence. Labels are short; that is\nprose and now reads as prose.\n\nCo-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
-  },
-  {
-    "hash": "de9f3ca",
-    "date": "2026-09-05T22:19:46+05:30",
-    "subject": "fix(chain): batch reads through Multicall3 instead of one call per trajectory",
-    "body": "The leaderboard oscillated between one and two operators and between fourteen\nand fifteen runs while the chain held twenty-three trajectories and two\ncontributors. Each poll issued one eth_call per trajectory, the public RPC caps\nat fifteen requests a second, and the failures were quietly dropped by a\nfilter — so every poll under-reported by a different amount.\n\nMonad testnet carries Multicall3 at the canonical address, so declaring it on\nthe chain collapses a whole screen of reads into a single call.\n\nA partial read is also no longer treated as a smaller answer: if any read in a\nbatch fails the hook throws, and the surface shows its error state rather than\nquietly rendering an incomplete ledger.\n\nCo-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
-  },
-  {
-    "hash": "21999c2",
-    "date": "2026-09-05T21:45:00+05:30",
-    "subject": "fix(station): an unreadable task no longer flickers between error and spinner",
-    "body": "useTask polled every six seconds, so a task id that is out of range — which\nreverts every single time — bounced between 'Could not read that task' and\n'Reading task #999 from the chain…' indefinitely. A check landing inside the\nretry window saw an empty page.\n\nPolling now stops once a read has errored, and the error state wins over the\nretry spinner on both the station and the task page.\n\nCo-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
-  },
-  {
-    "hash": "14ce355",
-    "date": "2026-09-05T21:10:14+05:30",
-    "subject": "fix(station): remount the rig per run so the payload actually resets",
-    "body": "The previous attempt passed a runId into the scene and reset the refs in an\neffect. It never fired: children of <Canvas> live in a separate\nreact-three-fiber reconciler root, and a prop change on the parent does not\nreliably re-run their effects. Measured directly in the browser — after Run\nagain, the tool stayed at the exact coordinates the previous run ended on and\nthe deviation never left 9.8 mm, so a second run began already inside the goal.\n\nThe rig is now keyed on runId, so a new run remounts the scene. The GLB is\ncached by useGLTF, so nothing reloads.\n\nCo-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
-  },
-  {
-    "hash": "53e5a1d",
-    "date": "2026-09-05T20:35:27+05:30",
-    "subject": "fix(station): the payload did not reset between runs",
-    "body": "The scene reset keyed on `start`, a module-level constant, so it ran once on\nmount and never again. A second run began with the payload still wherever the\nprevious run had left it — including inside the goal, which returned IN\nTOLERANCE for a run where the operator never touched the arm.\n\nThe station now bumps a runId on every run and the viewport resets its payload,\narm pose, gripper and held keys when it changes.\n\nCo-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
-  },
-  {
-    "hash": "c0777a0",
-    "date": "2026-09-05T20:00:41+05:30",
-    "subject": "fix(api): a missing taskId no longer exports task 0",
-    "body": "Number(null) is 0, so GET /api/dataset with no parameter silently answered for\ntask 0 instead of rejecting the request. It now returns 400, and a non-numeric\nvalue says what it received.\n\nAlso links the transaction in scripts/claim.mjs, which was the one submission\npath that reached the chain without recording its hash — the feed and the\ndataset export reported that run as never submitted when it had settled.\n\nAdds scripts/audit-links.mjs, which holds the store and the chain to each\nother: every recorded transaction must exist and have succeeded, and every\nunlinked run must genuinely have no record on chain. It caught a run that was\non chain but unlinked, and it exits non-zero on any discrepancy.\n\nCo-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
-  },
-  {
-    "hash": "0f39a6a",
-    "date": "2026-09-05T19:25:55+05:30",
-    "subject": "fix(post): form validity gates the button, not the wallet",
-    "body": "A task with a three-character instruction or zero slots showed its inline\nerror but left the button live, because the disabled check only applied once\na wallet was connected. The definition of a task is wrong or right on its own;\nonly affordability depends on the wallet.\n\nThe two gates are now separate, and the button says which one is failing:\n'Finish the definition', 'Connect a wallet', or 'Escrow exceeds your balance'.\n\nCo-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
   }
 ]
