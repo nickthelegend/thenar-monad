@@ -1,5 +1,17 @@
 [
   {
+    "hash": "e7029e9",
+    "date": "2026-10-02T00:11:23+05:30",
+    "subject": "Tell a non-subscriber so before asking it to sign",
+    "body": "An address with no time on CorpusAccess gets 402 at once; only one that\nhas a subscription is asked to prove it is the caller (401 until it signs).\nA signature window longer than ten minutes now says that, not 'expired'.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+  },
+  {
+    "hash": "55ed5f9",
+    "date": "2026-10-01T23:48:39+05:30",
+    "subject": "Bring the changelog up to date with the history",
+    "body": "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+  },
+  {
     "hash": "a81386f",
     "date": "2026-10-01T23:48:39+05:30",
     "subject": "Close what a full browser pass of the app found",
@@ -346,17 +358,5 @@
     "date": "2026-09-06T10:30:00+05:30",
     "subject": "Measure the station viewport off the settled layout",
     "body": "The viewport is code-split and mounts under a grid row whose height is only\nsettled once the rest of the page has laid out. react-use-measure took its\nfirst reading before that and fell back to 300x150, and because the row's\nsize never changed afterwards the observer had no reason to fire again.\n\nMeasuring undebounced off offsetWidth/Height reads the settled box, and one\ndispatched resize on the frame after the GL context exists covers the case\nwhere even that is early. RainbowKit's stylesheet also moved ahead of\nglobals.css in the layout, so its resets can no longer outrank Tailwind."
-  },
-  {
-    "hash": "2e33e3d",
-    "date": "2026-09-06T09:55:14+05:30",
-    "subject": "Pin wagmi to 2.16.9 so the RainbowKit modal actually opens",
-    "body": "RainbowKit 2.2.11 declares wagmi ^2.9.0 as a peer and the project was on\nwagmi 3.7.6. Nothing threw — useConnectModal simply handed back an\nundefined opener and the connect button was a no-op, which the optional call\nin useSession swallowed silently.\n\n2.16.9 is the version that satisfies RainbowKit's baseAccount import without\ndragging in the optional @x402 packages that 2.19 resolves statically and\nTurbopack cannot find. Verified against the running app: the modal opens on\na real click, lists Browser Wallet and Coinbase Wallet, and closes again."
-  },
-  {
-    "hash": "6226bd1",
-    "date": "2026-09-06T09:20:27+05:30",
-    "subject": "Fix the settled migration order",
-    "body": "The index on the new column sat in the create block, which runs before the\nALTER that adds it. On any database that predated the column the index threw,\nthe whole exec aborted, and the migration below it was never reached — the\nlive backend answered every read with 'no such column: settled'.\n\nThe index now runs after the migration, where the column exists either way.\nVerified against a database built without the column: it migrates and the\nunverified legacy row is correctly excluded."
   }
 ]
