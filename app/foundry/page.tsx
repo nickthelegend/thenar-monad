@@ -51,7 +51,7 @@ export default function FoundryPage() {
 
       <DimRule className="mt-10" note="Minted policies" />
 
-      {isLoading ? (
+      {isLoading || (!policies && !isError) ? (
         <ul className="mt-6 flex flex-col gap-4" aria-busy="true">
           {Array.from({ length: 2 }, (_, i) => <li key={i} className="hatch h-40" />)}
         </ul>

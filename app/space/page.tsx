@@ -12,7 +12,7 @@ type Room = { taskId: number; operators: number };
 export default function SpacePage() {
   const [rooms, setRooms] = useState<Room[] | null>(null);
   const [presenceDown, setPresenceDown] = useState(false);
-  const { tasks, isLoading, isError, refetch } = useTaskCatalogue();
+  const { tasks, answered, isError, refetch } = useTaskCatalogue();
 
   useEffect(() => {
     let live = true;
@@ -66,9 +66,9 @@ export default function SpacePage() {
         </p>
       ) : null}
 
-      {isLoading && !tasks ? (
+      {!answered && !isError ? (
         <p className="mt-6 text-[14px] text-scribe-3">Reading the tasks from the chain…</p>
-      ) : isError && !tasks ? (
+      ) : isError && !answered ? (
         <div className="mt-6 border border-rule px-6 py-10 text-center">
           <p className="text-[15px] text-scribe-2">Could not read the task registry.</p>
           <button type="button" onClick={() => void refetch()} className="mt-4 border border-rule-strong px-4 py-2 text-[12px] text-scribe hover:border-scribe">

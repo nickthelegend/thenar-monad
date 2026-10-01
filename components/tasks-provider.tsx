@@ -42,6 +42,7 @@ type Ctx = {
   byId: (id: number) => TaskWithScene | undefined;
   open: TaskWithScene[];
   isLoading: boolean;
+  answered: boolean;
   isError: boolean;
   error: unknown;
   refetch: () => void;
@@ -77,6 +78,10 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
       byId: (id: number) => index.get(id),
       open: tasks.filter((t) => t.slotsTotal - t.slotsFilled > 0),
       isLoading,
+      // Whether the chain has answered at all. A read whose retries are paused
+      // (React Query waits for focus in a background tab) is neither loading
+      // nor failed, and "no tasks" is not something to say until it answers.
+      answered: data !== undefined,
       isError,
       error,
       refetch: () => void refetch(),

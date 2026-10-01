@@ -30,7 +30,7 @@ type Row = {
 export default function TaskView() {
   const { id } = useParams<{ id: string }>();
   const n = Number(id);
-  const { isLoading, isError, refetch } = useTaskCatalogue();
+  const { answered, isError, refetch } = useTaskCatalogue();
   const task = useCatalogueTask(Number.isInteger(n) ? n : undefined);
 
   const { data: runs } = useQuery({
@@ -69,7 +69,7 @@ export default function TaskView() {
   if (!task) {
     return (
       <div className="mx-auto max-w-[900px] px-5 py-16">
-        <span className="label">{isLoading ? `Reading task #${n}…` : `Task #${n} is not in the registry.`}</span>
+        <span className="label">{answered ? `Task #${n} is not in the registry.` : `Reading task #${n}…`}</span>
       </div>
     );
   }

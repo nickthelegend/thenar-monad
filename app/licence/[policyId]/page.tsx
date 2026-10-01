@@ -40,7 +40,7 @@ export default function LicencePage() {
     );
   }
 
-  if (isLoading && !policy) {
+  if ((isLoading || (!policies && !isError)) && !policy) {
     return <div className="mx-auto max-w-[900px] px-5 py-16"><span className="label">Reading policy #{id}…</span></div>;
   }
 
