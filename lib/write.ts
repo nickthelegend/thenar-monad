@@ -65,6 +65,7 @@ export function useThenarWrite() {
         if (receipt.status !== "success") {
           setPhase("error");
           setError("The transaction reverted on chain.");
+          void queryClient.invalidateQueries();
           return null;
         }
         setPhase("confirmed");
@@ -77,6 +78,9 @@ export function useThenarWrite() {
       } catch (e) {
         setPhase("error");
         setError(explainTxError(e));
+        // A revert usually means the page's picture is out of date (somebody
+        // else minted, filled or closed it first), so it re-reads too.
+        void queryClient.invalidateQueries();
         return null;
       }
     },

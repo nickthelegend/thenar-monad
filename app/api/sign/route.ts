@@ -126,7 +126,9 @@ async function handlePOST(req: Request) {
     if (task.policyMinted) {
       return NextResponse.json({ error: "This task's policy has been minted. It takes no more runs." }, { status: 409 });
     }
-    if (task.expiresAt > 0n && Date.now() >= Number(task.expiresAt) * 1000) {
+    // The chain's clock, not this server's: the contract and closeTask both
+    // judge the deadline by block time.
+    if (task.expiresAt > 0n && (await client.getBlock()).timestamp >= task.expiresAt) {
       return NextResponse.json({ error: "This task is past its deadline. It takes no more runs." }, { status: 409 });
     }
 
