@@ -1045,6 +1045,7 @@ function Rig({
       {/* On the operator's real table in mixed reality, the drawn plate would
           cover it: the objects stand on the real surface instead. */}
       <HideInPassthrough><SurfacePlate /></HideInPassthrough>
+      <PassthroughShadows />
       <ReachEnvelope visible={outOfReach} target={target} reach={arm === "so101" ? SO101_REACH : REACH_MAX} />
       <GhostTrail points={trail} />
       <GoalZone at={goal} payload={object} seats={payloads.length} />
@@ -1163,6 +1164,24 @@ function HideInPassthrough({ children }: { children: React.ReactNode }) {
     if (group.current) group.current.visible = xrState.mode !== "mr";
   });
   return <group ref={group}>{children}</group>;
+}
+
+/**
+ * On the operator's real table there is no drawn plate to catch shadows, and
+ * an arm with no shadow floats. This plane draws nothing but the shadows that
+ * fall on it, so the arm and the objects sit on the real surface.
+ */
+function PassthroughShadows() {
+  const mesh = useRef<THREE.Mesh>(null);
+  useFrame(() => {
+    if (mesh.current) mesh.current.visible = xrState.mode === "mr";
+  });
+  return (
+    <mesh ref={mesh} rotation={[-Math.PI / 2, 0, 0]} position={[0, TABLE_Z + 0.0005, 0]} receiveShadow visible={false}>
+      <planeGeometry args={[1.6, 1.6]} />
+      <shadowMaterial transparent opacity={0.32} />
+    </mesh>
+  );
 }
 
 export function StationViewport(props: ViewportProps) {

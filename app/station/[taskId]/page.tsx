@@ -14,7 +14,7 @@ import { useSpace } from "@/lib/space";
 import { environmentForScenario, lightingFor } from "@/lib/environments";
 import { useRunsOnTask, useSubmitCost } from "@/lib/hooks";
 import { useTaskCatalogue, useCatalogueTask } from "@/components/tasks-provider";
-import { XR_ACTION, xrState } from "@/components/station/xr";
+import { XR_ACTION, XR_STATE, xrState, type XrStateDetail } from "@/components/station/xr";
 import { TeachPanel } from "@/components/station/teach-panel";
 import { DriveWith } from "@/components/station/drive-with";
 import { TaskChips } from "@/components/task-chips";
@@ -375,12 +375,22 @@ export default function StationPage() {
     window.addEventListener(XR_ACTION, onXR);
     return () => window.removeEventListener(XR_ACTION, onXR);
   }, [phase, tel, finish]);
+  // While the operator is in the headset the page behind it is a mirror for
+  // anyone watching: no brief over the scene, just what is going on.
+  const [inHeadset, setInHeadset] = useState(false);
+  const [headsetDevice, setHeadsetDevice] = useState(false);
+  useEffect(() => {
+    const on = (e: Event) => setInHeadset(!!(e as CustomEvent<XrStateDetail>).detail.mode);
+    window.addEventListener(XR_STATE, on);
+    const t = setTimeout(() => setHeadsetDevice(/OculusBrowser|Quest/i.test(navigator.userAgent)), 0);
+    return () => { window.removeEventListener(XR_STATE, on); clearTimeout(t); };
+  }, []);
   useEffect(() => {
     if (!task) return;
     xrState.hud = [
       task.name,
       phase === "running"
-        ? `Running ${elapsed.toFixed(1)} s · ${tel?.held ? "holding" : tel?.inRange ? "in range — close the jaws" : "reach the payload"} · ${tel ? Math.round(tel.deviationMm) : "—"} mm from the goal`
+        ? `Running ${elapsed.toFixed(1)} s · ${tel?.held ? "holding" : tel?.inRange ? "in range: close the jaws" : "reach the payload"} · ${tel ? Math.round(tel.deviationMm) : "…"} mm from the goal`
         : phase === "measured" && verdict
           ? `${verdict.success ? "Measured" : "Not placed"} · score ${(verdict.score / 100).toFixed(0)} · ${Math.round(verdict.deviationMm)} mm off · take the headset off to submit`
           : "Press A to begin a run",
@@ -654,7 +664,13 @@ export default function StationPage() {
             </button>
           ) : null}
 
-          {phase === "brief" ? (
+          {phase === "brief" && inHeadset ? (
+            <div className="pointer-events-none absolute left-3 top-3 rounded-full border border-white/10 bg-black/70 px-3 py-1.5 text-xs text-scribe-2 backdrop-blur">
+              In the headset. Press A to begin.
+            </div>
+          ) : null}
+
+          {phase === "brief" && !inHeadset ? (
             // Auto margins rather than items-center: on a phone the brief is taller
             // than the workspace, and a centred child overflows upward under the
             // header where it cannot be scrolled to. This centres while it fits
@@ -711,7 +727,11 @@ export default function StationPage() {
                   </p>
                 ) : null}
                 {firstVisit && !practice ? (
-                  <p className="mt-3 text-xs text-scribe-3">Move with W A S D, lower with Q, grab with Space.</p>
+                  <p className="mt-3 text-xs text-scribe-3">
+                    {headsetDevice
+                      ? "Press Put it on my table, then A in the headset."
+                      : "Move with W A S D, lower with Q, grab with Space."}
+                  </p>
                 ) : null}
 
                 {/* Asked before the run, not after it: a paid run needs a

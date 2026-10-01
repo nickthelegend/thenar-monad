@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { cn } from "@/lib/cn";
 import { LeaderPanel } from "@/components/station/leader-panel";
 import { MirrorPanel } from "@/components/station/arm-link";
-import { ENTER_XR, XR_STATE, type XrStateDetail } from "@/components/station/xr";
+import { ENTER_XR, XR_STATE, lastXrState, type XrStateDetail } from "@/components/station/xr";
 
 type Mode = "keys" | "leader" | "quest";
 const KEY = "thenar:drive-with";
@@ -114,7 +114,7 @@ function Quest({ taskId, xr }: { taskId: number; xr: { vr: boolean; mr: boolean 
     const t = setTimeout(() => setLink(`${host}/q/${taskId}`), 0);
     return () => clearTimeout(t);
   }, [taskId]);
-  const [state, setState] = useState<XrStateDetail>({ mode: null, failed: null });
+  const [state, setState] = useState<XrStateDetail>(() => lastXrState.current);
   useEffect(() => {
     const on = (e: Event) => setState((e as CustomEvent<XrStateDetail>).detail);
     window.addEventListener(XR_STATE, on);
@@ -126,13 +126,13 @@ function Quest({ taskId, xr }: { taskId: number; xr: { vr: boolean; mr: boolean 
     return (
       <div className="flex flex-col gap-3">
         {xr.mr && state.mode !== "vr" ? (
-          <button type="button" onClick={() => enter("mr")} disabled={!!state.mode}
+          <button type="button" onClick={() => enter("mr")} disabled={!!state.mode || !state.ready}
             className="rounded-lg bg-lilac px-4 py-3 text-sm font-semibold text-black transition duration-300 hover:bg-white active:scale-[0.98] disabled:opacity-70">
-            {state.mode === "mr" ? "In the headset" : "Put it on my table"}
+            {state.mode === "mr" ? "In the headset" : state.ready ? "Put it on my table" : "Loading the arm…"}
           </button>
         ) : null}
         {xr.vr && state.mode !== "mr" ? (
-          <button type="button" onClick={() => enter("vr")} disabled={!!state.mode}
+          <button type="button" onClick={() => enter("vr")} disabled={!!state.mode || !state.ready}
             className="rounded-lg border border-white/15 px-4 py-2.5 text-sm text-white transition-colors hover:bg-white/5 disabled:opacity-70">
             {state.mode === "vr" ? "In the headset" : "Enter in VR"}
           </button>

@@ -105,7 +105,14 @@ function placeAtHit(base: XRReferenceSpace, hit: XRPose, viewer: XRPose): XRRefe
 export const ENTER_XR = "thenar:enter-xr";
 /** Announced whenever a session starts, ends or is refused. */
 export const XR_STATE = "thenar:xr-state";
-export type XrStateDetail = { mode: "vr" | "mr" | null; failed: string | null };
+export type XrStateDetail = {
+  /** The scene is drawn and a session can be asked for. */
+  ready: boolean;
+  mode: "vr" | "mr" | null;
+  failed: string | null;
+};
+/** The last state announced, for a panel that mounts after the announcement. */
+export const lastXrState: { current: XrStateDetail } = { current: { ready: false, mode: null, failed: null } };
 
 /**
  * Read the controllers and hands each frame. Lives inside the Canvas because
@@ -458,9 +465,12 @@ export function EnterXR({ gl, className }: { gl: THREE.WebGLRenderer | null; cla
     return () => window.removeEventListener(ENTER_XR, on);
   }, []);
   const enterRef = useRef<((mode: "vr" | "mr") => Promise<void>) | null>(null);
+  const ready = !!gl && !!modes && (modes.vr || modes.mr);
   useEffect(() => {
-    window.dispatchEvent(new CustomEvent<XrStateDetail>(XR_STATE, { detail: { mode: inSession, failed } }));
-  }, [inSession, failed]);
+    const detail = { ready, mode: inSession, failed };
+    lastXrState.current = detail;
+    window.dispatchEvent(new CustomEvent<XrStateDetail>(XR_STATE, { detail }));
+  }, [ready, inSession, failed]);
 
   if (!modes || (!modes.vr && !modes.mr) || !gl) return null;
   // In the headset's own browser the station's Quest panel carries these, larger.
