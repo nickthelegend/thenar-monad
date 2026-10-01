@@ -62,7 +62,9 @@ export function LabsFooter() {
           ))}
         </div>
       </div>
-      <p className="mx-auto mt-16 max-w-[1200px] text-xs text-scribe-3">© 2026 ThenarLabs. Built on Monad.</p>
+      <p className="mx-auto mt-16 max-w-[1200px] text-xs text-scribe-3">
+        © 2026 ThenarLabs. Built on Monad. The hero film was made with Google Veo, and the glass renders with ChatGPT.
+      </p>
     </footer>
   );
 }

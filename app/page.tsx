@@ -113,7 +113,7 @@ export default async function LabsHome() {
               loop
               playsInline
               preload="auto"
-              poster="/labs/hero.webp"
+              poster="/labs/hero-poster.webp"
             >
               <source src="/labs/hero.webm" type="video/webm" />
               <source src="/labs/hero.mp4" type="video/mp4" />
