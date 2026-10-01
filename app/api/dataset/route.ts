@@ -109,9 +109,10 @@ export async function GET(req: Request) {
   // Whole-corpus pulls are what a subscription is for. A single episode by
   // hash stays open: that is the sample a buyer looks at before deciding, and
   // charging for the look is how you end up with nobody looking.
+  // Subscription first, proof second: an address with no time on it is told
+  // so (402) before it is asked to sign for nothing, and one that has time
+  // has to show it is the one asking (401 until it does).
   const subscriber = req.headers.get("x-subscriber");
-  const proof = await subscriberProof(subscriber, taskId, req.headers);
-  if (proof) return proof;
   const access = await corpusAccess(subscriber);
   if (access.gated && access.unreadable) {
     return NextResponse.json(
@@ -130,6 +131,10 @@ export async function GET(req: Request) {
       },
       { status: 402 },
     );
+  }
+  if (access.gated) {
+    const proof = await subscriberProof(subscriber, taskId, req.headers);
+    if (proof) return proof;
   }
 
   return taskCorpus(taskId);
