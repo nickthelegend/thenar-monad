@@ -6,6 +6,11 @@
 **Try it:** https://app.thenar.io (on Monad testnet). The team behind it,
 ThenarLabs, and its hardware: https://thenar.io.
 
+**Drive a task three ways:** from the keyboard, from a real SO-101 leader arm
+plugged in over USB, or from a Meta Quest 3S with the arm standing on your own
+table in mixed reality (`app.thenar.io/q/0` in the headset's browser). Every
+way records the same trajectory, scored and paid the same way.
+
 ## The one-line pitch
 
 Robot training data where the people who recorded it provably own it, and the

@@ -2,21 +2,27 @@
 
 ## A Quest 3 / 3S on the station
 
-Open any task's station in the Quest browser, at `app.thenar.io/station/<task>`. Two buttons appear in the corner
-of the scene when the browser has WebXR:
+In the Quest browser, open `app.thenar.io/q/<task>` (for example `app.thenar.io/q/0`).
+That is the station for the task with **Drive with: Quest 3S** already chosen. On a
+laptop, the same panel shows the link to type into the headset.
 
-- **Enter on your table** — mixed reality. The bench sits on your real table, in passthrough.
-- **Enter in VR** — the modelled room.
+- **Put it on my table**: mixed reality. Point the right controller at your real
+  table: a ring shows where the arm will stand, and the bench follows it. Pull the
+  trigger to set it down. With hands instead of controllers, look at the table and
+  pinch. If the headset has not scanned your room it finds no surface; after a
+  moment the trigger keeps the bench where it already stands. Running Space Setup
+  once fixes that.
+- **Enter in VR**: the modelled room, with the bench brought in front of you.
 
-The bench is placed a forearm ahead of you on entry. Rest the right controller on
-your real table and press **B** to stand the arm exactly there.
+In mixed reality only the arm, the task's objects and the goal ring are drawn, and
+their shadows fall on your real table. The modelled room and plate are hidden.
 
 | Controller | |
 |---|---|
 | **Grip** (hold) | take hold of the arm: the tool follows your hand, millimetre for millimetre |
-| **Trigger** | close the jaws, as far as it is pulled |
+| **Trigger** | close the jaws, as far as it is pulled (the pull that placed the arm does not count) |
 | **A** (or **X**) | begin a run, or end the one in progress |
-| **B** | put the bench where this controller rests |
+| **B** | pick the arm up and place it again |
 | **Stick** | nudge the tool one axis at a time |
 
 | Hands | |
@@ -24,21 +30,37 @@ your real table and press **B** to stand the arm exactly there.
 | **Left pinch** (hold) | take hold of the arm; it follows your right hand |
 | **Right thumb to index** | the jaws |
 
-The panel above the bench shows the task, the run and what to press. Take the headset
-off to submit: a run is paid from your wallet like any other, after the same
-passkey sign-in, and recorded in the same shape as one driven from a keyboard.
+The panel beside the bench shows the task, the run and what to press. Take the
+headset off to submit: a run is paid from your wallet like any other, after the
+same passkey sign-in, and recorded in the same shape as one driven from a keyboard
+or a leader arm.
 
-### Reaching the dev server from the headset
+### Reaching a local build from the headset
 
 WebXR needs a secure origin. Over USB, with developer mode on the headset:
 
 ```bash
-adb reverse tcp:3334 tcp:3334
-pnpm exec next dev --port 3334
+adb reverse tcp:3338 tcp:3338
+NEXT_DIST_DIR=.next-quest pnpm exec next build && NEXT_DIST_DIR=.next-quest pnpm exec next start -p 3338
 ```
 
-Then open `http://localhost:3334/station/0` in the Quest browser. A deployed site
-(HTTPS) needs nothing.
+Then open `http://localhost:3338/q/0` in the Quest browser. Use a production build:
+under `next dev` the station's 3D context can be lost after a few seconds. A
+deployed site (HTTPS) needs nothing.
+
+### Testing without a headset
+
+`test/live-station-xr.mjs` (VR) and `test/live-station-mr.mjs` (table placement)
+drive the station through Meta's IWER emulator in a headed Chromium:
+
+```bash
+IWER=path/to/iwer.bundle.js BASE=https://app.thenar.io TASK=0 node test/live-station-mr.mjs
+```
+
+The emulator has no room to scan, so the MR test answers hit tests with a table
+0.74 m up and 0.6 m ahead, then checks where the bench stands from the head pose
+the renderer is given. Both tests carry a fix for IWER 2.5, whose
+`getOffsetReferenceSpace` drops the offset.
 
 ## Driving a task with your SO-101 leader (AS5600)
 
