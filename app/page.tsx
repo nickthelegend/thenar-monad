@@ -8,6 +8,7 @@ import { LabsNav } from "@/components/labs/labs-nav";
 import { LabsFooter } from "@/components/labs/labs-footer";
 import { Reveal } from "@/components/labs/reveal";
 import { Tagline } from "@/components/labs/tagline";
+import { HeroVideo } from "@/components/labs/hero-video";
 import { AXON_ABI } from "@/lib/abi";
 import { AXON_ADDRESS, IS_DEPLOYED, appChain } from "@/lib/chain";
 import { chainClient } from "@/lib/rpc";
@@ -106,18 +107,14 @@ export default async function LabsHome() {
       <section className="relative flex min-h-[100svh] flex-col items-center overflow-hidden px-4 pb-16 text-center">
         <div aria-hidden className="absolute inset-x-0 bottom-0 top-[38%] [mask-image:linear-gradient(to_bottom,transparent,black_12%,black_80%,transparent)]">
           {heroFilm ? (
-            <video
+            <HeroVideo
               className="absolute inset-0 h-full w-full object-cover object-[center_40%]"
-              autoPlay
-              muted
-              loop
-              playsInline
-              preload="auto"
               poster="/labs/hero-poster.webp"
-            >
-              <source src="/labs/hero.webm" type="video/webm" />
-              <source src="/labs/hero.mp4" type="video/mp4" />
-            </video>
+              sources={[
+                { src: "/labs/hero.webm", type: "video/webm" },
+                { src: "/labs/hero.mp4", type: "video/mp4" },
+              ]}
+            />
           ) : (
             <Image src="/labs/hero.webp" alt="" fill priority sizes="100vw" className="object-cover object-[center_40%]" />
           )}
