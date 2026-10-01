@@ -18,7 +18,7 @@ import { useTaskCatalogue } from "@/components/tasks-provider";
 export default function FoundryPage() {
   const s = useSession();
   const { tasks } = useTaskCatalogue();
-  const { data: policies, isLoading, refetch } = usePolicies();
+  const { data: policies, isLoading, isError, refetch } = usePolicies();
 
   const mintable = (tasks ?? []).filter((t) => t.slotsFilled >= t.slotsTotal && !t.policyMinted);
 
@@ -55,6 +55,13 @@ export default function FoundryPage() {
         <ul className="mt-6 flex flex-col gap-4" aria-busy="true">
           {Array.from({ length: 2 }, (_, i) => <li key={i} className="hatch h-40" />)}
         </ul>
+      ) : isError && !policies ? (
+        <div className="mt-6 border border-rule px-6 py-12 text-center">
+          <p className="text-[15px] text-scribe-2">The minted policies could not be read from the chain just now.</p>
+          <button type="button" onClick={() => refetch()} className="mt-4 border border-rule-strong px-4 py-2 text-[12px] text-scribe hover:border-scribe">
+            Try again
+          </button>
+        </div>
       ) : (policies?.length ?? 0) === 0 ? (
         <div className="mt-6 border border-rule px-6 py-16 text-center">
           <p className="text-[15px] text-scribe-2">No policy has been minted yet.</p>

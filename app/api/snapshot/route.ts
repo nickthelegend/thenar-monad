@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { cronRefusal } from "@/lib/server/cron-auth";
 import { snapshot } from "@/lib/server/snapshot";
 
 export const runtime = "nodejs";
@@ -13,10 +14,8 @@ export const maxDuration = 60;
  * but the object is the whole corpus, so it is worth the guard.
  */
 export async function GET(req: Request) {
-  const secret = process.env.CRON_SECRET;
-  if (secret && req.headers.get("authorization") !== `Bearer ${secret}`) {
-    return NextResponse.json({ error: "Not authorised." }, { status: 401 });
-  }
+  const refused = cronRefusal(req);
+  if (refused) return refused;
 
   // Date only: one snapshot a day, and re-running replaces rather than piles up.
   const stamp = new Date().toISOString().slice(0, 10);

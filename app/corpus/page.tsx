@@ -126,7 +126,7 @@ export default function CorpusPage() {
       </p>
 
       {/* The gate answers 402 and, until now, pointed nowhere. */}
-      <CorpusAccessPanel />
+      <CorpusAccessPanel taskId={taskId} />
 
       <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-3 border-y border-rule py-3">
         <span className="flex items-baseline gap-2">

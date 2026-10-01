@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePath } from "@/lib/use-path";
 import { useBlockNumber } from "wagmi";
 import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/cn";
@@ -58,7 +58,7 @@ const inGroup = (pathname: string | null, g: (typeof GROUPS)[number]) =>
   g.items.some((i) => pathname === i.href || pathname?.startsWith(`${i.href}/`) || (i.href === "/spec/so101" && pathname === "/spec"));
 
 export function SiteNav({ force = false }: { force?: boolean } = {}) {
-  const pathname = usePathname();
+  const pathname = usePath();
   const s = useSession();
   const { data: block } = useBlockNumber({ watch: true, query: { enabled: IS_DEPLOYED } });
 

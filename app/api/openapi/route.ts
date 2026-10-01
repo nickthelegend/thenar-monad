@@ -120,15 +120,19 @@ function spec() {
           summary: "Download a corpus, or a single episode.",
           description:
             "One episode by hash is open to anyone. A whole task's corpus needs " +
-            "an active subscription, named by the x-subscriber header and checked " +
-            "on chain. The export carries phase boundaries, an operator-held-out " +
-            "split, and the failed runs in a separate array.",
+            "an active subscription, named by the x-subscriber header, proved by a " +
+            "personal_sign from that address over \"Thenar corpus download\\nsubscriber: " +
+            "<address lowercase>\\ntask: <id>\\nuntil: <unix seconds, at most 600 ahead>\", " +
+            "and checked on chain. The export carries phase boundaries, an " +
+            "operator-held-out split, and the failed runs in a separate array.",
           parameters: [
             { name: "taskId", in: "query", required: false, schema: { type: "integer", minimum: 0 } },
             { name: "traj", in: "query", required: false, schema: { type: "string", pattern: "^0x[0-9a-fA-F]{64}$" } },
             { name: "x-subscriber", in: "header", required: false, schema: { type: "string", pattern: "^0x[0-9a-fA-F]{40}$" }, description: "The address whose subscription to check." },
+            { name: "x-subscriber-signature", in: "header", required: false, schema: { type: "string" }, description: "That address's signature over the download message." },
+            { name: "x-subscriber-until", in: "header", required: false, schema: { type: "integer" }, description: "The expiry named in the signed message, unix seconds." },
           ],
-          responses: { "200": ok("The corpus or the episode."), "400": ok("Neither taskId nor traj was given, or one was malformed."), "402": ok("No active subscription for that address."), "404": ok("Nothing recorded for that task.") },
+          responses: { "200": ok("The corpus or the episode."), "400": ok("Neither taskId nor traj was given, or one was malformed."), "401": ok("An address was named without a valid, current signature from it."), "402": ok("No active subscription for that address."), "404": ok("Nothing recorded for that task."), "503": ok("The subscription contract could not be read; nothing was served.") },
         },
       },
       "/api/dataset/summary": { get: { summary: "What a corpus contains, without downloading it.", parameters: [{ name: "taskId", in: "query", required: true, schema: { type: "integer", minimum: 0 } }], responses: { "200": ok("Summary."), "400": ok("Missing taskId.") } } },

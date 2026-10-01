@@ -69,8 +69,17 @@ export const fmtInt = (n: number) => n.toLocaleString(locale());
  * a payout shown to three places in one country and two in another would make
  * the same transaction look like two different amounts.
  */
-export const fmtMon = (n: number, dp = 3) =>
-  n.toLocaleString(locale(), { minimumFractionDigits: dp, maximumFractionDigits: dp });
+/**
+ * A MON amount at a fixed number of places, except that an amount too small
+ * to show at that precision keeps two significant figures rather than reading
+ * as zero: a task paying 0.0000001 MON a run said "0.000 MON".
+ */
+export const fmtMon = (n: number, dp = 3) => {
+  if (n !== 0 && Math.abs(n) < 0.5 * 10 ** -dp) {
+    return n.toLocaleString(locale(), { maximumSignificantDigits: 2, maximumFractionDigits: 18 });
+  }
+  return n.toLocaleString(locale(), { minimumFractionDigits: dp, maximumFractionDigits: dp });
+};
 
 /** Scores live on 0..10000 on chain; operators read them as a percentage. */
 export const fmtScore = (score: number) =>

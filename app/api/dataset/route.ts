@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import { recoverMessageAddress } from "viem";
+import { corpusDownloadMessage, PROOF_WINDOW_SECONDS } from "@/lib/corpus-proof";
 import { phasesOf } from "@/lib/phases";
 import type { Sample } from "@/lib/types";
 import { queryOne } from "@/lib/server/db";
@@ -107,7 +109,16 @@ export async function GET(req: Request) {
   // Whole-corpus pulls are what a subscription is for. A single episode by
   // hash stays open: that is the sample a buyer looks at before deciding, and
   // charging for the look is how you end up with nobody looking.
-  const access = await corpusAccess(req.headers.get("x-subscriber"));
+  const subscriber = req.headers.get("x-subscriber");
+  const proof = await subscriberProof(subscriber, taskId, req.headers);
+  if (proof) return proof;
+  const access = await corpusAccess(subscriber);
+  if (access.gated && access.unreadable) {
+    return NextResponse.json(
+      { error: "The subscription contract could not be read, so nothing was served. Try again in a moment." },
+      { status: 503 },
+    );
+  }
   if (access.gated && !access.allowed) {
     return NextResponse.json(
       {
@@ -122,4 +133,44 @@ export async function GET(req: Request) {
   }
 
   return taskCorpus(taskId);
+}
+
+/**
+ * The caller has to be the subscriber, not just name one. Returns the refusal
+ * to send, or null when the signature is good. Without an address at all the
+ * subscription check answers, so a bare request still learns what to send.
+ */
+async function subscriberProof(subscriber: string | null, taskId: number, h: Headers): Promise<NextResponse | null> {
+  if (!subscriber || !/^0x[0-9a-fA-F]{40}$/.test(subscriber)) return null;
+  const signature = h.get("x-subscriber-signature");
+  const until = Number(h.get("x-subscriber-until"));
+  if (!signature || !/^0x[0-9a-fA-F]+$/.test(signature) || !Number.isInteger(until)) {
+    return NextResponse.json(
+      {
+        error:
+          "Prove the subscription is yours: sign the download with that address and send the signature " +
+          "as x-subscriber-signature, with x-subscriber-until.",
+        message: corpusDownloadMessage(subscriber, taskId, Math.floor(Date.now() / 1000) + PROOF_WINDOW_SECONDS),
+      },
+      { status: 401 },
+    );
+  }
+  const now = Math.floor(Date.now() / 1000);
+  if (until < now) {
+    return NextResponse.json({ error: "That signature has expired. Sign the download again." }, { status: 401 });
+  }
+  if (until > now + PROOF_WINDOW_SECONDS) {
+    return NextResponse.json(
+      { error: `A download signature is good for at most ${PROOF_WINDOW_SECONDS / 60} minutes. Sign it again with a nearer until.` },
+      { status: 401 },
+    );
+  }
+  const signer = await recoverMessageAddress({
+    message: corpusDownloadMessage(subscriber, taskId, until),
+    signature: signature as `0x${string}`,
+  }).catch(() => null);
+  if (!signer || signer.toLowerCase() !== subscriber.toLowerCase()) {
+    return NextResponse.json({ error: "That signature is not from the subscribing address." }, { status: 401 });
+  }
+  return null;
 }

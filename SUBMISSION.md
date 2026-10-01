@@ -58,7 +58,7 @@ checkable:
 | **Privy** ($5k): "beyond authentication" | Operators' embedded wallets sign every run and passkey registration on Monad; a lab's budget is a Privy server wallet whose policy lets it do nothing but fund Thenar tasks (`/lab`, `lib/server/privy-lab.ts`) | Built and live |
 | **Mera: One Passkey, Many Keys** ($2.5k) | One passkey, made with Mera, does three jobs. (1) **Identity:** its P-256 key is registered in PasskeyRegistry and Monad's precompile checks it before the operator can earn. (2) **Robot ownership:** a PRF salt that means "SO-101 commands" derives, through HKDF, an Ed25519 key in a Mera signing session; the relay in front of the operator's physical arm (`--owner`) moves it only for frames signed by that key, so the passkey is the key to their robot (`lib/robot-key.ts`, `scripts/arm-relay.mjs`). (3) The same passkey on any synced device reproduces the same arm key; nothing derived is ever stored. | Built; tested with a WebAuthn authenticator in Chromium and against Monad |
 | **Qwen 3.8 Max** ($5k credits, Track 4) | The buyer agent: Qwen reads the tasks and dataset summaries, decides what to buy, pays over x402 and checks the file against SalesLog, all as tool calls | Needs a Model Studio API key |
-| **Envio** ($1k) | A HyperIndex indexer over Axon, SalesLog and CorpusShares drives the activity feed and the leaderboard | Needs an Envio API token |
+| **Envio** ($1k) | A HyperIndex indexer over Axon, SalesLog and CorpusShares (`indexer/`), running against the local chain. The app's feed and leaderboard read contract storage directly, not the indexer | Indexing Monad needs an Envio API token |
 
 ## Checklist
 

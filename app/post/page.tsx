@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { suggestInstructions } from "@/lib/instructions";
 import { useEffect, useState, useMemo } from "react";
-import { parseEther } from "viem";
+import { formatEther, parseEther } from "viem";
 import { Button, DimRule } from "@/components/primitives";
 import { useSession } from "@/components/session";
 import { useThenarWrite } from "@/lib/write";
@@ -131,8 +131,16 @@ export default function PostTaskPage() {
     [payloadId, targetId, scenario, uploaded],
   );
   const validSlots = Number.isInteger(slotsN) && slotsN > 0 && slotsN <= 10_000;
-  const validReward = /^\d*\.?\d*$/.test(reward) && rewardN > 0;
-  const total = validSlots && validReward ? slotsN * rewardN : 0;
+  // The escrow is counted in wei from the decimal as typed. Through a float,
+  // 0.0000001 became "1e-7", which parseEther refuses, and the click died in
+  // an unhandled rejection with nothing on the page.
+  const rewardWei = (() => {
+    if (!/^\d*\.?\d{0,18}$/.test(reward) || !/\d/.test(reward)) return 0n;
+    try { return parseEther(reward); } catch { return 0n; }
+  })();
+  const validReward = rewardWei > 0n;
+  const escrowWei = validSlots && validReward ? rewardWei * BigInt(slotsN) : 0n;
+  const total = Number(formatEther(escrowWei));
 
   // Two separate gates. The definition of the task is wrong or right on its
   // own, and blocks the button whatever the wallet is doing. Affordability can
@@ -466,15 +474,15 @@ export default function PostTaskPage() {
                 ? await tx.run(
                     "createTaskUntil",
                     [
-                      chainName, slotsN, parseEther(reward), scenario, difficulty,
+                      chainName, slotsN, rewardWei, scenario, difficulty,
                       BigInt(Math.floor(Date.now() / 1000) + days * 86_400),
                     ],
-                    parseEther(String(total)),
+                    escrowWei,
                   )
                 : await tx.run(
                     "createTask",
-                    [chainName, slotsN, parseEther(reward), scenario, difficulty],
-                    parseEther(String(total)),
+                    [chainName, slotsN, rewardWei, scenario, difficulty],
+                    escrowWei,
                   );
             if (r) router.push("/hub");
           }}

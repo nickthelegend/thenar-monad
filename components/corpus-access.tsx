@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useReadContract } from "wagmi";
+import { useReadContract, useSignMessage } from "wagmi";
 import { formatEther } from "viem";
 import { useSession } from "@/components/session";
 import { useThenarWrite } from "@/lib/write";
@@ -9,6 +9,7 @@ import { CORPUS_ACCESS_ABI } from "@/lib/registry-abi";
 import { DEPLOYED } from "@/lib/registry";
 import { CURRENCY, txUrl, appChain } from "@/lib/chain";
 import { fmtMon, shortHash } from "@/lib/format";
+import { corpusDownloadMessage, PROOF_WINDOW_SECONDS } from "@/lib/corpus-proof";
 
 const ACCESS = DEPLOYED.find((d) => d.key === "corpusAccess")!.address;
 
@@ -27,10 +28,50 @@ const ACCESS = DEPLOYED.find((d) => d.key === "corpusAccess")!.address;
  * says, because a buyer renewing early should not fear losing the days they
  * already paid for.
  */
-export function CorpusAccessPanel() {
+/** Time left on a subscription, in the unit that does not round it to nothing. */
+export function timeLeft(seconds: number): string {
+  if (seconds < 3600) return `${Math.max(1, Math.ceil(seconds / 60))} min left`;
+  if (seconds < 86_400) return `${Math.ceil(seconds / 3600)} h left`;
+  let d = Math.floor(seconds / 86_400);
+  let h = Math.round((seconds % 86_400) / 3600);
+  if (h === 24) { d += 1; h = 0; }
+  return `${d} ${d === 1 ? "day" : "days"}${h ? ` ${h} h` : ""} left`;
+}
+
+export function CorpusAccessPanel({ taskId = "all" }: { taskId?: number | "all" }) {
   const s = useSession();
   const tx = useThenarWrite();
   const [days, setDays] = useState(7);
+  const { signMessageAsync } = useSignMessage();
+  const [pull, setPull] = useState<{ busy: boolean; note: string | null; failed: boolean }>({ busy: false, note: null, failed: false });
+
+  /** Sign for this one task, fetch it with the signature, and save the file. */
+  const download = async (id: number) => {
+    if (!s.address) return;
+    setPull({ busy: true, note: null, failed: false });
+    try {
+      const until = Math.floor(Date.now() / 1000) + PROOF_WINDOW_SECONDS - 30;
+      const signature = await signMessageAsync({ message: corpusDownloadMessage(s.address, id, until) });
+      const r = await fetch(`/api/dataset?taskId=${id}`, {
+        headers: { "x-subscriber": s.address, "x-subscriber-signature": signature, "x-subscriber-until": String(until) },
+      });
+      if (!r.ok) {
+        const b = await r.json().catch(() => ({}));
+        throw new Error(b.error ?? `The server answered ${r.status}.`);
+      }
+      const blob = await r.blob();
+      const name = r.headers.get("content-disposition")?.match(/filename="([^"]+)"/)?.[1] ?? `thenar-task-${id}.json`;
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = name;
+      a.click();
+      URL.revokeObjectURL(a.href);
+      setPull({ busy: false, note: `Saved ${name}, ${(blob.size / 1024).toFixed(0)} KB.`, failed: false });
+    } catch (e) {
+      const m = e instanceof Error ? e.message : String(e);
+      setPull({ busy: false, failed: true, note: /reject|denied|User rejected/i.test(m) ? "You did not sign, so nothing was downloaded." : m.split("\n")[0] });
+    }
+  };
 
   const price = useReadContract({ address: ACCESS, abi: CORPUS_ACCESS_ABI, functionName: "pricePerDay" });
   const minDays = useReadContract({ address: ACCESS, abi: CORPUS_ACCESS_ABI, functionName: "MIN_DAYS" });
@@ -47,7 +88,6 @@ export function CorpusAccessPanel() {
   const hi = Number((maxDays.data as bigint | number | undefined) ?? 365);
   const dueWei = perDayWei * BigInt(days);
   const secondsLeft = Number((remaining.data as bigint | undefined) ?? 0n);
-  const daysLeft = Math.floor(secondsLeft / 86_400);
 
   const valid = days >= lo && days <= hi;
   const affordable = s.balance >= Number(formatEther(dueWei));
@@ -61,20 +101,18 @@ export function CorpusAccessPanel() {
         </span>
         {s.connected ? (
           <span className={`font-mono text-[13px] ${secondsLeft > 0 ? "text-signal" : "text-scribe-3"}`}>
-            {secondsLeft > 0
-              ? `you have ${daysLeft} ${daysLeft === 1 ? "day" : "days"} left`
-              : "no active subscription on this wallet"}
+            {secondsLeft > 0 ? `you have ${timeLeft(secondsLeft)}` : "no active subscription on this wallet"}
           </span>
         ) : null}
       </div>
 
       <p className="mt-2 max-w-[66ch] text-[13px] leading-relaxed text-scribe-2">
-        It sells time, not rights. A subscription lets{" "}
+        It sells time, not rights. While it runs,{" "}
         <code className="font-mono text-[12px] text-scribe">/api/dataset</code>{" "}
-        hand you the whole corpus as newline-delimited JSON for as long as it
-        runs; it conveys no ownership of anything, and every episode stays
-        readable one at a time by hash without paying at all. Extending adds to
-        whatever is left rather than replacing it.
+        hands you a task&rsquo;s whole corpus as one JSON file, once you sign the
+        download with the subscribing wallet; it conveys no ownership of
+        anything, and every episode stays readable one at a time by hash without
+        paying at all. Extending adds to whatever is left rather than replacing it.
       </p>
 
       <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -120,6 +158,26 @@ export function CorpusAccessPanel() {
 
       {tx.error ? (
         <p role="alert" className="mt-2 text-[13px] text-reject">{tx.error}</p>
+      ) : null}
+
+      {s.connected && secondsLeft > 0 ? (
+        <div className="mt-3 flex flex-wrap items-center gap-3">
+          {taskId === "all" ? (
+            <span className="text-[13px] text-scribe-3">Pick a task below to download its corpus.</span>
+          ) : (
+            <button
+              type="button"
+              disabled={pull.busy}
+              onClick={() => download(taskId)}
+              className="border border-rule-strong px-4 py-2 text-[12px] text-scribe transition-colors hover:border-scribe disabled:opacity-60"
+            >
+              {pull.busy ? "Sign in your wallet…" : `Download task #${taskId}`}
+            </button>
+          )}
+          {pull.note ? (
+            <span role={pull.failed ? "alert" : undefined} className={`text-[13px] ${pull.failed ? "text-reject" : "text-go"}`}>{pull.note}</span>
+          ) : null}
+        </div>
       ) : null}
       {tx.phase === "confirmed" && tx.txHash ? (
         <p className="mt-2 font-mono text-[12px] text-go">

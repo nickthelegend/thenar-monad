@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { AskPanel } from "@/components/ask-panel";
 import Link from "next/link";
+import { NewestRunLink } from "@/components/newest-run-link";
 import spec from "@/lib/arm-spec.json";
 import { NON_CAPABILITIES } from "@/lib/chain";
 import { DimRule } from "@/components/primitives";
@@ -192,9 +193,7 @@ export default function SpecPage() {
         would have is published on that run&rsquo;s own page. It scores nothing
         and changes no payout — it exists so the gap is a figure rather than an
         assumption.{" "}
-        <Link href="/run/0x77f0cc8cd166ce38679fee669324dc3b898ed308dbf7aee8752c96490941a7a2" className="text-signal hover:text-signal-hi">
-          See it on a run
-        </Link>
+        <NewestRunLink>See it on a run</NewestRunLink>
         .
       </p>
     </div>

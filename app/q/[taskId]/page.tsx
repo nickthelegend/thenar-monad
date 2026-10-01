@@ -7,6 +7,6 @@ import { redirect, notFound } from "next/navigation";
  */
 export default async function QuestLink({ params }: { params: Promise<{ taskId: string }> }) {
   const { taskId } = await params;
-  if (!/^\d{1,6}$/.test(taskId)) notFound();
+  if (!/^(0|[1-9]\d{0,5})$/.test(taskId)) notFound();
   redirect(`/station/${taskId}?headset=1`);
 }

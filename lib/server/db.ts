@@ -1,6 +1,6 @@
 import "server-only";
 import { appChain } from "@/lib/chain";
-import { migrate, query, queryOne, run, count, ENGINE, backfillContracts } from "@/lib/server/sql";
+import { migrate, query, queryOne, run, count, backfillContracts } from "@/lib/server/sql";
 import { AXON_ADDRESS, PRIOR_CONTRACTS } from "@/lib/chain";
 
 export { ENGINE, query, queryOne, count, run } from "@/lib/server/sql";
@@ -111,6 +111,18 @@ export async function recentTrajectories(limit = 20) {
        FROM trajectory WHERE settled = 1 AND chain_id = ? AND contract = ?
       ORDER BY created_at DESC LIMIT ?`,
     [appChain.id, HERE(), limit],
+  );
+}
+
+/** One contributor's settled runs, newest first. */
+export async function trajectoriesByContributor(contributor: string, limit = 500) {
+  await db();
+  return query<Omit<StoredTrajectory, "samples" | "signature" | "placement" | "efficiency" | "smoothness" | "payload_ids">>(
+    `SELECT traj_hash, task_id, contributor, score, deviation_mm, duration_s,
+            sample_count, created_at, tx_hash
+       FROM trajectory WHERE settled = 1 AND chain_id = ? AND contract = ? AND lower(contributor) = ?
+      ORDER BY created_at DESC LIMIT ?`,
+    [appChain.id, HERE(), contributor.toLowerCase(), limit],
   );
 }
 

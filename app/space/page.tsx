@@ -11,26 +11,29 @@ type Room = { taskId: number; operators: number };
 
 export default function SpacePage() {
   const [rooms, setRooms] = useState<Room[] | null>(null);
-  const { tasks } = useTaskCatalogue();
+  const [presenceDown, setPresenceDown] = useState(false);
+  const { tasks, isLoading, isError, refetch } = useTaskCatalogue();
 
   useEffect(() => {
     let live = true;
     const tick = () =>
       fetch("/api/space")
-        .then((r) => r.json())
-        .then((d: { rooms?: Room[] }) => { if (live) setRooms(d.rooms ?? []); })
-        .catch(() => { if (live) setRooms([]); });
+        .then((r) => { if (!r.ok) throw new Error(String(r.status)); return r.json(); })
+        .then((d: { rooms?: Room[] }) => { if (live) { setRooms(d.rooms ?? []); setPresenceDown(false); } })
+        .catch(() => { if (live) setPresenceDown(true); });
     void tick();
     const id = setInterval(tick, 2000);
     return () => { live = false; clearInterval(id); };
   }, []);
 
   const busy = new Map((rooms ?? []).map((r) => [r.taskId, r.operators]));
-  // A task with no slots left is not worth walking into, but a room with people
-  // in it is worth watching whether or not it can still be filled — hiding it
-  // meant the floor could say two operators were here and show nowhere they were.
+  // A room is a task that takes runs: slots left, not closed, not past its
+  // deadline, no policy minted (the hub's "Accepting runs"). Counting every
+  // unfilled slot listed eleven rooms when four would take a run. A room with
+  // people in it is still worth watching whatever its state — hiding it meant
+  // the floor could say two operators were here and show nowhere they were.
   const open = (tasks ?? [])
-    .filter((t) => t.slotsTotal - t.slotsFilled > 0 || (busy.get(t.id) ?? 0) > 0)
+    .filter((t) => t.open || (busy.get(t.id) ?? 0) > 0)
     .sort((a, b) => (busy.get(b.id) ?? 0) - (busy.get(a.id) ?? 0));
   const total = (rooms ?? []).reduce((n, r) => n + r.operators, 0);
 
@@ -57,9 +60,24 @@ export default function SpacePage() {
 
       <DimRule className="mt-6" />
 
-      {open.length === 0 ? (
+      {presenceDown ? (
+        <p role="status" className="mt-4 text-[13px] text-scribe-3">
+          Who is in each room could not be read just now. The rooms below are still open; the counts come back on their own.
+        </p>
+      ) : null}
+
+      {isLoading && !tasks ? (
+        <p className="mt-6 text-[14px] text-scribe-3">Reading the tasks from the chain…</p>
+      ) : isError && !tasks ? (
+        <div className="mt-6 border border-rule px-6 py-10 text-center">
+          <p className="text-[15px] text-scribe-2">Could not read the task registry.</p>
+          <button type="button" onClick={() => void refetch()} className="mt-4 border border-rule-strong px-4 py-2 text-[12px] text-scribe hover:border-scribe">
+            Try again
+          </button>
+        </div>
+      ) : open.length === 0 ? (
         <div className="mt-6 border border-rule px-6 py-16 text-center">
-          <p className="text-[15px] text-scribe-2">Every task is full.</p>
+          <p className="text-[15px] text-scribe-2">No task is taking runs right now.</p>
           <p className="mx-auto mt-1 max-w-[46ch] text-[14px] text-scribe-3">
             A room opens as soon as somebody funds a task with slots left to fill.
           </p>

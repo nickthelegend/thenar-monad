@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { INDEX_CONFIGURED, INDEX_MISSING, fetchIndex } from "@/lib/index-config";
-import { formatEther, isAddress } from "viem";
+import { formatEther, getAddress, isAddress } from "viem";
 import { useReadContract } from "wagmi";
 import { DimRule } from "@/components/primitives";
 import { addressUrl, txUrlOn, appChain, CURRENCY, AXON_ADDRESS } from "@/lib/chain";
@@ -34,8 +34,11 @@ type Settlement = {
  * public: the runs from the ledger, the calls from Monadscan's index.
  */
 export default function OperatorPage() {
-  const { address } = useParams<{ address: string }>();
-  const valid = typeof address === "string" && isAddress(address);
+  const { address: raw } = useParams<{ address: string }>();
+  // Any casing of a valid address is that address; everything below reads it
+  // in its checksummed form.
+  const valid = typeof raw === "string" && isAddress(raw, { strict: false });
+  const address = valid ? getAddress(raw.toLowerCase()) : raw;
 
   const [runs, setRuns] = useState<Run[] | null>(null);
   const [runsFailed, setRunsFailed] = useState<string | null>(null);
@@ -98,7 +101,7 @@ export default function OperatorPage() {
   useEffect(() => {
     if (!valid) return;
     let live = true;
-    fetch(`/api/feed?limit=50`)
+    fetch(`/api/feed?contributor=${address}`)
       .then(async (r) => {
         const d = await r.json().catch(() => null);
         if (!r.ok) throw new Error(d?.error ?? `The ledger answered ${r.status}.`);

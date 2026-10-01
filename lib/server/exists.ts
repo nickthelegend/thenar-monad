@@ -28,7 +28,7 @@ export const policyCount = () => count("policyCount");
 
 /** True only when the chain answered and the id is not below the count. */
 export async function certainlyAbsent(id: string, which: "task" | "policy"): Promise<boolean> {
-  if (!/^\d+$/.test(id)) return true;
+  if (!/^(0|[1-9]\d*)$/.test(id)) return true; // no leading zeros: one URL per id
   const n = which === "task" ? await taskCount() : await policyCount();
   return n !== null && Number(id) >= n;
 }

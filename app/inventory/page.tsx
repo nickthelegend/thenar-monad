@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { DimRule } from "@/components/primitives";
 import { PropPreview } from "@/components/prop-picker";
@@ -127,12 +126,10 @@ export default function InventoryPage() {
       )}
 
       <p className="mt-8 text-[14px] leading-relaxed text-scribe-3">
-        Your own model can join this library &mdash;{" "}
-        <Link href="/post" className="text-scribe-2 underline underline-offset-2 hover:text-probe">
-          upload a glTF binary when you post a task
-        </Link>{" "}
-        and it is validated, de-duplicated by digest and stored beside the runs
-        recorded against it.
+        Your own model can join this library &mdash; send a glTF binary to{" "}
+        <code className="font-mono text-[12px] text-scribe-2">POST /api/props</code>{" "}
+        (multipart: file, name, role, widthMm, uploader) and it is validated,
+        de-duplicated by digest and stored beside the runs recorded against it.
       </p>
     </div>
   );

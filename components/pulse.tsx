@@ -1,6 +1,6 @@
 "use client";
 
-import { usePathname } from "next/navigation";
+import { usePath } from "@/lib/use-path";
 import { useEffect, useRef } from "react";
 
 export const PULSE_KEY = "thenar.count-me-out";
@@ -31,7 +31,7 @@ export const PULSE_KEY = "thenar.count-me-out";
 let dead = false;
 
 export function Pulse() {
-  const path = usePathname();
+  const path = usePath();
   const last = useRef<string | null>(null);
 
   useEffect(() => {

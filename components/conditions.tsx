@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { usePathname } from "next/navigation";
+import { usePath } from "@/lib/use-path";
 import { useAccount, useSwitchChain } from "wagmi";
 import { appChain, RPC_ENDPOINTS, FAUCET_URL, CURRENCY, LOW_GAS_BALANCE } from "@/lib/chain";
 import { useSession } from "@/components/session";
@@ -60,7 +60,7 @@ export function Conditions() {
   // The landing page draws its own fixed header over the top of the document,
   // so a band in the normal flow sat underneath it there with both sets of text
   // showing through. On that page it docks to the bottom of the viewport.
-  const onLanding = usePathname() === "/";
+  const onLanding = usePath() === "/";
 
   const [offline, setOffline] = useState(false);
   const [rpcDown, setRpcDown] = useState(false);

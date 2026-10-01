@@ -34,7 +34,7 @@ async function handleGET(req: Request) {
   }
 
   const minParam = q.get("minScore");
-  if (minParam !== null && !/^\d+$/.test(minParam)) {
+  if (minParam !== null && (!/^\d+$/.test(minParam) || Number(minParam) > 10_000)) {
     return NextResponse.json({ error: "minScore must be an integer in 0..10000" }, { status: 400 });
   }
 

@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { NotFoundTitle } from "@/components/not-found-title";
 
 export const metadata: Metadata = { title: "Not found — Thenar" };
 
 export default function NotFound() {
   return (
     <div className="mx-auto flex min-h-[70dvh] max-w-[560px] flex-col justify-center px-5 py-16">
+      <NotFoundTitle />
       <span className="font-mono text-[13px] text-scribe-3">404</span>
       <h1 className="mt-2 font-display text-4xl font-600 leading-none">
         Nothing is measured here.

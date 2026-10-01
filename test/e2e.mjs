@@ -398,9 +398,11 @@ if (health) {
   check("no subscription, no corpus", unpaid.status === 402, String(unpaid.status));
 
   if (SUBSCRIBER) {
-    const paid = await fetch(`${BASE}/api/dataset?taskId=0`, { headers: { "x-subscriber": SUBSCRIBER } });
-    check("a corpus subscription is honoured", paid.status === 200,
-      `${paid.status} for ${SUBSCRIBER}`);
+    // Naming a subscriber is not being one: without its signature the
+    // download is refused, whoever's address it is.
+    const named = await fetch(`${BASE}/api/dataset?taskId=0`, { headers: { "x-subscriber": SUBSCRIBER } });
+    check("a subscriber's address alone does not download", named.status === 401,
+      `${named.status} for ${SUBSCRIBER}`);
   } else {
     // Not a pass and not a failure: there is nothing subscribed to assert
     // against. Saying so is the honest result; asserting 200 from an address

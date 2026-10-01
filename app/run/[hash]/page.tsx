@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import RunView from "./run-view";
+import { getTrajectory } from "@/lib/server/db";
 
 /**
  * Say 404 when the run is not there.
@@ -24,8 +25,30 @@ export async function generateMetadata({ params }: { params: Promise<{ hash: str
   return { title: `Run ${hash.slice(0, 10)}… — Thenar` };
 }
 
+/**
+ * Whether the store holds this run: true, false, or null when it could not be
+ * asked. Behind Vercel the store is the backend's, so it is asked over HTTP;
+ * anywhere else the database is this process's own.
+ */
+async function stored(hash: string): Promise<boolean | null> {
+  const backend = process.env.BACKEND_ORIGIN?.replace(/\/$/, "");
+  try {
+    if (backend) {
+      const r = await fetch(`${backend}/api/trajectory/${hash.toLowerCase()}`, { next: { revalidate: 60 } });
+      if (r.status === 404) return false;
+      return r.ok ? true : null;
+    }
+    return Boolean(await getTrajectory(hash.toLowerCase()));
+  } catch {
+    return null;
+  }
+}
+
 export default async function RunPage({ params }: { params: Promise<{ hash: string }> }) {
   const { hash } = await params;
   if (!HASH.test(hash)) notFound();
+  // Only a definite "not stored" is a 404. A store that did not answer is not
+  // evidence of absence; the view says so in its own words.
+  if ((await stored(hash)) === false) notFound();
   return <RunView />;
 }

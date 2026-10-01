@@ -7,7 +7,6 @@ import { readContracts } from "wagmi/actions";
 import { formatEther, toFunctionSelector } from "viem";
 import { AXON_ABI } from "./abi";
 import { AXON_ADDRESS, IS_DEPLOYED, scenarioName } from "./chain";
-import { DEPLOYED } from "./registry";
 import { parSecondsFor } from "./par";
 import { armOf, instructionOf, parseScan, type ArmKind, type ScannedScene } from "./scan";
 
@@ -384,11 +383,13 @@ export function usePolicies() {
     enabled: IS_DEPLOYED,
     refetchInterval: 8_000,
     queryFn: async (): Promise<ChainPolicy[]> => {
-      const n = (await readContracts(config, {
+      const head = (await readContracts(config, {
         contracts: [{ address: AXON_ADDRESS, abi: AXON_ABI, functionName: "policyCount" }],
-      }))[0].result as bigint | undefined;
-
-      const count = Number(n ?? 0n);
+      }))[0];
+      // A failed read is not a count of zero: it used to show "No policy has
+      // been minted yet." whenever the node did not answer.
+      if (head.status !== "success") throw new Error("the policy count could not be read");
+      const count = Number(head.result as bigint);
       if (!count) return [];
 
       const rows = await readContracts(config, {

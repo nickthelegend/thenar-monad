@@ -30,7 +30,7 @@ type Row = {
 export default function TaskView() {
   const { id } = useParams<{ id: string }>();
   const n = Number(id);
-  const { isLoading, isError } = useTaskCatalogue();
+  const { isLoading, isError, refetch } = useTaskCatalogue();
   const task = useCatalogueTask(Number.isInteger(n) ? n : undefined);
 
   const { data: runs } = useQuery({
@@ -44,14 +44,22 @@ export default function TaskView() {
     },
   });
 
-  if (isError || !Number.isInteger(n)) {
+  // The server already answered 404 for an id the registry does not have, so
+  // a failure here is the chain not answering, and it says that rather than
+  // "no such task".
+  if (isError && !task) {
     return (
       <div className="mx-auto max-w-md px-5 py-24 text-center">
-        <h1 className="font-display text-3xl">No such task</h1>
-        <p className="mt-2 text-scribe-2">Task {id} is not in the registry.</p>
-        <Link href="/hub" className="mt-6 inline-block border border-rule-strong px-4 py-2 text-[12px]">
-          Back to the hub
-        </Link>
+        <h1 className="font-display text-3xl">Could not read task #{id}</h1>
+        <p className="mt-2 text-scribe-2">The chain did not answer just now. The task is unaffected.</p>
+        <div className="mt-6 flex justify-center gap-3">
+          <button type="button" onClick={() => refetch()} className="border border-scribe bg-scribe px-4 py-2 text-[12px] text-ink-0">
+            Try again
+          </button>
+          <Link href="/hub" className="inline-block border border-rule-strong px-4 py-2 text-[12px]">
+            Back to the hub
+          </Link>
+        </div>
       </div>
     );
   }

@@ -1,6 +1,6 @@
 import "server-only";
 import { PrivyClient } from "@privy-io/node";
-import { encodeFunctionData, parseAbi, toHex, type Hex } from "viem";
+import { encodeFunctionData, parseEventLogs, parseAbi, toHex, type Hex } from "viem";
 import { chainClient } from "../rpc";
 import { AXON_ADDRESS, appChain } from "@/lib/chain";
 
@@ -51,6 +51,7 @@ const client = chainClient();
 const abi = parseAbi([
   "function createTaskUntil(string name, uint32 slots, uint128 rewardPerTrajectory, uint8 scenario, uint8 difficulty, uint64 expiresAt) payable returns (uint256)",
   "function taskCount() view returns (uint256)",
+  "event TaskCreated(uint256 indexed taskId, address indexed funder, string name, uint32 slots, uint128 rewardPerTrajectory, uint8 scenario, uint8 difficulty)",
 ]);
 
 /** Privy's policy engine declined to sign. Not an outage: the control working. */
@@ -148,8 +149,18 @@ export async function postBounty(l: Lab, b: Bounty) {
   });
   const hash = await signAndSend(l, AXON_ADDRESS as `0x${string}`, value, data);
   const receipt = await client.waitForTransactionReceipt({ hash, timeout: 60_000 });
-  const count = await client.readContract({ address: AXON_ADDRESS as `0x${string}`, abi, functionName: "taskCount" });
-  return { hash, status: receipt.status, taskId: Number(count) - 1, escrowWei: value.toString() };
+  // A reverted transaction has a hash too; it was reported as a posted task.
+  if (receipt.status !== "success") {
+    throw new Error(`The bounty transaction reverted on ${appChain.name} (${hash}), so no task was posted and nothing was escrowed.`);
+  }
+  // The task's id is the one this transaction created, read from its own
+  // TaskCreated log; taskCount - 1 could name somebody else's task posted in
+  // the same block.
+  const created = parseEventLogs({ abi, logs: receipt.logs, eventName: "TaskCreated" })
+    .find((e) => e.address.toLowerCase() === AXON_ADDRESS.toLowerCase());
+  if (!created) throw new Error(`The bounty transaction ${hash} succeeded but created no task.`);
+  const taskId = Number(created.args.taskId);
+  return { hash, status: receipt.status, taskId, escrowWei: value.toString() };
 }
 
 /**

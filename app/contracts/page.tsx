@@ -192,12 +192,11 @@ export default async function ContractsPage() {
         The method is resolved from the selector against the deployed
         contract&rsquo;s own compiler artifact rather than against the pruned ABI
         this interface calls &mdash; which is why{" "}
-        <code className="text-scribe-2">createTaskUntil</code>,{" "}
-        <code className="text-scribe-2">closeTask</code> and{" "}
-        <code className="text-scribe-2">submitTrajectoryFor</code> appear here by
-        name. They are real functions of this contract that the frontend never
-        calls, and against the interface&rsquo;s ABI a third of this history read
-        as unrecognised selectors.
+        <code className="text-scribe-2">submitTrajectoryFor</code> and{" "}
+        <code className="text-scribe-2">fundTask</code> appear here by name. They
+        are real functions of this contract that no page sends, made by scripts
+        and other callers, and against the interface&rsquo;s ABI they read as
+        unrecognised selectors.
       </p>
       {IS_DEPLOYED ? <CallLog /> : (
         <p className="mt-4 font-mono text-[13px] text-scribe-3">Nothing is deployed on {appChain.name} yet, so there are no calls to list.</p>

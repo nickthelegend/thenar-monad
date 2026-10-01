@@ -865,7 +865,9 @@ function MeasurementSnap({
   onAgain: () => void;
   onLeave: () => void;
 }) {
-  const RESERVE_FLOOR = 0.05;
+  // The same floor the warning is raised at; the note said 0.05 while the
+  // warning appeared under 0.1.
+  const RESERVE_FLOOR = LOW_GAS_BALANCE;
   const busy = tx.phase === "verifying" || tx.phase === "signing" || tx.phase === "pending";
   const done = tx.phase === "confirmed";
 
@@ -1010,7 +1012,7 @@ function MeasurementSnap({
           {thinOnGas && !done ? (
             <p className="border border-signal bg-signal-dim px-3 py-2 text-[13px] leading-relaxed text-signal">
               Your balance is {fmtMon(s.balance, 4)} {CURRENCY}. The chain reserves against
-              the whole gas limit, so a submit needs roughly {RESERVE_FLOOR} {CURRENCY}
+              the whole gas limit, so a submit needs roughly {RESERVE_FLOOR} {CURRENCY}{" "}
               on hand even though it spends a fraction of that.{" "}
               <a href={FAUCET_URL} target="_blank" rel="noreferrer" className="underline">
                 Top up
@@ -1059,7 +1061,12 @@ function MeasurementSnap({
 
         <div className="flex flex-wrap items-stretch gap-px border-t border-rule bg-rule">
           {accepted && !done ? (
-            s.wrongNetwork ? (
+            // A practice run has nothing to submit, signed in or not: the
+            // button states that and does nothing, where it used to open the
+            // sign-in for a run that could never be sent.
+            practice ? (
+              <Button variant="primary" className="flex-1" disabled>{label}</Button>
+            ) : s.wrongNetwork ? (
               <Button variant="primary" className="flex-1" onClick={s.switchToChain}>{label}</Button>
             ) : !s.connected ? (
               <Button variant="primary" className="flex-1" onClick={s.connect}>{label}</Button>

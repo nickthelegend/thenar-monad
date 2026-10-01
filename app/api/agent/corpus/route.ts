@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
-import { NextResponse, type NextRequest } from "next/server";
+import { APP_ORIGIN } from "@/lib/site";
+import { NextRequest, NextResponse } from "next/server";
 import { HTTPFacilitatorClient, decodePaymentRequiredHeader, decodePaymentResponseHeader } from "@x402/core/http";
 import { withX402FromHTTPServer, x402HTTPResourceServer, x402ResourceServer } from "@x402/next";
 import { ExactEvmScheme } from "@x402/evm/exact/server";
@@ -83,6 +84,19 @@ function saleOf(req: Request, res: Response, taskId: number): CorpusSale | null 
   return null;
 }
 
+/**
+ * The request as the buyer addressed it. Behind Vercel's rewrite the backend
+ * sees its own address, so the offer's resource read
+ * https://localhost:8080/api/agent/corpus, a URL no agent can fetch. The
+ * public origin is configured, never taken from a header a caller could set.
+ */
+const PUBLIC_ORIGIN = (process.env.PUBLIC_ORIGIN ?? APP_ORIGIN).replace(/\/$/, "");
+function asPublic(req: Request): NextRequest {
+  if (!PUBLIC_ORIGIN) return req as NextRequest;
+  const u = new URL(req.url);
+  return new NextRequest(`${PUBLIC_ORIGIN}${u.pathname}${u.search}`, req);
+}
+
 const headerSafe = (s: string) => s.replace(/[^\x20-\x7e]/g, "?").slice(0, 200);
 
 async function handleGET(req: Request) {
@@ -100,7 +114,7 @@ async function handleGET(req: Request) {
     return NextResponse.json({ error: "taskId must be a non-negative integer" }, { status: 400 });
   }
 
-  const res = await build(treasury)(req as NextRequest);
+  const res = await build(treasury)(asPublic(req));
 
   // x402 v2 puts the offer in a header and leaves the body empty. Anyone
   // reading a 402 by hand reads the body, so the same object goes in both. Browsers get the paywall page as is.

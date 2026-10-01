@@ -42,12 +42,12 @@ const WAYS = [
 const STEPS = [
   { n: "01", title: "Set up your passkey", body: "Once. Face ID, a fingerprint or a PIN; Monad checks it on chain, so paid runs come from a person." },
   { n: "02", title: "Do the task", body: "Pick the payload up and place it in the goal ring. The station measures the run as you finish." },
-  { n: "03", title: "Get paid", body: "The verifier signs the score and one Monad transaction records the run, pays you and issues your corpus shares." },
+  { n: "03", title: "Get paid", body: "The verifier signs the score and one Monad transaction records the run and pays you. Your share of the corpus is issued a moment later." },
 ];
 
 export default async function ThenarHome() {
   const figures = await openTasks();
-  const tasks = figures?.tasks.filter((t) => t.slotsLeft > 0).slice(0, 6) ?? [];
+  const tasks = figures?.tasks.filter((t) => t.accepting).slice(0, 6) ?? [];
 
   return (
     <div className="bg-black text-white">

@@ -28,6 +28,9 @@ type Health = {
  * refreshed, with what each one means when it fails.
  */
 const MEANS: Record<string, string> = {
+  keyIsolation: "The public web service must hold no signing key, so a breach of it cannot sign a score.",
+  signer: "The private service that holds the verifier key answers, and names the key it holds.",
+  serialisation: "The signer and the web service hash a trajectory the same way, or a signature would not match the run it was meant for.",
   verifierKey: "Without it the server cannot sign a score, and the contract will not pay an unsigned one.",
   contract: "The address every read and write goes to.",
   database: "Where the trajectories themselves live. The chain holds their hashes, not their samples.",

@@ -92,7 +92,10 @@ async function handlePOST(req: Request) {
     });
     const { taskId, contributor, durationSeconds, deviationMm, success } = body ?? {};
 
-    if (typeof taskId !== "number" || taskId < 0) throw new VerifyError("taskId is required");
+    if (taskId === undefined || taskId === null) throw new VerifyError("taskId is required");
+    if (typeof taskId !== "number" || !Number.isInteger(taskId) || taskId < 0) {
+      throw new VerifyError("taskId must be a non-negative integer");
+    }
     if (typeof contributor !== "string" || !/^0x[0-9a-fA-F]{40}$/.test(contributor)) {
       throw new VerifyError("contributor must be an address");
     }

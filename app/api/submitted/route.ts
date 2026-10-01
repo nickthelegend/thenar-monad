@@ -1,6 +1,8 @@
 import { logged } from "@/lib/server/log";
 import { NextResponse } from "next/server";
-import { getAddress } from "viem";
+import { getAddress, parseEventLogs } from "viem";
+
+import { AXON_ABI } from "@/lib/abi";
 
 import { chainClient } from "@/lib/rpc";
 import { AXON_ADDRESS, appChain } from "@/lib/chain";
@@ -58,11 +60,32 @@ async function handlePOST(req: Request) {
     );
   }
 
-  await markSettled(trajHash, txHash);
+  // Hashes are stored lowercase; the same spelling settles the row and names
+  // its shares, or one could happen without the other.
+  const hash = trajHash.toLowerCase();
+
+  // A successful transaction to the protocol is not yet this run's. Any of
+  // them would have settled any stored hash, and issued it shares, until the
+  // receipt had to carry the TrajectoryAccepted log for exactly this run.
+  const accepted = parseEventLogs({ abi: AXON_ABI, logs: receipt.logs, eventName: "TrajectoryAccepted" })
+    .some((l) => l.address.toLowerCase() === AXON_ADDRESS.toLowerCase()
+      && String((l.args as { trajHash?: string }).trajHash).toLowerCase() === hash);
+  if (!accepted) {
+    return NextResponse.json(
+      { error: "that transaction did not record this run" },
+      { status: 409 },
+    );
+  }
+
+  if (!(await getTrajectory(hash))) {
+    return NextResponse.json({ error: "no run with that hash is stored here" }, { status: 404 });
+  }
+
+  await markSettled(hash, txHash.toLowerCase());
 
   // The run is paid by the protocol; its share of the corpus is issued by
   // CorpusShares, a second Monad transaction that settles a moment later.
-  const shares = await issueRunShares(trajHash.toLowerCase());
+  const shares = await issueRunShares(hash);
   return NextResponse.json({ ok: true, block: Number(receipt.blockNumber), shares });
 }
 

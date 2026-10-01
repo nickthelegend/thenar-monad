@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePath } from "@/lib/use-path";
 import { useState } from "react";
 import { cn } from "@/lib/cn";
 import { ThenarWordmark } from "@/components/brand";
@@ -19,7 +19,7 @@ const LINKS = [
  * links in the middle, one lilac action on the right.
  */
 export function LabsNav() {
-  const pathname = usePathname();
+  const pathname = usePath();
   const [open, setOpen] = useState(false);
   return (
     <header className="fixed inset-x-0 top-0 z-50 px-4 pt-4">

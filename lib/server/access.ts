@@ -26,7 +26,7 @@ const client = chainClient();
 
 export type Access =
   | { gated: false; reason: string }
-  | { gated: true; allowed: boolean; who: string | null; remainingSeconds: number };
+  | { gated: true; allowed: boolean; who: string | null; remainingSeconds: number; unreadable?: true };
 
 export async function corpusAccess(who: string | null): Promise<Access> {
   if (!/^0x[0-9a-fA-F]{40}$/.test(CORPUS_ACCESS)) {
@@ -42,8 +42,9 @@ export async function corpusAccess(who: string | null): Promise<Access> {
     ]);
     return { gated: true, allowed: Boolean(ok), who: who.toLowerCase(), remainingSeconds: Number(left) };
   } catch {
-    // The chain is unreachable. Refusing every download because a node is
-    // having a bad minute would punish subscribers for our problem.
-    return { gated: false, reason: "the subscription contract could not be read" };
+    // The chain is unreachable. This used to open the gate, so a node having
+    // a bad minute handed the whole corpus to anyone who asked during it. It
+    // stays shut and says why; the subscriber retries a moment later.
+    return { gated: true, allowed: false, who: who.toLowerCase(), remainingSeconds: 0, unreadable: true };
   }
 }

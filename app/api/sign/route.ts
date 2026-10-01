@@ -55,7 +55,10 @@ async function handlePOST(req: Request) {
     });
     const { taskId, contributor, durationSeconds, deviationMm, success } = body ?? {};
 
-    if (typeof taskId !== "number" || taskId < 0) throw new VerifyError("taskId is required");
+    if (taskId === undefined || taskId === null) throw new VerifyError("taskId is required");
+    if (typeof taskId !== "number" || !Number.isInteger(taskId) || taskId < 0) {
+      throw new VerifyError("taskId must be a non-negative integer");
+    }
     if (typeof contributor !== "string" || !/^0x[0-9a-fA-F]{40}$/.test(contributor)) {
       throw new VerifyError("contributor must be an address");
     }
@@ -90,6 +93,15 @@ async function handlePOST(req: Request) {
       }
     }
 
+    // A task id past the end of the registry reverts getTask, which used to
+    // surface as "the verifier could not score this run".
+    const count = (await client.readContract({
+      address: AXON_ADDRESS, abi: AXON_ABI, functionName: "taskCount",
+    })) as bigint;
+    if (BigInt(taskId) >= count) {
+      return NextResponse.json({ error: "No such task." }, { status: 404 });
+    }
+
     // Read from the chain, not from the caller. par comes from the task's own
     // difficulty, so the efficiency term cannot be set by whoever calls this.
     const task = (await client.readContract({
@@ -97,10 +109,25 @@ async function handlePOST(req: Request) {
       abi: AXON_ABI,
       functionName: "getTask",
       args: [BigInt(taskId)],
-    })) as { name: string; difficulty: number; rewardPerTrajectory: bigint; slotsFilled: number; slotsTotal: number };
+    })) as {
+      name: string; difficulty: number; rewardPerTrajectory: bigint; slotsFilled: number; slotsTotal: number;
+      closed: boolean; policyMinted: boolean; expiresAt: bigint;
+    };
 
     if (task.slotsFilled >= task.slotsTotal) {
       return NextResponse.json({ error: "This task has no slots left." }, { status: 409 });
+    }
+    // The contract records a signed run whatever the task's deadline says, so
+    // the deadline is held here, where the signature is made: no signature, no
+    // record, no payout from a task its funder may already be reclaiming.
+    if (task.closed) {
+      return NextResponse.json({ error: "This task was closed by its funder. It takes no more runs." }, { status: 409 });
+    }
+    if (task.policyMinted) {
+      return NextResponse.json({ error: "This task's policy has been minted. It takes no more runs." }, { status: 409 });
+    }
+    if (task.expiresAt > 0n && Date.now() >= Number(task.expiresAt) * 1000) {
+      return NextResponse.json({ error: "This task is past its deadline. It takes no more runs." }, { status: 409 });
     }
 
     const parSeconds = parSecondsFor(task.difficulty);

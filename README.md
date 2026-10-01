@@ -44,7 +44,7 @@ Each of these is load-bearing, and each has a place in the code shaped by it.
 | **Sub-second, single-slot finality** | A run is paid in the block that records it, and the station reports the settlement latency it measured. A share issue and a sales-log write each land a moment later, so the station shows the payout and the share in one panel instead of promising the second. |
 | **Parallel execution** | `AxonProtocolV2` shards its slot counter: each operator's submit writes only its own shard, so two runs on one task touch no common storage and execute side by side. |
 | **P-256 precompile at `0x0100`** | `PasskeyRegistry` verifies a browser passkey's secp256r1 signature on chain, and a run can be authorised with it. See `/passkey`. |
-| **Gas charged on the limit** | Gas limits are estimated plus a tenth, never doubled; the station and `/post` quote the cost from receipts, and the low-balance floor is one constant. |
+| **Gas charged on the limit** | A browser write leaves the limit to the wallet's estimate, and the lab's server-signed bounty sends its estimate plus a tenth, never a doubled one; the station and `/post` quote the cost from receipts, and the low-balance floor is one constant. |
 | **100-block `eth_getLogs` cap on public RPCs** | History is read from contract storage through Multicall3, not from logs. A run and a task each record the block they were made in, so a transaction hash is a one-block log query every endpoint answers. `SalesLog` keeps every sale in storage for the same reason. |
 | **Cheap enough for a one-cent sale** | An agent pays one cent of USDC per corpus; the facilitator pays the gas and the sale is final before the response is sent. |
 
@@ -175,9 +175,9 @@ cd contracts && forge test        # 117 contract tests, including CorpusShares a
 - **Testnet only.** Nothing here is on Monad mainnet.
 - **Until `lib/deployment.ts` has addresses, nothing is deployed.** The pages
   say so rather than showing figures.
-- **No run here has been driven by a person yet** on this deployment; scripted
-  runs from `scripts/monad-run.mjs` say that they are scripted wherever they
-  are shown.
+- **No run has been recorded on this deployment yet.** `scripts/monad-run.mjs`
+  can send a signed run from a script; nothing marks such a run as scripted,
+  so none has been sent here.
 - **Monadscan's index needs a key.** The per-address call history on
   `/contracts`, `/operator` and `/portfolio` reads Etherscan's V2 API and says
   so when `ETHERSCAN_API_KEY` is unset. Everything else reads the chain.

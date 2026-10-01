@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { cronRefusal } from "@/lib/server/cron-auth";
 import { drill } from "@/lib/server/snapshot";
 
 export const runtime = "nodejs";
@@ -12,10 +13,8 @@ export const maxDuration = 120;
  * bucket, so it is worth a secret when one is configured.
  */
 export async function GET(req: Request) {
-  const secret = process.env.CRON_SECRET;
-  if (secret && req.headers.get("authorization") !== `Bearer ${secret}`) {
-    return NextResponse.json({ error: "Not authorised." }, { status: 401 });
-  }
+  const refused = cronRefusal(req);
+  if (refused) return refused;
 
   const stamp = new URL(req.url).searchParams.get("stamp")
     ?? new Date().toISOString().slice(0, 10);

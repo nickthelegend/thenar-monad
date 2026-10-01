@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import { usePath } from "@/lib/use-path";
 import { useTaskCatalogue } from "@/components/tasks-provider";
 import { cn } from "@/lib/cn";
 import { appChain } from "@/lib/chain";
@@ -82,7 +83,7 @@ const STEPS: Step[] = [
 
 export function Tour() {
   const params = useSearchParams();
-  const pathname = usePathname();
+  const pathname = usePath();
   const router = useRouter();
   const { tasks } = useTaskCatalogue();
   const [runHash, setRunHash] = useState<string | null>(null);

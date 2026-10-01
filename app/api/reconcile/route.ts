@@ -1,5 +1,6 @@
 import { logged } from "@/lib/server/log";
 import { NextResponse } from "next/server";
+import { cronRefusal } from "@/lib/server/cron-auth";
 import { keccak256, toHex } from "viem";
 import { chainClient } from "@/lib/rpc";
 import { AXON_ADDRESS, KNOWN_CHAINS } from "@/lib/chain";
@@ -48,7 +49,9 @@ async function receiptOn(rpc: string, hash: string): Promise<boolean> {
  * It only ever reads, so it can confirm and retract but never invent. Running
  * it twice changes nothing.
  */
-async function handlePOST() {
+async function handlePOST(req: Request) {
+  const refused = cronRefusal(req);
+  if (refused) return refused;
   return reconcile();
 }
 
@@ -58,14 +61,12 @@ async function handlePOST() {
  * Nothing was calling this route, which meant a row could sit unverified
  * indefinitely and the ledger could drift from the chain without anyone
  * noticing until it showed up on the feed. Vercel's scheduler only issues GET,
- * hence this. It is safe to expose: every write it makes is a fact a chain
- * returned, so the worst an unsolicited call can do is re-confirm the truth.
+ * hence this. Both methods take the same guard: it writes to the ledger and
+ * calls every known chain's RPC, which is the scheduler's business only.
  */
 export async function GET(req: Request) {
-  const secret = process.env.CRON_SECRET;
-  if (secret && req.headers.get("authorization") !== `Bearer ${secret}`) {
-    return NextResponse.json({ error: "Not authorised." }, { status: 401 });
-  }
+  const refused = cronRefusal(req);
+  if (refused) return refused;
   return reconcile();
 }
 

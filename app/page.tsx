@@ -3,15 +3,13 @@ import { existsSync } from "node:fs";
 import path from "node:path";
 import Image from "next/image";
 import Link from "next/link";
-import { formatEther } from "viem";
 import { LabsNav } from "@/components/labs/labs-nav";
 import { LabsFooter } from "@/components/labs/labs-footer";
 import { Reveal } from "@/components/labs/reveal";
 import { Tagline } from "@/components/labs/tagline";
 import { HeroVideo } from "@/components/labs/hero-video";
-import { AXON_ABI } from "@/lib/abi";
-import { AXON_ADDRESS, IS_DEPLOYED, appChain } from "@/lib/chain";
-import { chainClient } from "@/lib/rpc";
+import { appChain } from "@/lib/chain";
+import { openTasks } from "@/lib/server/open-tasks";
 import { PRODUCTS } from "@/lib/products";
 import { APP_HOME, appHref } from "@/lib/site";
 
@@ -25,21 +23,9 @@ export const metadata: Metadata = {
 export const revalidate = 300;
 
 async function monadFigures() {
-  if (!IS_DEPLOYED) return null;
-  try {
-    const client = chainClient();
-    const count = Number(await client.readContract({ address: AXON_ADDRESS, abi: AXON_ABI, functionName: "taskCount" }));
-    const tasks = (await Promise.all(
-      Array.from({ length: count }, (_, i) =>
-        client.readContract({ address: AXON_ADDRESS, abi: AXON_ABI, functionName: "getTask", args: [BigInt(i)] }),
-      ),
-    )) as unknown as { escrow: bigint; rewardPerTrajectory: bigint; slotsTotal: number; slotsFilled: number }[];
-    const escrow = tasks.reduce((n, t) => n + t.escrow, 0n);
-    const open = tasks.reduce((n, t) => n + Math.max(0, Number(t.slotsTotal) - Number(t.slotsFilled)), 0);
-    return { tasks: count, escrow: Number(formatEther(escrow)), open };
-  } catch {
-    return null;
-  }
+  // The same reading as the app's home and the hub: open means taking runs now.
+  const f = await openTasks();
+  return f ? { tasks: f.tasks.length, escrow: f.escrowMon, open: f.slotsLeft } : null;
 }
 
 const BUILT_WITH = ["Monad", "Privy", "Mera", "Envio", "Qwen", "x402", "WebXR", "MuJoCo"];

@@ -55,7 +55,7 @@ export default async function TaskPage({ params }: { params: Promise<{ id: strin
 
   // A task id is a non-negative integer. "abc" and "1.5" name nothing, and
   // that much needs no network.
-  if (!/^\d+$/.test(id)) notFound();
+  if (!/^(0|[1-9]\d*)$/.test(id)) notFound(); // one spelling per task: /task/007 is not /task/7
 
   const count = await taskCount();
   if (count !== null && Number(id) >= count) notFound();

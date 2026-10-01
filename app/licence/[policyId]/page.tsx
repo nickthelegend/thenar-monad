@@ -22,7 +22,7 @@ export default function LicencePage() {
   const id = Number(policyId);
   const valid = Number.isInteger(id) && id >= 0;
 
-  const { data: policies, isLoading } = usePolicies();
+  const { data: policies, isLoading, isError, refetch } = usePolicies();
   const { byId } = useTaskCatalogue();
   const policy = policies?.find((p) => p.id === id);
   const { data: cap } = useCapTable(valid ? id : undefined);
@@ -42,6 +42,18 @@ export default function LicencePage() {
 
   if (isLoading && !policy) {
     return <div className="mx-auto max-w-[900px] px-5 py-16"><span className="label">Reading policy #{id}…</span></div>;
+  }
+
+  if (isError && !policy) {
+    return (
+      <div className="mx-auto max-w-md px-5 py-24 text-center">
+        <h1 className="font-display text-3xl">Could not read policy #{id}</h1>
+        <p className="mt-2 text-scribe-2">The chain did not answer just now. The licence is unaffected.</p>
+        <button type="button" onClick={() => refetch()} className="mt-6 border border-rule-strong px-4 py-2 text-[12px]">
+          Try again
+        </button>
+      </div>
+    );
   }
 
   if (!policy) {

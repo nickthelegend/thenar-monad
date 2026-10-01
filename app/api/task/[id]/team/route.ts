@@ -83,6 +83,12 @@ async function handlePOST(req: Request, ctx: { params: Promise<{ id: string }> }
     return NextResponse.json({ error: "signature is required" }, { status: 400 });
   }
 
+  // An id past the end of the registry reverts getTask; that was a bare 500.
+  const count = (await client.readContract({ address: AXON_ADDRESS, abi: AXON_ABI, functionName: "taskCount" })) as bigint;
+  if (BigInt(taskId) >= count) {
+    return NextResponse.json({ error: "no such task" }, { status: 404 });
+  }
+
   // Who the funder is, asked of the chain. A roster whose authority came from
   // the request body would be a roster anybody could write.
   const task = (await client.readContract({
