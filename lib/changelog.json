@@ -1,5 +1,17 @@
 [
   {
+    "hash": "0161291",
+    "date": "2026-10-02T01:27:26+05:30",
+    "subject": "Name the datasheet's reward in the currency it is paid in",
+    "body": "reward_per_trajectory_usdc held a MON amount formatted with 18\ndecimals; it is reward_per_trajectory_mon now.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+  },
+  {
+    "hash": "d599bae",
+    "date": "2026-10-02T01:07:11+05:30",
+    "subject": "Bring the changelog up to date with the history",
+    "body": "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+  },
+  {
     "hash": "c294180",
     "date": "2026-10-02T01:07:10+05:30",
     "subject": "Say 'reading' until the chain has answered",
@@ -346,17 +358,5 @@
     "date": "2026-09-06T13:58:38+05:30",
     "subject": "Fix space: auto-repeat was flipping the jaws back open",
     "body": "Space toggled the jaws on every keydown, and a held key auto-repeats. One\npress plus nine repeats — about half a second — flipped them open, shut,\nopen, shut and left them at 42 mm. Closing the jaws genuinely did nothing,\nanywhere on the table, however close to the payload you were.\n\nThe toggle now ignores repeats, so one press is one change of state.\n\nSpace also activates whatever button has focus, and after Begin run that is\nthe End run button, so a press meant for the jaws could end the run instead.\nFocus is dropped when a run starts."
-  },
-  {
-    "hash": "5017ba3",
-    "date": "2026-09-06T13:23:52+05:30",
-    "subject": "Stop the hero payload teleporting, and make the station payload graspable",
-    "body": "The hero attached the payload on the jaw opening alone, so the moment the\njaws closed the block snapped to the gripper from wherever it happened to\nbe, and at 76 percent of the cycle its resting place flipped from the pick\nspot to the place spot in a single frame. Between those two it read as an\nobject floating around the table rather than one being carried.\n\nIt now rides the same keyframes as the arm — seated at the origin until the\ngrasp, carried until the release, seated at the destination after — and the\ncycle alternates direction, so the loop never has to teleport it back to the\nstart.\n\nThe station's capture volume also reaches high enough that one press of Q\nfrom the rest pose puts the jaws on the payload, and the readout says which\nof the two things is wrong: how far away it is, or that you are over it and\ntoo high."
-  },
-  {
-    "hash": "9aa6542",
-    "date": "2026-09-06T12:49:05+05:30",
-    "subject": "Make the payload actually graspable",
-    "body": "The capture test was a sphere measured to the payload's waist. The tool\ncannot descend below 12 mm above the table and the waist sits at 37.5 mm,\nso 25 mm of unavoidable vertical error came straight off a 55 mm budget and\nleft under 49 mm in the plane — and nothing on screen said whether you were\ninside it, so finding it was guesswork. In practice the payload could not be\npicked up.\n\nThe test is now a cylinder: within 90 mm in the table plane, and anywhere\nalong the payload's own height. The readout carries the distance to the\npayload and turns to IN RANGE — PRESS SPACE once closing the jaws will\nactually take it."
   }
 ]
