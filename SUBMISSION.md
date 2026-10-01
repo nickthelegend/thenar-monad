@@ -3,6 +3,9 @@
 **Track 4 — Trust, Identity & AI Infrastructure.** Build window 1 September to
 13 October 2026; judging 14–27 October.
 
+**Try it:** https://app.thenar.io (on Monad testnet). The team behind it,
+ThenarLabs, and its hardware: https://thenar.io.
+
 ## The one-line pitch
 
 Robot training data where the people who recorded it provably own it, and the

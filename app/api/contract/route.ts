@@ -40,6 +40,6 @@ export async function GET() {
     superseded: SUPERSEDED.map((c) => ({
       name: c.name, address: c.address, does: c.does, source: c.source,
     })),
-    registry: "https://thenar.io/contracts",
+    registry: "https://app.thenar.io/contracts",
   });
 }

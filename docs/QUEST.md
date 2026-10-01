@@ -2,7 +2,7 @@
 
 ## A Quest 3 / 3S on the station
 
-Open any task's station in the Quest browser. Two buttons appear in the corner
+Open any task's station in the Quest browser, at `app.thenar.io/station/<task>`. Two buttons appear in the corner
 of the scene when the browser has WebXR:
 
 - **Enter on your table** — mixed reality. The bench sits on your real table, in passthrough.
@@ -47,10 +47,10 @@ TCA9548A (thenar-arms, `so101-mg996r/firmware/thenar`, built with
 `-DROLE_LEADER=1`). Move it by hand and the SO-101 in the task follows it joint
 for joint, and the run records exactly what your hand did.
 
-**On thenar.io, with nothing installed** (Chrome or Edge on a computer):
+**On app.thenar.io, with nothing installed** (Chrome or Edge on a computer):
 
 1. Plug the leader into the computer over USB.
-2. Open an SO-101 task's station, e.g. `thenar.io/station/0`. Under **Your SO-101**, press
+2. Open an SO-101 task's station, e.g. `app.thenar.io/station/0`. Under **Your SO-101**, press
    **Drive with my leader arm** and pick the leader's port.
 3. The first time only: hold the leader in the home pose (base 0°, shoulder −25°,
    elbow +35°, wrist 0°, roll 0°, jaw 20°) and press **This is home**. The leader

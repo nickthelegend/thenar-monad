@@ -28,6 +28,7 @@ Avalanche build, then the move back.
 | **Sales log** | [`SalesLog`](contracts/src/SalesLog.sol): every pull, with the sha256 of the file served, in storage and in events |
 | **Identity** | A passkey per operator, made with [Mera](https://github.com/category-labs/mera) and verified on chain by [`PasskeyRegistry`](contracts/src/PasskeyRegistry.sol) through the P-256 precompile at `0x0100` ([`/api/operator`](app/api/operator/route.ts)) |
 | **Wallets** | Privy: operators sign in with an email and get an embedded wallet on Monad; a lab's budget is a Privy server wallet whose policy only lets it fund bounties |
+| **Live** | **https://app.thenar.io**, the app (tasks, the station, the data, agents). https://thenar.io is ThenarLabs, the company, and everything it builds |
 | **Repo** | https://github.com/nickthelegend/thenar-monad |
 | **Submission** | [SUBMISSION.md](SUBMISSION.md) |
 
