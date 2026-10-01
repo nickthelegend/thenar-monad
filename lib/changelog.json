@@ -1,5 +1,29 @@
 [
   {
+    "hash": "c294180",
+    "date": "2026-10-02T01:07:10+05:30",
+    "subject": "Say 'reading' until the chain has answered",
+    "body": "A read whose retries React Query has paused (it waits for focus in a\nbackground tab) is neither loading nor failed, and the task page said\n'not in the registry', the foundry 'no policy has been minted' and the\nlicence 'not minted' while nothing had answered at all. The catalogue now\nsays whether the chain has answered, and those pages, and /space, whose\nloading and failure states could never trigger because its task list is\nnever null, read that.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+  },
+  {
+    "hash": "8a673bc",
+    "date": "2026-10-02T01:00:23+05:30",
+    "subject": "Re-read after a failed write too, and judge a deadline by block time",
+    "body": "A revert usually means the page's view was stale (somebody else minted,\nfilled or closed it first), so the cached reads are refreshed then as\nwell. The signer compares a task's deadline with the latest block's\ntimestamp, the clock the contract and closeTask use, not its own.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+  },
+  {
+    "hash": "706ce30",
+    "date": "2026-10-02T00:40:36+05:30",
+    "subject": "Every write refreshes what it changed, reverts say what they mean, and no fake push",
+    "body": "- After any confirmed transaction the cached chain reads are invalidated,\n  so a minted certificate stops offering its mint and a closed task its\n  close. The certificate panel also re-reads itself after a mint.\n- A revert from a contract whose errors the page's ABI leaves out was\n  shown as a bare selector (\"reverted with the following signature:\n  0xddefae28\"). Every custom error the contracts declare is now named by\n  selector, and the ones a page can hit are said in words.\n- Web push was a stub: /status let a browser subscribe to notices that\n  nothing ever sent (no sending key, no sender). The subscription UI, the\n  route and the service worker's push handler are gone.\n- A licence's \"Download the corpus\" went to the API, which a plain link\n  can never satisfy now that a download is signed; it opens the corpus\n  page on that task (/corpus?task=N), where the signed download is. The\n  licence copy says one JSON file, not newline-delimited.\n- \"1 contributors\", \"1 runs ×\", \"1 runs stored\" read as one.\n- The Qwen agent streams each model turn: on this machine's CPU a turn\n  outlasted fetch's five-minute wait for headers.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+  },
+  {
+    "hash": "8032227",
+    "date": "2026-10-02T00:11:24+05:30",
+    "subject": "Bring the changelog up to date with the history",
+    "body": "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+  },
+  {
     "hash": "e7029e9",
     "date": "2026-10-02T00:11:23+05:30",
     "subject": "Tell a non-subscriber so before asking it to sign",
@@ -334,29 +358,5 @@
     "date": "2026-09-06T12:49:05+05:30",
     "subject": "Make the payload actually graspable",
     "body": "The capture test was a sphere measured to the payload's waist. The tool\ncannot descend below 12 mm above the table and the waist sits at 37.5 mm,\nso 25 mm of unavoidable vertical error came straight off a 55 mm budget and\nleft under 49 mm in the plane — and nothing on screen said whether you were\ninside it, so finding it was guesswork. In practice the payload could not be\npicked up.\n\nThe test is now a cylinder: within 90 mm in the table plane, and anywhere\nalong the payload's own height. The readout carries the distance to the\npayload and turns to IN RANGE — PRESS SPACE once closing the jaws will\nactually take it."
-  },
-  {
-    "hash": "cdf044b",
-    "date": "2026-09-06T12:14:19+05:30",
-    "subject": "Frame the hero arm from its real extent",
-    "body": "The camera sat about 1.08 m from an arm three quarters of a metre tall at a\n32 degree field of view, so the hero was a close crop of the elbow — the\npick-and-place cycle it exists to show was off screen.\n\nThe distance is now solved from the arm's actual extent against the panel's\naspect, taking whichever of the two axes is tighter, so it frames the whole\ncycle on a wide desktop panel and on a narrow phone one alike. Only the\ndistance is derived; the three-quarter view the product is drawn from is\nunchanged."
-  },
-  {
-    "hash": "c208418",
-    "date": "2026-09-06T11:39:33+05:30",
-    "subject": "GSAP landing motion, step icons, canonical sitemap",
-    "body": "One authored sequence rather than scattered effects: the dimension rules\ndraw out from their centres, the headline settles, and the live chain\nreadings arrive last, because on a bench the measurement is the last thing\nto appear. The run sequence reveals once as a batch on scroll.\n\nEverything uses gsap.from, so the resting state is the visible one and\nnothing is hidden if the script never runs, and the whole thing is skipped\nunder prefers-reduced-motion.\n\nThe four steps now carry drawn icons from the existing set, and the sitemap\npoints at thenar.io instead of the Railway backend, which would otherwise\nhave indexed every page twice."
-  },
-  {
-    "hash": "b5d2144",
-    "date": "2026-09-06T11:04:46+05:30",
-    "subject": "Revert the speculative viewport sizing changes",
-    "body": "Chased a blank station viewport that turned out to be the automation tab\nbeing backgrounded: requestAnimationFrame is paused in a hidden tab, so\nreact-three-fiber never initialised its renderer and nothing mounted. The\ncanvas is fine in a visible tab.\n\nviewport.tsx goes back to the version that was verified working, keeping\nonly the model path rename."
-  },
-  {
-    "hash": "d6a4c57",
-    "date": "2026-09-06T10:30:00+05:30",
-    "subject": "Measure the station viewport off the settled layout",
-    "body": "The viewport is code-split and mounts under a grid row whose height is only\nsettled once the rest of the page has laid out. react-use-measure took its\nfirst reading before that and fell back to 300x150, and because the row's\nsize never changed afterwards the observer had no reason to fire again.\n\nMeasuring undebounced off offsetWidth/Height reads the settled box, and one\ndispatched resize on the frame after the GL context exists covers the case\nwhere even that is early. RainbowKit's stylesheet also moved ahead of\nglobals.css in the layout, so its resets can no longer outrank Tailwind."
   }
 ]
