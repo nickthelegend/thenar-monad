@@ -12,24 +12,21 @@ import { Announce, Button, CountUp, Difficulty, ScoreDial, ToleranceBand } from 
 import { useSession } from "@/components/session";
 import { useSpace } from "@/lib/space";
 import { environmentForScenario, lightingFor } from "@/lib/environments";
-import { SKILL_LABEL } from "@/lib/skills";
 import { useRunsOnTask, useSubmitCost } from "@/lib/hooks";
 import { useTaskCatalogue, useCatalogueTask } from "@/components/tasks-provider";
 import { XR_ACTION, xrState } from "@/components/station/xr";
 import { TeachPanel } from "@/components/station/teach-panel";
-import { MirrorPanel } from "@/components/station/arm-link";
-import { LeaderPanel } from "@/components/station/leader-panel";
+import { DriveWith } from "@/components/station/drive-with";
 import { TaskChips } from "@/components/task-chips";
-import { embodimentOf } from "@/lib/embodiment";
 import type { Skill } from "@/lib/teach";
 import { useSubmitRun } from "@/lib/submit";
 import { OperatorGate } from "@/components/operator-gate";
 import { SHARES_SYMBOL } from "@/lib/corpus-shares";
-import { ACCEPT_FLOOR, evaluate, GRIP_CLOSED_MM, ORDER_PENALTY, TOLERANCE_MM } from "@/lib/score";
+import { ACCEPT_FLOOR, evaluate, GRIP_CLOSED_MM, TOLERANCE_MM } from "@/lib/score";
 import { shortfalls, belowFloorBy, wouldHavePaid, wouldHavePaidSentence } from "@/lib/shortfall";
 import { saveDraft, loadDraft, clearDraft } from "@/lib/run-draft";
 import { webglAvailable } from "@/lib/webgl";
-import { readTally, noteMeasured, notePaid, meanScore, minutes, type Tally } from "@/lib/session-tally";
+import { readTally, noteMeasured, notePaid, type Tally } from "@/lib/session-tally";
 import { soundOn, setSound } from "@/lib/click";
 import { txUrl, CURRENCY, CHAIN_SHORT, FAUCET_URL, LOW_GAS_BALANCE, appChain } from "@/lib/chain";
 import { sceneForTask } from "@/lib/props";
@@ -513,141 +510,55 @@ export default function StationPage() {
       </header>
 
       <div className="grid flex-1 grid-cols-1 lg:min-h-0 lg:grid-cols-[300px_1fr_308px] lg:grid-rows-[1fr]">
-        <aside className="order-2 flex flex-col border-rule lg:order-1 lg:min-h-0 lg:overflow-y-auto lg:border-r">
-          <Section title="Goal">
-            <p className="text-[14px] leading-relaxed text-scribe-2">
-              {task.name}.{" "}
+        <aside className="order-2 flex flex-col gap-6 border-white/10 p-5 lg:order-1 lg:min-h-0 lg:overflow-y-auto lg:border-r">
+          <div>
+            <p className="text-xs text-scribe-3">Goal</p>
+            <p className="mt-2 text-base leading-snug text-white">
               {scene.payloads.length > 1
-                ? `Both objects come to rest in the datum circle, ${scene.payloads[0].label} first — its seat is the left mark.`
-                : "Bring the payload to rest inside the datum circle."}
+                ? `Both into the ring, the ${scene.payloads[0].label} first.`
+                : "Pick it up and set it down inside the ring."}
             </p>
-            {scene.payloads.length > 1 ? (
-              <p className="mt-2 text-[13px] leading-relaxed text-scribe-3">
-                Placing the {scene.payloads[1].label} first still records, and still
-                pays &mdash; it costs {(ORDER_PENALTY * 100).toFixed(0)}% of the score, because a
-                recording that reverses the sequence teaches the wrong task.
-              </p>
-            ) : null}
             {scene.arms > 1 ? (
-              <p className="mt-2 text-[13px] leading-relaxed text-scribe-3">
-                Two arms. <kbd className="border border-rule-strong px-1">Tab</kbd> switches
-                which one the controls drive &mdash; the ring on the bench marks
-                the live one. Both are recorded whether or not you are driving
-                them, because an arm that was holding something is part of what
-                happened.
-              </p>
+              <p className="mt-2 text-xs text-scribe-3">Two arms: <kbd className="rounded border border-white/15 px-1">Tab</kbd> switches between them.</p>
             ) : null}
-            {task.arm === "so101" ? (
-              <p className="mt-2 text-[13px] leading-relaxed text-scribe-3">
-                On an SO-101 built with MG996R servos, solved from its CAD. It
-                reaches 400 mm and holds with one moving jaw; the run records
-                its own five joints and the jaw, not the THENAR-6&rsquo;s.
-              </p>
-            ) : null}
-            {task.scanned ? (
-              <p className="mt-2 text-[13px] leading-relaxed text-scribe-3">
-                Measured off a real table: the payload stands where it stood in
-                the photo, and the run is scored against where the target really
-                was, read from the task on chain.
-              </p>
-            ) : null}
-            {scene.varies ? (
-              <p className="mt-2 text-[13px] leading-relaxed text-scribe-3">
-                This task names no object, so each run draws one &mdash; this
-                one is the {scene.payload.label}. Which object you held is
-                recorded in the trajectory, so the run stays reproducible.
-              </p>
-            ) : null}
-          </Section>
-          {task.arm === "so101" ? (
-            <Section title="Your SO-101">
-              <div className="flex flex-col gap-4">
-                <LeaderPanel />
-                <MirrorPanel />
-              </div>
-            </Section>
-          ) : null}
-          <Section title="Controls">
-            <dl className="flex flex-col gap-1.5">
-              <Key keys={["Drag"]} action="Move the tool in the workspace" />
-              <Key keys={["W", "S", "\u2191", "\u2193"]} action="Reach out / pull in" />
-              <Key keys={["A", "D", "\u2190", "\u2192"]} action="Swing left / right" />
-              <Key keys={["E", "Q"]} action="Raise / lower" />
-              <Key keys={["Space"]} action="Open / close the jaws" />
-            </dl>
-            {/* Not a novelty control. A discrete, named grammar is what voice
-                is actually good for, and for an operator who cannot use a
-                pointer or hold a key accurately it is the difference between
-                driving this station and not. Every command dispatches the same
-                keystroke the panel above names. */}
-            <VoiceControl className="mt-3" />
+          </div>
 
-            {/* A trained network driving the same arm, through the same
-                kinematics and the same grasp rule. Marked as practice while it
-                does: a recording of a policy driving is not a demonstration by
-                the address it would be paid to, and the corpus is only worth
-                anything if its episodes are what they say they are. */}
-            <button
-              type="button"
-              onClick={() => setPolicyOn((v) => !v)}
-              aria-pressed={policyOn}
-              className={cn(
-                "mt-2 flex w-full items-center justify-between gap-3 border px-3 py-2 text-left transition-colors",
-                policyOn
-                  ? "border-probe text-probe"
-                  : "border-rule text-scribe-3 hover:border-rule-strong hover:text-scribe",
-              )}
-            >
-              <span className="text-[12px]">
-                {policyOn ? "Policy driving" : "Let the policy drive"}
-              </span>
-              <span className="font-mono text-[11px] text-scribe-3">
-                {policyOn && !policy ? "loading…" : policyOn ? "practice" : ""}
-              </span>
-            </button>
-            {policyOn ? (
-              <p className="mt-1.5 text-[12px] leading-relaxed text-scribe-3">
-                3,076 parameters, trained on 220 scripted demonstrations of a single
-                object &mdash; not on this corpus, which is not yet coherent enough to
-                learn from. On that scene it grasps from every start tested and
-                reaches the datum, and releases in five of eight. It has learned
-                nothing else: on a task with other objects, or two of them, it can
-                hover without ever grasping. Nothing it does is submitted.
-              </p>
-            ) : null}
-            <TeachPanel taskId={task.id} arm={task.arm} skill={skill} onSkill={setSkill} repeating={repeatOn} onRepeat={(on) => { setRepeatOn(on); if (on) setPolicyOn(false); }} />
-            <dl className="flex flex-col gap-1.5">
-              <div className="flex items-center gap-2 pt-1">
-                <button
-                  type="button"
-                  onClick={() => { setSound(!sound); setSoundState(!sound); }}
-                  aria-pressed={sound}
-                  className="border border-rule-strong px-1.5 py-0.5 font-mono text-[12px] text-scribe-2"
-                >
-                  {sound ? "On" : "Off"}
-                </button>
-                <span className="text-[12px] text-scribe-3">Click on grasp and release</span>
-              </div>
-              {/* A key hint is not a control. Opening the controls used to need a
-                  keyboard, on the one page most likely to be driven by a mouse
-                  or a trackpad. */}
+          <div>
+            <p className="mb-3 text-xs text-scribe-3">Drive with</p>
+            <DriveWith taskId={task.id} so101={task.arm === "so101"} />
+          </div>
+
+          <details className="group mt-auto rounded-xl border border-white/10 p-4">
+            <summary className="flex cursor-pointer list-none items-center justify-between text-sm text-scribe-2 hover:text-white">
+              More <span className="text-scribe-3 transition-transform group-open:rotate-90">›</span>
+            </summary>
+            <div className="mt-4 flex flex-col gap-3">
+              <VoiceControl />
+              {/* A trained network driving the same arm. Marked practice while it
+                  does: a policy's recording is not the operator's demonstration. */}
               <button
                 type="button"
-                onClick={() => setHelpOpen(true)}
-                className="flex items-center gap-2 text-left"
+                onClick={() => setPolicyOn((v) => !v)}
+                aria-pressed={policyOn}
+                className={cn(
+                  "flex w-full items-center justify-between gap-3 rounded-lg border px-3 py-2 text-left text-xs transition-colors",
+                  policyOn ? "border-probe text-probe" : "border-white/10 text-scribe-2 hover:border-white/25 hover:text-white",
+                )}
               >
-                <kbd className="min-w-[22px] border border-rule-strong bg-ink-3 px-1.5 py-0.5 text-center font-mono text-[12px] text-scribe-2">?</kbd>
-                <span className="text-[12px] text-scribe-3 underline underline-offset-2 hover:text-scribe-2">All controls</span>
+                {policyOn ? "The policy is driving" : "Let the policy drive"}
+                <span className="font-mono text-[11px] text-scribe-3">{policyOn && !policy ? "loading…" : policyOn ? "practice" : ""}</span>
               </button>
-            </dl>
-          </Section>
-          <Section title="Settlement">
-            <p className="text-[13px] leading-relaxed text-scribe-2">
-              One transaction records the trajectory hash, its task, your address
-              and the verified score — and transfers the {CURRENCY}. There is no separate
-              signing step.
-            </p>
-          </Section>
+              <TeachPanel taskId={task.id} arm={task.arm} skill={skill} onSkill={setSkill} repeating={repeatOn} onRepeat={(on) => { setRepeatOn(on); if (on) setPolicyOn(false); }} />
+              <button
+                type="button"
+                onClick={() => { setSound(!sound); setSoundState(!sound); }}
+                aria-pressed={sound}
+                className="flex items-center justify-between rounded-lg border border-white/10 px-3 py-2 text-xs text-scribe-2 hover:border-white/25"
+              >
+                Sound on grasp <span className="text-scribe-3">{sound ? "On" : "Off"}</span>
+              </button>
+            </div>
+          </details>
         </aside>
 
         <div className="relative order-1 h-[52dvh] lg:order-2 lg:h-auto lg:min-h-0">
@@ -679,9 +590,9 @@ export default function StationPage() {
               <span className="text-scribe-3">X <span className="text-scribe">{tel.tool[0].toFixed(3)}</span></span>
               <span className="text-scribe-3">Y <span className="text-scribe">{tel.tool[1].toFixed(3)}</span></span>
               <span className="text-scribe-3">Z <span className="text-scribe">{tel.tool[2].toFixed(3)}</span></span>
-              <span className="text-scribe-3">JAW <span className="text-scribe">{tel.grip.toFixed(0)}</span> mm</span>
+              <span className="text-scribe-3">Jaw <span className="text-scribe">{tel.grip.toFixed(0)}</span> mm</span>
               <span className={cn(tel.held ? "text-signal" : "text-scribe-3")}>
-                {tel.held ? "PAYLOAD HELD" : "JAWS EMPTY"}
+                {tel.held ? "Holding" : "Jaws empty"}
               </span>
               {/* Without this the operator is hunting for the payload blind:
                   the capture volume is invisible, so nothing says whether
@@ -689,20 +600,19 @@ export default function StationPage() {
               {/* The key hints are for a person driving. While the policy has
                   the arm they told the viewer to press keys that do nothing. */}
               {policyOn ? (
-                <span className="text-probe">POLICY DRIVING — NOTHING TO PRESS</span>
+                <span className="text-probe">The policy is driving</span>
               ) : !tel.held ? (
                 tel.inRange ? (
-                  <span className="text-go">IN RANGE — PRESS SPACE</span>
+                  <span className="text-go">In range: press Space</span>
                 ) : tel.overPayload ? (
-                  <span className="text-signal">OVER THE PAYLOAD — PRESS Q TO LOWER</span>
+                  <span className="text-signal">Over it: press Q to lower</span>
                 ) : (
                   <span className="text-scribe-3">
-                    PAYLOAD <span className="text-scribe">{tel.payloadDist.toFixed(2)}</span> m
-                    <span className="ml-2 text-scribe-3">— HOLD A</span>
+                    {tel.payloadDist.toFixed(2)} m to the object
                   </span>
                 )
               ) : null}
-              {tel.joints.clamped ? <span className="ml-auto text-reject">OUT OF REACH</span> : null}
+              {tel.joints.clamped ? <span className="ml-auto text-reject">Out of reach</span> : null}
             </div>
           ) : null}
 
@@ -723,46 +633,6 @@ export default function StationPage() {
                   <Key keys={["E", "Q"]} action="Raise / lower" />
                   <Key keys={["Space"]} action="Open / close the jaws" />
             </dl>
-            {/* Not a novelty control. A discrete, named grammar is what voice
-                is actually good for, and for an operator who cannot use a
-                pointer or hold a key accurately it is the difference between
-                driving this station and not. Every command dispatches the same
-                keystroke the panel above names. */}
-            <VoiceControl className="mt-3" />
-
-            {/* A trained network driving the same arm, through the same
-                kinematics and the same grasp rule. Marked as practice while it
-                does: a recording of a policy driving is not a demonstration by
-                the address it would be paid to, and the corpus is only worth
-                anything if its episodes are what they say they are. */}
-            <button
-              type="button"
-              onClick={() => setPolicyOn((v) => !v)}
-              aria-pressed={policyOn}
-              className={cn(
-                "mt-2 flex w-full items-center justify-between gap-3 border px-3 py-2 text-left transition-colors",
-                policyOn
-                  ? "border-probe text-probe"
-                  : "border-rule text-scribe-3 hover:border-rule-strong hover:text-scribe",
-              )}
-            >
-              <span className="text-[12px]">
-                {policyOn ? "Policy driving" : "Let the policy drive"}
-              </span>
-              <span className="font-mono text-[11px] text-scribe-3">
-                {policyOn && !policy ? "loading…" : policyOn ? "practice" : ""}
-              </span>
-            </button>
-            {policyOn ? (
-              <p className="mt-1.5 text-[12px] leading-relaxed text-scribe-3">
-                3,076 parameters, trained on 220 scripted demonstrations of a single
-                object &mdash; not on this corpus, which is not yet coherent enough to
-                learn from. On that scene it grasps from every start tested and
-                reaches the datum, and releases in five of eight. It has learned
-                nothing else: on a task with other objects, or two of them, it can
-                hover without ever grasping. Nothing it does is submitted.
-              </p>
-            ) : null}
             <dl className="flex flex-col gap-1.5">
                   <Key keys={["?"]} action="Show or hide this" />
                   <Key keys={["Esc"]} action="Close" />
@@ -825,50 +695,23 @@ export default function StationPage() {
                 </div>
               ) : null}
               <div className={cn("max-w-sm text-center", recovered ? "mb-auto" : "my-auto")}>
-                <h2 className="font-display text-2xl font-600">Ready to record</h2>
-                <p className="mt-2 text-[14px] leading-relaxed text-scribe-2">
-                  The timer starts on your first frame. Pick the payload up, bring
-                  it to rest inside the datum circle, and let go — the measurement
-                  is taken automatically once it settles.
+                <h2 className="text-2xl font-medium">Ready</h2>
+                <p className="mt-2 text-sm text-scribe-2">
+                  Set it down inside the ring. The score is taken when it settles.
                 </p>
                 {practice ? (
-                  <div className="mt-4 border border-rule-strong bg-ink-2 px-3 py-2 text-left">
-                    <p className="text-[12px] text-scribe-2">
-                      Practice run
-                    </p>
-                    <p className="mt-1 text-[13px] leading-relaxed text-scribe-3">
-                      {/* Every practice run used to be explained as a used-up
-                          quota, including one the policy drives from 0 / 5. */}
-                      {!task.open
-                        ? "This task has no slots left, so nothing here will be paid."
-                        : capped
-                          ? "You have used all 5 of your runs on this task, so the chain will not pay another."
-                          : policyOn
-                            ? "The policy is driving, and a run it drives is not yours to be paid for."
-                            : "You chose to practise, so nothing here will be paid or submitted."}
-                      {" "}
-                      The scene, the controls and the measurement are exactly the
-                      same &mdash; you just will not be asked to sign at the end.
-                      No wallet needed.
-                    </p>
-                  </div>
+                  <p className="mt-3 rounded-lg border border-white/10 px-3 py-2 text-xs text-scribe-3">
+                    Practice: {!task.open
+                      ? "no runs left on this task."
+                      : capped
+                        ? "you have used your 5 runs here."
+                        : policyOn
+                          ? "the policy is driving."
+                          : "nothing is paid or submitted."}
+                  </p>
                 ) : null}
                 {firstVisit && !practice ? (
-                  <ol className="mt-4 flex flex-col gap-2 border border-rule bg-ink-2 px-3 py-3 text-left">
-                    {[
-                      ["Move", "Drag in the workspace, or W A S D. The tool follows."],
-                      ["Grasp", "Get over the payload and low enough, then Space. The jaws only close on something they are actually on."],
-                      ["Place", "Let go inside the datum circle. The measurement is taken when it settles — there is nothing to press."],
-                    ].map(([k, v], i) => (
-                      <li key={k} className="flex gap-3">
-                        <span className="font-mono text-[12px] tabular-nums text-scribe-3">{i + 1}</span>
-                        <span className="flex flex-col gap-0.5">
-                          <span className="text-[12px] text-scribe">{k}</span>
-                          <span className="text-[13px] leading-relaxed text-scribe-3">{v}</span>
-                        </span>
-                      </li>
-                    ))}
-                  </ol>
+                  <p className="mt-3 text-xs text-scribe-3">Move with W A S D, lower with Q, grab with Space.</p>
                 ) : null}
 
                 {/* Asked before the run, not after it: a paid run needs a
@@ -888,9 +731,9 @@ export default function StationPage() {
                   <button
                     type="button"
                     onClick={() => { setChosePractice(true); start(); }}
-                    className="mt-3 block w-full text-[13px] text-scribe-3 underline underline-offset-4 hover:text-scribe-2"
+                    className="mt-3 block w-full text-xs text-scribe-3 underline underline-offset-4 hover:text-scribe-2"
                   >
-                    Practise first &mdash; no wallet, no slot used
+                    Practise first, no wallet needed
                   </button>
                 ) : null}
               </div>
@@ -923,108 +766,59 @@ export default function StationPage() {
           ) : null}
         </div>
 
-        <aside className="order-3 flex flex-col border-rule lg:min-h-0 lg:overflow-y-auto lg:border-l">
-          <Section title="This task">
-            <div className="flex flex-col gap-3">
-              <Row label="Arm" value={embodimentOf(task.arm).label} />
-              <Row label="Scenario" value={task.scenario} />
-              <Row label="Room" value={room.label} />
-              <Row label="Skill" value={SKILL_LABEL[task.skill]} />
-              <div className="flex items-center justify-between">
-                <span className="label">Difficulty</span>
-                <Difficulty level={task.difficulty} />
-              </div>
-              <Row label="Per run" value={`${fmtMon(task.rewardMon)} ${CURRENCY}`} tone="signal" />
-              <Row label="Slots left" value={String(task.slotsTotal - task.slotsFilled)} />
-              <Row label="Escrow" value={`${fmtMon(Number(task.escrowWei) / 1e18, 3)} ${CURRENCY}`} />
+        <aside className="order-3 flex flex-col gap-6 border-white/10 p-5 lg:min-h-0 lg:overflow-y-auto lg:border-l">
+          <div>
+            <p className="text-xs text-scribe-3">Paid per run</p>
+            <p className="mt-1 text-3xl font-medium tabular-nums text-signal">
+              {fmtMon(task.rewardMon)} <span className="text-base text-scribe-3">{CURRENCY}</span>
+            </p>
+            <div className="mt-3 flex items-center justify-between text-xs text-scribe-3">
+              <span>{task.slotsTotal - task.slotsFilled} of {task.slotsTotal} runs left</span>
+              <Difficulty level={task.difficulty} />
             </div>
-          </Section>
+          </div>
+
+          <div>
+            <p className="mb-2 text-xs text-scribe-3">Live placement</p>
+            {tel ? (
+              <ToleranceBand deviationMm={tel.deviationMm} toleranceMm={TOLERANCE_MM} label="From the goal" />
+            ) : (
+              <p className="text-xs text-scribe-3">{phase === "running" ? "Waiting for the first reading." : "Starts with the run."}</p>
+            )}
+          </div>
 
           {tally && tally.measured > 0 ? (
-            <Section title="This sitting">
-              <div className="flex flex-col gap-3">
-                <Row label="Runs measured" value={String(tally.measured)} />
-                <Row label="Paid" value={String(tally.paid)} />
-                <Row label="Mean score" value={fmtScore(Math.round(meanScore(tally)))} />
-                {/* The mean says how the sitting is going; the best says what
-                    this operator managed on this bench today, and it is the one
-                    they are actually chasing between runs. */}
-                <Row label="Best score" value={tally.best ? fmtScore(tally.best) : "—"} tone={tally.best ? "signal" : undefined} />
-                <Row label="Earned" value={`${fmtMon(tally.earned, 4)} ${CURRENCY}`} tone="signal" />
-                <Row label="At the bench" value={`${minutes(tally).toFixed(0)} min`} />
-              </div>
-              <p className="mt-3 text-[12px] leading-relaxed text-scribe-3">
-                This tab only. Every figure is also on chain independently &mdash; this
-                just saves doing the arithmetic between runs.
-              </p>
-            </Section>
+            <div className="grid grid-cols-3 gap-2 rounded-xl border border-white/10 p-3 text-center">
+              <div><p className="text-lg tabular-nums">{tally.measured}</p><p className="text-[11px] text-scribe-3">runs</p></div>
+              <div><p className="text-lg tabular-nums">{tally.best ? fmtScore(tally.best) : "—"}</p><p className="text-[11px] text-scribe-3">best</p></div>
+              <div><p className="text-lg tabular-nums text-signal">{fmtMon(tally.earned, 4)}</p><p className="text-[11px] text-scribe-3">earned</p></div>
+            </div>
           ) : null}
 
-
-          <Section title="In the room">
-            {ghosts.length === 0 ? (
-              <p className="text-[13px] text-scribe-3">
-                Nobody else is working this task right now. Their tool shows in the
-                scene when they are.
-              </p>
-            ) : (
-              <ul className="flex flex-col gap-1.5">
+          {ghosts.length ? (
+            <div>
+              <p className="mb-2 text-xs text-scribe-3">Also here</p>
+              <ul className="flex flex-col gap-1">
                 {ghosts.map((g) => (
-                  <li key={g.id} className="flex items-center justify-between gap-3">
-                    <span className="truncate font-mono text-[13px] text-scribe-2">
-                      {shortHash(g.id)}
-                    </span>
-                    <span
-                      className={cn(
-                        "shrink-0 text-[12px]",
-                        g.held ? "text-signal" : "text-scribe-3",
-                      )}
-                    >
-                      {g.held ? "carrying" : "empty"}
-                    </span>
+                  <li key={g.id} className="flex items-center justify-between font-mono text-xs text-scribe-2">
+                    {shortHash(g.id)} <span className={g.held ? "text-signal" : "text-scribe-3"}>{g.held ? "carrying" : "empty"}</span>
                   </li>
                 ))}
               </ul>
-            )}
-          </Section>
+            </div>
+          ) : null}
 
-          <Section title="Live placement">
-            {tel ? (
-              <ToleranceBand deviationMm={tel.deviationMm} toleranceMm={TOLERANCE_MM} label="Deviation from datum" />
-            ) : phase === "running" ? (
-              // The reading arrives on the first frame the viewport renders.
-              // Gating this on telemetry alone made the panel say the run had
-              // not begun while the button beside it read END RUN — which is
-              // what a throttled tab shows for as long as frames are held.
-              <p className="text-[13px] text-scribe-3">Waiting for the first reading.</p>
-            ) : (
-              <p className="text-[13px] text-scribe-3">Begin the run to take a live reading.</p>
-            )}
-          </Section>
-
-          <Section title="How this is scored">
-            <ul className="flex flex-col gap-2 text-[13px] leading-relaxed text-scribe-2">
-              <li><span className="text-scribe">Placement, 55%</span> — distance from the datum at rest, inside ±{TOLERANCE_MM} mm.</li>
-              <li><span className="text-scribe">Smoothness, 25%</span> — mean jerk of the tool path.</li>
-              <li><span className="text-scribe">Efficiency, 20%</span> — your time against par, {fmtSeconds(task.parSeconds)}.</li>
-              <li className="pt-1 text-scribe-3">
-                The server re-scores every run and signs the result; the contract
-                will not pay a score it did not sign. Below {fmtScore(ACCEPT_FLOOR)} a run pays nothing.
-              </li>
-              {/* The operator is being scored by a kinematic simulator and is
-                  entitled to know it here, at the moment it applies to them,
-                  rather than only on the run page afterwards. The measurement
-                  itself is not run here: the engine is eight megabytes of
-                  WebAssembly and nobody should pay that to read a brief. */}
-              <li className="text-scribe-3">
-                This station solves inverse kinematics and grasps analytically —
-                there is no contact simulation. Every recorded run is afterwards
-                integrated under rigid-body dynamics and the difference is
-                published on its own page. It scores nothing and changes no
-                payout.
-              </li>
+          <details className="group mt-auto rounded-xl border border-white/10 p-4">
+            <summary className="flex cursor-pointer list-none items-center justify-between text-sm text-scribe-2 hover:text-white">
+              How it&rsquo;s scored <span className="text-scribe-3 transition-transform group-open:rotate-90">›</span>
+            </summary>
+            <ul className="mt-3 flex flex-col gap-2 text-xs leading-relaxed text-scribe-3">
+              <li><span className="text-scribe-2">Placement 55%:</span> within ±{TOLERANCE_MM} mm of the goal.</li>
+              <li><span className="text-scribe-2">Smoothness 25%:</span> a steady hand.</li>
+              <li><span className="text-scribe-2">Speed 20%:</span> against par, {fmtSeconds(task.parSeconds)}.</li>
+              <li>The server re-scores and signs every run. Below {fmtScore(ACCEPT_FLOOR)} it pays nothing.</li>
             </ul>
-          </Section>
+          </details>
         </aside>
       </div>
     </div>
@@ -1289,24 +1083,6 @@ function Missing({ id, reason }: { id: string; reason: "id" | "chain" | "absent"
       <Link href="/hub" className="mt-6 inline-block border border-rule-strong px-4 py-2 text-[12px]">
         Back to the hub
       </Link>
-    </div>
-  );
-}
-
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <section className="flex flex-col gap-3 border-b border-rule px-4 py-4">
-      <h2 className="label">{title}</h2>
-      {children}
-    </section>
-  );
-}
-
-function Row({ label, value, tone }: { label: string; value: string; tone?: "signal" }) {
-  return (
-    <div className="flex items-baseline justify-between gap-3">
-      <span className="label">{label}</span>
-      <span className={cn("font-mono text-[13px] capitalize tabular-nums", tone === "signal" ? "text-signal" : "text-scribe")}>{value}</span>
     </div>
   );
 }

@@ -66,14 +66,10 @@ export function LeaderPanel() {
           className="self-start text-[12px] text-scribe-3 hover:text-signal">
           My leader is on the arm relay
         </button>
-        <p className="text-[13px] leading-relaxed text-scribe-3">
-          Plug your SO-101 leader (six AS5600 encoders on an ESP32) into this computer and the arm on
-          screen follows your hand, joint for joint, and the run records it.
+        <p className="text-xs text-scribe-3">
           {serialAvailable()
-            ? " Pick its USB port when the browser asks."
-            : " This browser has no USB serial; use Chrome or Edge on a computer, or start the relay with "}
-          {serialAvailable() ? null : <code className="font-mono text-[12px]">--leader /dev/cu.…</code>}
-          {serialAvailable() ? null : "."}
+            ? "Plug your SO-101 leader in by USB. The arm on screen follows your hand."
+            : "Needs Chrome or Edge on a computer, or the arm relay with --leader."}
         </p>
         {s.error ? <p className="text-[13px] text-reject">{s.error}</p> : null}
       </div>

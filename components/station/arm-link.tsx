@@ -80,7 +80,7 @@ export function connectRelay() {
       /* not ours */
     }
   };
-  ws.onerror = () => publish({ error: "No arm relay answered on this machine. Start it with: node scripts/arm-relay.mjs" });
+  ws.onerror = () => publish({ error: "The arm relay isn't running. Start it: node scripts/arm-relay.mjs" });
   ws.onclose = () => {
     link.ws = null;
     relayLeaderGone();
@@ -250,10 +250,8 @@ export function MirrorPanel() {
       ) : null}
       {s.error ? <p className="text-[13px] leading-relaxed text-reject">{s.error}</p> : null}
       {!on ? (
-        <p className="text-[13px] leading-relaxed text-scribe-3">
-          Drives a real MG996R SO-101 from this page, through <code className="font-mono text-[12px]">scripts/arm-relay.mjs</code> on
-          this computer. It arms only from home, never into the table, and stops the moment this tab does.
-          Practice and paid runs record the same either way.
+        <p className="text-xs text-scribe-3">
+          Through <code className="font-mono">scripts/arm-relay.mjs</code> on this computer. It arms only from home and stops when this tab does.
         </p>
       ) : null}
       {!on ? (

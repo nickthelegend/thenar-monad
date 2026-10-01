@@ -87,6 +87,27 @@ function placeAtController(base: XRReferenceSpace, grip: XRPose): XRReferenceSpa
 }
 
 /**
+ * Stand the bench on a real surface: its origin (the arm's base, on the table
+ * plane) at the point the operator aimed at, its reach pointing the way they
+ * face, so they stand behind the arm as they would at a real bench.
+ */
+function placeAtHit(base: XRReferenceSpace, hit: XRPose, viewer: XRPose): XRReferenceSpace {
+  const p = hit.transform.position, o = viewer.transform.orientation;
+  const fwd = new THREE.Vector3(0, 0, -1).applyQuaternion(new THREE.Quaternion(o.x, o.y, o.z, o.w));
+  fwd.y = 0;
+  fwd.normalize();
+  const yaw = Math.atan2(-fwd.z, fwd.x);
+  const q = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), yaw);
+  return base.getOffsetReferenceSpace(new XRRigidTransform({ x: p.x, y: p.y, z: p.z }, { x: q.x, y: q.y, z: q.z, w: q.w }));
+}
+
+/** Ask the page (from a sidebar button, say) to start a headset session. */
+export const ENTER_XR = "thenar:enter-xr";
+/** Announced whenever a session starts, ends or is refused. */
+export const XR_STATE = "thenar:xr-state";
+export type XrStateDetail = { mode: "vr" | "mr" | null; failed: string | null };
+
+/**
  * Read the controllers and hands each frame. Lives inside the Canvas because
  * in a session the frame loop is the headset's, and only there is the pose
  * of the frame about to be drawn available.
@@ -100,6 +121,13 @@ export function XRControls() {
   const nextAt = useRef(0);
   const pinch = useRef({ left: false, right: false });
   const markers = useRef<THREE.Group>(null);
+  // Mixed reality starts by placing: the bench follows where the operator aims
+  // on their real table until they confirm. A hit-test source does the aiming.
+  const placing = useRef(false);
+  const hitSource = useRef<XRHitTestSource | null>(null);
+  const hitBy = useRef<"controller" | "gaze" | null>(null);
+  const reticle = useRef<THREE.Mesh>(null);
+  const placingSince = useRef(0);
   // The panel is made and owned outside render: it is a canvas and a GPU
   // texture, which a render pass must neither create nor mutate.
   const hudRef = useRef<Hud | null>(null);
@@ -114,16 +142,42 @@ export function XRControls() {
     };
   }, [scene]);
 
+  /** Begin aiming: from the right controller's ray, or from the eyes when there are hands, not controllers. */
+  const startPlacing = (session: XRSession) => {
+    if (!session.requestHitTestSource || !baseSpace.current) return;
+    placing.current = true;
+    placingSince.current = performance.now();
+    hitSource.current?.cancel();
+    hitSource.current = null;
+    const right = [...session.inputSources].find((s) => s.handedness === "right" && !s.hand);
+    const space = right?.targetRaySpace;
+    hitBy.current = space ? "controller" : "gaze";
+    const make = space
+      ? Promise.resolve(space)
+      : session.requestReferenceSpace("viewer");
+    make
+      .then((sp) => session.requestHitTestSource!({ space: sp }))
+      .then((src) => { if (placing.current && src) hitSource.current = src; else src?.cancel(); })
+      // No hit testing after all: fall back to resting a controller on the table and pressing B.
+      .catch(() => { placing.current = false; hitBy.current = null; });
+  };
+
   useFrame((state, _dt, xrFrame) => {
     const frame = xrFrame as XRFrameLike | undefined;
     const hud = hudRef.current;
     const session = gl.xr.getSession?.();
     if (!session || !frame) {
       placed.current = false;
+      placing.current = false;
+      hitSource.current?.cancel();
+      hitSource.current = null;
+      hitBy.current = null;
+      if (reticle.current) reticle.current.visible = false;
       baseSpace.current = null;
       clutch.current = null;
       xrInput.grip = null;
       if (hud) hud.mesh.visible = false;
+      delete document.documentElement.dataset.xrHud;
       if (markers.current) markers.current.visible = false;
       return;
     }
@@ -131,12 +185,14 @@ export function XRControls() {
     if (!ref) return;
     baseSpace.current ??= ref;
 
-    // First frame of a session: bring the bench in front of the operator.
+    // First frame of a session: bring the bench in front of the operator and,
+    // on their table in mixed reality, start placing it where they aim.
     if (!placed.current) {
       const viewer = frame.getViewerPose(baseSpace.current);
       if (viewer) {
         gl.xr.setReferenceSpace(placeFromViewer(baseSpace.current, viewer));
         placed.current = true;
+        if (xrState.mode === "mr") startPlacing(session);
       }
       return;
     }
@@ -146,6 +202,59 @@ export function XRControls() {
       prev.current[key] = now;
       return now && !was;
     };
+
+    // --- placing: the bench rides the hit point until the operator confirms ------------
+    if (placing.current) {
+      const viewer = frame.getViewerPose(baseSpace.current);
+      const hits = hitSource.current ? frame.getHitTestResults(hitSource.current) : [];
+      const hit = hits[0]?.getPose(baseSpace.current);
+      if (hit && viewer) gl.xr.setReferenceSpace(placeAtHit(baseSpace.current, hit, viewer));
+      if (reticle.current) reticle.current.visible = Boolean(hit);
+      let confirm = false;
+      for (const src of session.inputSources) {
+        if (src.handedness !== "right") continue;
+        if (src.gamepad) {
+          confirm ||= edge("place-trigger", !!src.gamepad.buttons[0]?.pressed);
+          confirm ||= edge("place-a", !!src.gamepad.buttons[4]?.pressed);
+        }
+        if (src.hand && frame.getJointPose) {
+          const t = src.hand.get("thumb-tip"), i = src.hand.get("index-finger-tip");
+          const a = t && frame.getJointPose(t, baseSpace.current), b = i && frame.getJointPose(i, baseSpace.current);
+          if (a && b) {
+            const gap = Math.hypot(a.transform.position.x - b.transform.position.x, a.transform.position.y - b.transform.position.y, a.transform.position.z - b.transform.position.z);
+            confirm ||= edge("place-pinch", gap < 0.02);
+          }
+        }
+      }
+      // A headset that has not scanned the room finds no surface at all; after a
+      // moment the operator may keep the bench where it already stands.
+      const noSurface = !hit && performance.now() - placingSince.current > 2500;
+      if (hud) {
+        hud.mesh.visible = true;
+        hud.mesh.position.set(0.02, 0.36, -0.3);
+        const eye = new THREE.Vector3();
+        state.camera.getWorldPosition(eye);
+        hud.mesh.lookAt(eye);
+        hud.draw([
+          "Put the arm on your table",
+          hit
+            ? hitBy.current === "gaze" ? "Pinch to place it here" : "Pull the trigger to place it here"
+            : noSurface
+              ? hitBy.current === "gaze" ? "No table found: pinch to keep it here" : "No table found: pull the trigger to keep it here"
+              : hitBy.current === "gaze" ? "Look at your table" : "Point the controller at your table",
+          "B moves it again later",
+        ]);
+      }
+      if (confirm && (hit || noSurface)) {
+        placing.current = false;
+        hitSource.current?.cancel();
+        hitSource.current = null;
+        if (reticle.current) reticle.current.visible = false;
+        // Let go of the trigger before it drives the jaws.
+        prev.current["trigger-hold"] = true;
+      }
+      return;
+    }
 
     let held: THREE.Vector3 | null = null; // where the operator's holding hand is, this frame
     let jaws: number | null = null;
@@ -165,12 +274,18 @@ export function XRControls() {
         const p = pose.transform.position;
         mk[0]?.position.set(p.x, p.y, p.z);
         if (pad.buttons[1]?.pressed) held = new THREE.Vector3(p.x, p.y, p.z);
-        jaws = GRIP_OPEN_MM + (GRIP_SHUT_MM - GRIP_OPEN_MM) * (pad.buttons[0]?.value ?? 0);
+        // After placing, the trigger that confirmed it drives nothing until it is let go.
+        if (prev.current["trigger-hold"] && !pad.buttons[0]?.pressed) prev.current["trigger-hold"] = false;
+        jaws = prev.current["trigger-hold"] ? GRIP_OPEN_MM : GRIP_OPEN_MM + (GRIP_SHUT_MM - GRIP_OPEN_MM) * (pad.buttons[0]?.value ?? 0);
         // A begins or ends a run; B puts the bench where this controller rests.
         if (edge("a", !!pad.buttons[4]?.pressed)) window.dispatchEvent(new CustomEvent(XR_ACTION, { detail: "primary" }));
         if (edge("b", !!pad.buttons[5]?.pressed) && baseSpace.current) {
-          const base = frame.getPose(right.gripSpace, baseSpace.current);
-          if (base) gl.xr.setReferenceSpace(placeAtController(baseSpace.current, base));
+          if (xrState.mode === "mr" && session.requestHitTestSource) {
+            startPlacing(session);
+          } else {
+            const base = frame.getPose(right.gripSpace, baseSpace.current);
+            if (base) gl.xr.setReferenceSpace(placeAtController(baseSpace.current, base));
+          }
           clutch.current = null;
         }
         // The stick still nudges, one axis at a time, for the last millimetre.
@@ -235,13 +350,18 @@ export function XRControls() {
     hud.mesh.lookAt(eye);
     hud.draw([
       ...xrState.hud,
-      held ? "HOLDING — the tool follows your hand" : right?.hand ? "Pinch with your LEFT hand to take hold" : "Squeeze GRIP to take hold · trigger closes the jaws",
-      "A: begin / end run · B: put the bench where this controller rests",
+      held ? "Holding: the tool follows your hand" : right?.hand ? "Pinch your left hand to take hold" : "Grip to take hold, trigger for the jaws",
+      "A starts or ends a run · B moves the bench",
     ]);
   });
 
   return (
     <>
+      {/* While placing: a ring on the real table under where the arm will stand. */}
+      <mesh ref={reticle} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.002, 0]} visible={false}>
+        <ringGeometry args={[0.09, 0.105, 48]} />
+        <meshBasicMaterial color="#DCCFFF" transparent opacity={0.9} />
+      </mesh>
       <group ref={markers} visible={false}>
         {/* Where each hand is, so the operator can see what they are driving
             with. Plain shapes: the controller models live on a CDN this
@@ -275,22 +395,27 @@ class Hud {
     const now = performance.now();
     if (now - this.last < 120) return;
     this.last = now;
+    // The page can read what the headset is being told (tests, and anyone
+    // looking over the operator's shoulder at the browser).
+    document.documentElement.dataset.xrHud = lines.join(" | ");
     const c = this.canvas.getContext("2d")!;
     c.clearRect(0, 0, 1024, 420);
-    c.fillStyle = "rgba(14,14,14,0.88)";
-    c.fillRect(0, 0, 1024, 420);
-    c.strokeStyle = "rgba(242,238,230,0.25)";
+    c.beginPath();
+    c.roundRect(2, 2, 1020, 416, 36);
+    c.fillStyle = "rgba(10,10,12,0.9)";
+    c.fill();
+    c.strokeStyle = "rgba(255,255,255,0.12)";
     c.lineWidth = 3;
-    c.strokeRect(1.5, 1.5, 1021, 417);
-    c.fillStyle = "#E8B04A";
-    c.font = "600 30px ui-monospace, Menlo, monospace";
-    c.fillText("THENAR · STATION", 36, 58);
+    c.stroke();
+    c.fillStyle = "#B9A2FF";
+    c.font = "500 26px Poppins, ui-sans-serif, system-ui, sans-serif";
+    c.fillText("Thenar", 44, 66);
     lines.slice(0, 6).forEach((l, i) => {
-      c.fillStyle = i === 0 ? "#F2EEE6" : "#B8B2A8";
-      c.font = `${i === 0 ? "600 30px" : "500 26px"} ui-sans-serif, system-ui, sans-serif`;
+      c.fillStyle = i === 0 ? "#FFFFFF" : "rgba(255,255,255,0.62)";
+      c.font = `${i === 0 ? "600 34px" : "400 27px"} Poppins, ui-sans-serif, system-ui, sans-serif`;
       let t = l;
-      while (t.length > 1 && c.measureText(t).width > 950) t = t.slice(0, -2);
-      c.fillText(t === l ? t : t + "…", 36, 118 + i * 50);
+      while (t.length > 1 && c.measureText(t).width > 936) t = t.slice(0, -2);
+      c.fillText(t === l ? t : t + "…", 44, 128 + i * 50);
     });
     this.texture.needsUpdate = true;
   }
@@ -325,7 +450,21 @@ export function EnterXR({ gl, className }: { gl: THREE.WebGLRenderer | null; cla
     return () => { live = false; clearTimeout(t); };
   }, []);
 
+  // A button elsewhere on the page (the station's Quest panel) can ask for a
+  // session; its click is the user gesture the headset requires.
+  useEffect(() => {
+    const on = (e: Event) => { void enterRef.current?.((e as CustomEvent<"vr" | "mr">).detail ?? "mr"); };
+    window.addEventListener(ENTER_XR, on);
+    return () => window.removeEventListener(ENTER_XR, on);
+  }, []);
+  const enterRef = useRef<((mode: "vr" | "mr") => Promise<void>) | null>(null);
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent<XrStateDetail>(XR_STATE, { detail: { mode: inSession, failed } }));
+  }, [inSession, failed]);
+
   if (!modes || (!modes.vr && !modes.mr) || !gl) return null;
+  // In the headset's own browser the station's Quest panel carries these, larger.
+  const onHeadset = typeof navigator !== "undefined" && /OculusBrowser|Quest/i.test(navigator.userAgent);
 
   const enter = async (mode: "vr" | "mr") => {
     setFailed(null);
@@ -334,7 +473,7 @@ export function EnterXR({ gl, className }: { gl: THREE.WebGLRenderer | null; cla
     try {
       const session = await xr.requestSession(mode === "mr" ? "immersive-ar" : "immersive-vr", {
         requiredFeatures: ["local-floor"],
-        optionalFeatures: ["hand-tracking", "bounded-floor"],
+        optionalFeatures: ["hand-tracking", "bounded-floor", "hit-test"],
       });
       Object.assign(gl.xr, { enabled: true });
       gl.xr.setReferenceSpaceType("local-floor");
@@ -350,6 +489,7 @@ export function EnterXR({ gl, className }: { gl: THREE.WebGLRenderer | null; cla
       setFailed(e instanceof Error ? e.message : "The headset refused the session.");
     }
   };
+  enterRef.current = enter;
 
   const button = (mode: "vr" | "mr", label: string) => (
     <button
@@ -357,8 +497,9 @@ export function EnterXR({ gl, className }: { gl: THREE.WebGLRenderer | null; cla
       onClick={() => enter(mode)}
       disabled={!!inSession}
       className={cn(
-        "border px-3 py-2 text-[12px] transition-colors",
-        inSession === mode ? "border-signal text-signal" : "border-rule-strong bg-ink-1/80 text-scribe hover:border-signal hover:text-signal",
+        "rounded-lg px-4 py-2 text-sm font-medium transition duration-300",
+        mode === "mr" ? "bg-lilac text-black hover:bg-white" : "border border-white/15 bg-black/60 text-white backdrop-blur hover:bg-white/10",
+        inSession === mode && "opacity-70",
       )}
     >
       {inSession === mode ? "In the headset" : label}
@@ -367,11 +508,13 @@ export function EnterXR({ gl, className }: { gl: THREE.WebGLRenderer | null; cla
 
   return (
     <div className={cn("flex flex-col items-end gap-1", className)}>
-      <div className="flex gap-2">
-        {modes.mr ? button("mr", "Enter on your table") : null}
-        {modes.vr ? button("vr", "Enter in VR") : null}
-      </div>
-      {failed ? <p className="font-mono text-[12px] text-reject">{failed}</p> : null}
+      {onHeadset ? null : (
+        <div className="flex gap-2">
+          {modes.mr ? button("mr", "Put it on my table") : null}
+          {modes.vr ? button("vr", "Enter in VR") : null}
+        </div>
+      )}
+      {failed && !onHeadset ? <p className="text-xs text-reject">{failed}</p> : null}
     </div>
   );
 }

@@ -76,3 +76,4 @@ demo/out/check/
 # The Envio indexer's own install and generated code
 indexer/node_modules/
 indexer/generated/
+/.next-quest/

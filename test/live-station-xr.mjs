@@ -30,9 +30,10 @@ const log = (k, v) => console.log(k, JSON.stringify(v));
 
 try {
   await page.goto(`${BASE}/station/${TASK}`);
-  const vr = page.getByRole("button", { name: "Enter in VR" });
+  // On an emulated Quest the station's Quest panel holds the headset buttons.
+  const vr = page.getByRole("button", { name: "Enter in VR" }).first();
   await vr.waitFor({ timeout: 90000 });
-  log("buttons", await page.locator("button", { hasText: /Enter (in VR|on your table)/ }).allTextContents());
+  log("buttons", await page.locator("button", { hasText: /Enter in VR|on my table/ }).allTextContents());
   await vr.click();
   await page.getByRole("button", { name: "In the headset" }).waitFor({ timeout: 20000 });
 
@@ -104,7 +105,7 @@ try {
   });
   log("run", result);
   const verdict = await page.evaluate(() => document.body.innerText);
-  const measured = /Placed|Measured|within tolerance|mm from the/i.test(verdict);
+  const measured = /Measurement taken|In tolerance|Out of tolerance|Placed|Measured/i.test(verdict);
   if (SHOTS) await page.screenshot({ path: `${SHOTS}/station-xr.png` });
   log("verdict-snippet", verdict.split("\n").filter((l) => /score|mm|placed|Placed|practice|wallet/i.test(l)).slice(0, 12));
   assert.equal(result.running, true, "A began a run");

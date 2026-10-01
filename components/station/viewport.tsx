@@ -1042,7 +1042,9 @@ function Rig({
       />
 
       {environmentUrl ? <HideInPassthrough><Room url={environmentUrl} /></HideInPassthrough> : null}
-      <SurfacePlate />
+      {/* On the operator's real table in mixed reality, the drawn plate would
+          cover it: the objects stand on the real surface instead. */}
+      <HideInPassthrough><SurfacePlate /></HideInPassthrough>
       <ReachEnvelope visible={outOfReach} target={target} reach={arm === "so101" ? SO101_REACH : REACH_MAX} />
       <GhostTrail points={trail} />
       <GoalZone at={goal} payload={object} seats={payloads.length} />
