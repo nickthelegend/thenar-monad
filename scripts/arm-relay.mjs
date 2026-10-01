@@ -19,8 +19,9 @@
  *   - every target is checked against the joint limits and against the table
  *     (forward kinematics of the same CAD chain the station solves on);
  *   - a stale stream, a closed tab or a stopped relay sends STOP;
- *   - it listens on 127.0.0.1 and accepts pages only from loopback origins or
- *     ones named with --origin, so no website can reach an arm on this desk;
+ *   - it listens on 127.0.0.1 and accepts pages only from loopback origins,
+ *     Thenar's own (app.thenar.io, thenar.io), or ones named with --origin, so
+ *     no other website can reach an arm on this desk;
  *   - with --owner, a frame moves the arm only if it is signed by that key:
  *     the Ed25519 key the owner's passkey derives (lib/robot-key.ts). A frame
  *     unsigned, signed by another key, older than two seconds or replayed
@@ -91,7 +92,9 @@ export function validTarget(q) {
 const nearHome = (q) => q.every((v, i) => Math.abs(v - HOME[i]) <= 3);
 
 const loopback = /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/;
-const allowedOrigin = (o) => !o || loopback.test(o) || opt.origin.includes(o);
+/** Thenar's own sites, where the station runs. Nothing else is let in unless named. */
+const THENAR = ["https://app.thenar.io", "https://thenar.io"];
+const allowedOrigin = (o) => !o || loopback.test(o) || THENAR.includes(o) || opt.origin.includes(o);
 
 // ---- serial -------------------------------------------------------------------
 
