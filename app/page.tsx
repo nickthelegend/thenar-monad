@@ -89,21 +89,7 @@ export default async function LabsHome() {
 
       {/* Hero. The film (or its first frame) fills the section; the words sit in
           the black the render leaves above the arm. */}
-      <section className="relative flex min-h-[100svh] flex-col items-center overflow-hidden px-4 pb-16 text-center">
-        <div aria-hidden className="absolute inset-x-0 bottom-0 top-[38%] [mask-image:linear-gradient(to_bottom,transparent,black_12%,black_80%,transparent)]">
-          {heroFilm ? (
-            <HeroVideo
-              className="absolute inset-0 h-full w-full object-cover object-[center_40%]"
-              poster="/labs/hero-poster.webp"
-              sources={[
-                { src: "/labs/hero.webm", type: "video/webm" },
-                { src: "/labs/hero.mp4", type: "video/mp4" },
-              ]}
-            />
-          ) : (
-            <Image src="/labs/hero.webp" alt="" fill priority sizes="100vw" className="object-cover object-[center_40%]" />
-          )}
-        </div>
+      <section className="relative flex min-h-[100svh] flex-col items-center overflow-hidden px-4 text-center">
         <div className="relative z-10 pt-36 sm:pt-40">
           <Reveal fade>
             <h1 className="heading-glow mx-auto max-w-[680px] text-5xl font-medium leading-none tracking-tight sm:text-7xl">
@@ -127,15 +113,31 @@ export default async function LabsHome() {
             </Link>
             <Link
               href="/products"
-              className="rounded-lg px-5 py-3 text-base text-scribe-2 transition-colors duration-500 hover:text-white"
+              className="rounded-lg border border-white/15 bg-white/[0.06] px-5 py-3 text-base font-medium text-white backdrop-blur-md transition duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-white/[0.12] active:scale-[0.98]"
             >
               See what we build →
             </Link>
           </Reveal>
         </div>
-        <div className="flex-1" />
+        {/* The film sits under the words, never behind them: it used to start a
+            fixed 38% down the screen, and on a short or narrow screen it slid up
+            behind the subtitle and the second button. */}
+        <div aria-hidden className="relative -mx-4 -mt-6 w-[calc(100%+2rem)] flex-1 min-h-[300px] sm:min-h-[440px] [mask-image:linear-gradient(to_bottom,transparent,black_16%,black_80%,transparent)]">
+          {heroFilm ? (
+            <HeroVideo
+              className="absolute inset-0 h-full w-full object-cover object-[center_40%]"
+              poster="/labs/hero-poster.webp"
+              sources={[
+                { src: "/labs/hero.webm", type: "video/webm" },
+                { src: "/labs/hero.mp4", type: "video/mp4" },
+              ]}
+            />
+          ) : (
+            <Image src="/labs/hero.webp" alt="" fill priority sizes="100vw" className="object-cover object-[center_40%]" />
+          )}
+        </div>
 
-        <Reveal delay={450} className="relative z-10 w-full max-w-[900px]">
+        <Reveal delay={450} className="relative z-10 -mt-16 w-full max-w-[900px] pb-16">
           <p className="text-xs text-scribe-3">Built with</p>
           <BuiltWith />
         </Reveal>

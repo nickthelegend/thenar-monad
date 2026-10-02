@@ -55,7 +55,7 @@ export function LabsNav() {
         <div className="flex items-center gap-2">
           <Link
             href={APP_HOME}
-            className="rounded-lg bg-lilac px-4 py-2 text-sm font-semibold text-black transition duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-white active:scale-[0.98]"
+            className="whitespace-nowrap rounded-lg bg-lilac px-3 py-2 text-sm font-semibold text-black transition duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-white active:scale-[0.98] sm:px-4"
           >
             Open the app
           </Link>
