@@ -1,5 +1,17 @@
 [
   {
+    "hash": "ded6329",
+    "date": "2026-10-02T19:27:05+05:30",
+    "subject": "Keep the hero's words off the film",
+    "body": "The film started a fixed 38% down the screen, so on a short or narrow\nscreen it slid up behind the subtitle and 'See what we build', which\nread as grey on a bright glass arm. It now sits in the page flow under\nthe buttons, fading in at its top edge, with the logo strip tucked into\nits faded bottom. 'See what we build' is a glass button with white text,\nand 'Open the app' in the nav stays on one line on a phone.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+  },
+  {
+    "hash": "55e2274",
+    "date": "2026-10-02T19:18:26+05:30",
+    "subject": "Bring the changelog up to date with the history",
+    "body": "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+  },
+  {
     "hash": "99937ed",
     "date": "2026-10-02T19:18:23+05:30",
     "subject": "Show the tools Thenar is built on by their real logos",
@@ -346,17 +358,5 @@
     "date": "2026-09-06T16:17:44+05:30",
     "subject": "README: correct the AxonProtocol test count",
     "body": "forge test reports 23, not 19; the suite grew with the sharding tests."
-  },
-  {
-    "hash": "3fa7a18",
-    "date": "2026-09-06T15:42:57+05:30",
-    "subject": "README: inline demo GIF and a contracts section",
-    "body": "The video tag is stripped for some viewers, so the GIF carries the demo\ninline and the release link carries the full cut. Adds the deployed\naddresses, what each entry point does, and where the tests are."
-  },
-  {
-    "hash": "6060bd2",
-    "date": "2026-09-06T15:08:11+05:30",
-    "subject": "Embed the demo video in the README",
-    "body": "Recorded against the deployed build after the mirroring fix, so the payload\nand the goal ring sit on the same side of the table as the arm reaching for\nthem. Both transactions in the cut are real and linked from the README."
   }
 ]
