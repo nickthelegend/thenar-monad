@@ -1,5 +1,17 @@
 [
   {
+    "hash": "99937ed",
+    "date": "2026-10-02T19:18:23+05:30",
+    "subject": "Show the tools Thenar is built on by their real logos",
+    "body": "The 'Built with' strip on the company home was eight names in grey text.\nIt is now each project's own mark, taken from its site, docs or repo:\nMonad's wordmark, Privy's logo, Mera's mark beside its name in its own\nGeorgia italic, Envio's wordmark, Qwen's mark and wordmark, x402's\nwordmark, the Immersive Web's WebXR logo and DeepMind's MuJoCo wordmark.\nDark lettering is turned white for the black page; nothing else changed.\nEach logo links to its project, and the strip pauses under the pointer.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+  },
+  {
+    "hash": "31ec9d6",
+    "date": "2026-10-02T01:27:27+05:30",
+    "subject": "Bring the changelog up to date with the history",
+    "body": "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+  },
+  {
     "hash": "0161291",
     "date": "2026-10-02T01:27:26+05:30",
     "subject": "Name the datasheet's reward in the currency it is paid in",
@@ -346,17 +358,5 @@
     "date": "2026-09-06T15:08:11+05:30",
     "subject": "Embed the demo video in the README",
     "body": "Recorded against the deployed build after the mirroring fix, so the payload\nand the goal ring sit on the same side of the table as the arm reaching for\nthem. Both transactions in the cut are real and linked from the README."
-  },
-  {
-    "hash": "c8a060e",
-    "date": "2026-09-06T14:33:25+05:30",
-    "subject": "Un-mirror the payload, goal ring and trail",
-    "body": "The arm model is rotated -90 degrees about X, which maps its own plane-Y\nonto three's -Z. The payload, the goal ring and the tool trail were all\nplaced from a plane-Y with the sign left positive, so every one of them\nrendered mirrored across the table from the arm that was supposed to be\nreaching for them.\n\nThe arithmetic was never wrong — the inverse kinematics land on the target\nto the millimetre, which is why the grasp and the score worked while the\npicture showed the block sitting on the opposite side, apparently untouched\nand jumping about. Only the rendering carried the wrong sign."
-  },
-  {
-    "hash": "c96345c",
-    "date": "2026-09-06T13:58:38+05:30",
-    "subject": "Fix space: auto-repeat was flipping the jaws back open",
-    "body": "Space toggled the jaws on every keydown, and a held key auto-repeats. One\npress plus nine repeats — about half a second — flipped them open, shut,\nopen, shut and left them at 42 mm. Closing the jaws genuinely did nothing,\nanywhere on the table, however close to the payload you were.\n\nThe toggle now ignores repeats, so one press is one change of state.\n\nSpace also activates whatever button has focus, and after Begin run that is\nthe End run button, so a press meant for the jaws could end the run instead.\nFocus is dropped when a run starts."
   }
 ]
