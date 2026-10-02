@@ -8,6 +8,7 @@ import { LabsFooter } from "@/components/labs/labs-footer";
 import { Reveal } from "@/components/labs/reveal";
 import { Tagline } from "@/components/labs/tagline";
 import { HeroVideo } from "@/components/labs/hero-video";
+import { BuiltWith } from "@/components/labs/built-with";
 import { appChain } from "@/lib/chain";
 import { openTasks } from "@/lib/server/open-tasks";
 import { PRODUCTS } from "@/lib/products";
@@ -27,8 +28,6 @@ async function monadFigures() {
   const f = await openTasks();
   return f ? { tasks: f.tasks.length, escrow: f.escrowMon, open: f.slotsLeft } : null;
 }
-
-const BUILT_WITH = ["Monad", "Privy", "Mera", "Envio", "Qwen", "x402", "WebXR", "MuJoCo"];
 
 const STEPS = [
   {
@@ -138,13 +137,7 @@ export default async function LabsHome() {
 
         <Reveal delay={450} className="relative z-10 w-full max-w-[900px]">
           <p className="text-xs text-scribe-3">Built with</p>
-          <div className="relative mt-4 overflow-hidden [mask-image:linear-gradient(90deg,transparent,black_15%,black_85%,transparent)]">
-            <div className="flex w-max animate-[labs-marquee_28s_linear_infinite] gap-12 motion-reduce:animate-none">
-              {[...BUILT_WITH, ...BUILT_WITH].map((b, i) => (
-                <span key={i} className="text-lg font-medium tracking-wide text-white/45">{b}</span>
-              ))}
-            </div>
-          </div>
+          <BuiltWith />
         </Reveal>
       </section>
 
