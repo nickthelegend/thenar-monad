@@ -2,9 +2,10 @@
 
 import { createConnector } from "wagmi";
 import {
-  createWalletClient, http, numberToHex, hexToBigInt,
+  createPublicClient, createWalletClient, http, numberToHex, hexToBigInt,
   type Address, type EIP1193Provider, type Hex,
 } from "viem";
+import { localSponsored, SPONSORED_ACCOUNT, SPONSORED_ACCOUNT_ABI, delegationCode, sponsoredDigest } from "@/lib/local-sponsor";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 import { LOCAL_RPC, thenarLocalnet } from "@/lib/chain";
 
@@ -66,6 +67,48 @@ function provider(): EIP1193Provider {
   const account = privateKeyToAccount(privateKey());
   const wallet = createWalletClient({ account, chain: thenarLocalnet, transport: http(LOCAL_RPC) });
 
+  /**
+   * Hand the call to the local sponsor instead of paying for it: the local
+   * stand-in for Privy's gas sponsorship (lib/local-sponsor.ts). The first
+   * time, this address also signs an EIP-7702 authorisation to the sponsored
+   * account. Every call is signed here, so the sponsor can deliver only what
+   * this key approved.
+   */
+  const sponsoredSend = async (to: Address, value: bigint, data: Hex): Promise<Hex> => {
+    const implementation = SPONSORED_ACCOUNT as Address;
+    const node = createPublicClient({ chain: thenarLocalnet, transport: http(LOCAL_RPC) });
+    const code = ((await node.getCode({ address: account.address })) ?? "0x").toLowerCase();
+    const delegated = code === delegationCode(implementation);
+    const authorization = delegated
+      ? undefined
+      : await account.signAuthorization({
+          contractAddress: implementation, chainId: thenarLocalnet.id,
+          nonce: await node.getTransactionCount({ address: account.address }),
+        });
+    const n = delegated
+      ? await node.readContract({ address: account.address, abi: SPONSORED_ACCOUNT_ABI, functionName: "nonce" })
+      : 0n;
+    const signature = await account.signMessage({ message: { raw: sponsoredDigest(thenarLocalnet.id, account.address, n, to, value, data) } });
+    const r = await fetch("/api/localnet/sponsor", {
+      method: "POST", headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        from: account.address, target: to, value: value.toString(), data, signature,
+        // The fields the sponsor needs, as JSON: viem's signed authorisation also carries `v` as a bigint.
+        ...(authorization
+          ? {
+              authorization: {
+                address: authorization.address, chainId: authorization.chainId, nonce: Number(authorization.nonce),
+                r: authorization.r, s: authorization.s, yParity: authorization.yParity ?? 0,
+              },
+            }
+          : {}),
+      }),
+    });
+    const b = (await r.json().catch(() => ({}))) as { hash?: Hex; error?: string };
+    if (!r.ok || !b.hash) throw new Error(b.error ?? `The sponsor answered ${r.status}.`);
+    return b.hash;
+  };
+
   const request = async ({ method, params }: { method: string; params?: unknown }) => {
     const p = (params ?? []) as unknown[];
     switch (method) {
@@ -91,6 +134,7 @@ function provider(): EIP1193Provider {
       }
       case "eth_sendTransaction": {
         const tx = p[0] as TxParams;
+        if (localSponsored() && SPONSORED_ACCOUNT && tx.to) return sponsoredSend(tx.to, big(tx.value) ?? 0n, tx.data ?? "0x");
         return wallet.sendTransaction({
           to: tx.to, data: tx.data, value: big(tx.value), gas: big(tx.gas), nonce: tx.nonce ? Number(tx.nonce) : undefined,
           ...(tx.maxFeePerGas ? { maxFeePerGas: big(tx.maxFeePerGas), maxPriorityFeePerGas: big(tx.maxPriorityFeePerGas) } : {}),

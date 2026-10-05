@@ -26,7 +26,7 @@
  */
 import { spawn, spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
-import { createPublicClient, getAddress, http, toHex } from "viem";
+import { concat, createPublicClient, createWalletClient, getAddress, getContractAddress, http, toHex, zeroHash } from "viem";
 import { mnemonicToAccount } from "viem/accounts";
 
 const RPC = process.env.NEXT_PUBLIC_LOCAL_RPC || "http://127.0.0.1:8645";
@@ -42,6 +42,8 @@ const key = (i) => {
 };
 const ROLES = {
   deployer: key(0), verifier: key(1), issuer: key(2), agent: key(3), facilitator: key(4), faucet: key(5),
+  // Pays the gas for wallets in sponsored mode, as Privy's sponsorship does on Monad.
+  sponsor: key(9),
 };
 
 const fresh = process.argv.includes("--fresh");
@@ -160,6 +162,22 @@ ${body}
   console.log(`deployed  axon ${contracts.axon} at block ${deployBlock}, USDC ${usdc}`);
 }
 
+// The EIP-7702 account sponsored wallets delegate to, at its CREATE2 address
+// through the deployer anvil ships with, so it is the same on any local chain
+// built from the same source. It stands in for the smart account Privy's gas
+// sponsorship delegates an embedded wallet to on Monad.
+const CREATE2_DEPLOYER = "0x4e59b44847b379578588920cA78FbF26c0B4956C";
+const accountArtifact = "contracts/out/SponsoredAccount.sol/SponsoredAccount.json";
+if (!existsSync(accountArtifact)) spawnSync("forge", ["build", "-q"], { cwd: "contracts", stdio: "inherit" });
+const accountCode = JSON.parse(readFileSync(accountArtifact, "utf8")).bytecode.object;
+const sponsoredAccount = getContractAddress({ opcode: "CREATE2", from: CREATE2_DEPLOYER, salt: zeroHash, bytecode: accountCode });
+if (!(await hasCode(sponsoredAccount))) {
+  const deployer = createWalletClient({ account: mnemonicToAccount(MNEMONIC, { addressIndex: 0 }), transport: http(RPC), chain: null });
+  const hash = await deployer.sendTransaction({ to: CREATE2_DEPLOYER, data: concat([zeroHash, accountCode]) });
+  await client.waitForTransactionReceipt({ hash });
+  console.log(`deploy    SponsoredAccount ${sponsoredAccount}`);
+}
+
 // The env the local app, the facilitator and the scripts run with.
 const dep = readFileSync("lib/deployment-local.ts", "utf8");
 const usdc = dep.match(/usdc: "(0x[0-9a-fA-F]{40})"/)[1];
@@ -180,6 +198,8 @@ AGENT_ADDRESS=${ROLES.agent.address}
 X402_FACILITATOR_URL=http://127.0.0.1:4021
 X402_FACILITATOR_PRIVATE_KEY=${ROLES.facilitator.key}
 LOCAL_FAUCET_PRIVATE_KEY=${ROLES.faucet.key}
+LOCAL_SPONSOR_PRIVATE_KEY=${ROLES.sponsor.key}
+NEXT_PUBLIC_LOCAL_SPONSORED_ACCOUNT=${sponsoredAccount}
 `);
 console.log(`env       .env.localnet written`);
 console.log(`ready     ${RPC}  chain 31337  block ${await client.getBlockNumber()}`);

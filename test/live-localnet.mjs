@@ -27,7 +27,16 @@
  *  7. /corpus buys the task's corpus over x402 from the operator's own wallet:
  *     USDC moves, the file downloads, and SalesLog holds its SHA-256.
  *  8. /leaderboard shows the run and the sale as the Envio indexer has them
- *     (needs ENVIO_GRAPHQL_URL on the app and indexer/ running; skipped if not).
+ *     (needs indexer/ running).
+ *
+ * SPONSORED=1 runs the same day for an operator who never holds MON: the
+ * local wallet delegates to SponsoredAccount under EIP-7702 and a sponsor
+ * pays every transaction's gas, the local stand-in for Privy's sponsorship on
+ * Monad. The faucet sends USDC only. The checks are:
+ * - the passkey registration and the submit are both sent by the sponsor, to
+ *   the operator's own address;
+ * - the protocol still pays the operator;
+ * - the operator's MON is exactly what the run paid it.
  *
  * Every transaction is real and signed, on chain 31337. Nothing is mocked.
  */
@@ -51,6 +60,7 @@ const TASK = Number(process.env.TASK ?? 0);
 const SHOTS = process.env.SHOTS;
 /** "keyboard" drives the arm from the keys; "leader" from a physical-leader stand-in through the relay. */
 const DRIVE = process.env.DRIVE ?? "keyboard";
+const SPONSORED = process.env.SPONSORED === "1";
 const C = LOCAL_DEPLOYMENT.contracts;
 const chain = createPublicClient({ transport: http(RPC) });
 const log = (k, v) => console.log(k.padEnd(10), typeof v === "string" ? v : JSON.stringify(v));
@@ -86,11 +96,15 @@ try {
   // 1. The wallet.
   await page.goto(`${BASE}/localnet`);
   assert.ok(await page.getByTestId("localnet-banner").isVisible(), "a local build says it is not Monad");
+  if (SPONSORED) {
+    await page.getByRole("checkbox", { name: /A sponsor pays this wallet/ }).check();
+    assert.equal(await page.evaluate(() => localStorage.getItem("thenar:localnet:sponsor")), "1");
+  }
   await page.getByRole("button", { name: "Sign in with the local wallet" }).click();
   const balances = await until(async () => {
     const t = await page.getByTestId("local-balances").textContent().catch(() => null);
-    return t && /[1-9][\d.]* MON/.test(t) ? t : null;
-  }, 30_000, "the faucet's MON");
+    return t && (SPONSORED ? /0\.0000 MON · 20 USDC/ : /[1-9][\d.]* MON/).test(t) ? t : null;
+  }, 30_000, SPONSORED ? "the faucet's USDC (and no MON)" : "the faucet's MON");
   const address = (await page.locator("main a[href^='/explorer/address/0x']").nth(1).textContent()).trim();
   log("wallet", { address, balances });
 
@@ -109,6 +123,14 @@ try {
     functionName: "isInControlList", args: [address],
   }).catch((e) => `unreadable: ${e.shortMessage ?? e.message}`);
   log("passkey", { registered: key, operator: st.operator, whitelisted });
+  if (SPONSORED) {
+    const code = await chain.getCode({ address });
+    const env = readFileSync(".env.localnet", "utf8");
+    const account = env.match(/NEXT_PUBLIC_LOCAL_SPONSORED_ACCOUNT=(0x[0-9a-fA-F]{40})/)[1];
+    assert.equal(code?.toLowerCase(), `0xef0100${account.slice(2).toLowerCase()}`, "the wallet delegated to SponsoredAccount (EIP-7702)");
+    assert.equal(await chain.getBalance({ address }), 0n, "registering the passkey cost the operator nothing");
+    log("sponsored", { delegatedTo: account, mon: "0" });
+  }
   await shot("localnet-passkey");
 
   // 3. The registry verifies a fresh assertion.
@@ -216,6 +238,13 @@ try {
   });
   assert.equal(accepted.length, 1, "one TrajectoryAccepted for this operator");
   assert.ok(accepted[0].args.paid > 0n, "the run was paid");
+  if (SPONSORED) {
+    const receipt = await chain.getTransactionReceipt({ hash: accepted[0].transactionHash });
+    assert.equal(receipt.to.toLowerCase(), address.toLowerCase(), "the submit went to the operator's own (delegated) address");
+    assert.notEqual(receipt.from.toLowerCase(), address.toLowerCase(), "and was sent by the sponsor");
+    assert.equal(after - before, accepted[0].args.paid, "the operator received the whole payout and paid no gas");
+    log("sponsored", { sponsor: receipt.from, gasPaidBySponsor: formatEther(receipt.gasUsed * receipt.effectiveGasPrice), operatorGot: formatEther(after - before) });
+  }
 
   const hash = accepted[0].args.trajHash;
   await page.goto(`${BASE}/run/${hash}`);

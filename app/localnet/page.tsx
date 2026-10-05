@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useBlockNumber, useReadContract } from "wagmi";
+import { useBlockNumber, useBytecode, useReadContract } from "wagmi";
 import { erc20Abi, formatUnits } from "viem";
 import { Button } from "@/components/primitives";
 import { useSession } from "@/components/session";
 import { ACTIVE_DEPLOYMENT, CURRENCY, LOCALNET, LOCAL_RPC, USDC, appChain } from "@/lib/chain";
+import { SPONSORED_ACCOUNT, delegationCode, localSponsored, setLocalSponsored } from "@/lib/local-sponsor";
 
 /**
  * The local chain, and the wallet this browser holds on it.
@@ -23,6 +24,16 @@ export default function LocalnetPage() {
   });
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState<string | null>(null);
+  // Read after mount: the setting lives in this browser's storage.
+  const [sponsored, setSponsored] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setSponsored(localSponsored()), 0);
+    return () => clearTimeout(t);
+  }, []);
+  const { data: code } = useBytecode({
+    address: s.address ?? undefined, query: { enabled: Boolean(s.address && SPONSORED_ACCOUNT), refetchInterval: 4_000 },
+  });
+  const delegated = Boolean(SPONSORED_ACCOUNT && code && code.toLowerCase() === delegationCode(SPONSORED_ACCOUNT));
 
   if (!LOCALNET) {
     return (
@@ -38,11 +49,15 @@ export default function LocalnetPage() {
     setBusy(true); setNote(null);
     try {
       const r = await fetch("/api/localnet/fund", {
-        method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ address: s.address }),
+        method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ address: s.address, gas: !sponsored }),
       });
       const b = await r.json();
       if (!r.ok) throw new Error(b.error ?? "The faucet refused.");
-      setNote(b.funded ? `Sent 5 ${CURRENCY} and 20 USDC.` : "This wallet already has more than 1 MON.");
+      setNote(
+        !b.funded ? (sponsored ? "This wallet already has 20 USDC." : "This wallet already has more than 1 MON.")
+        : sponsored ? "Sent 20 USDC. The sponsor pays this wallet's gas, so it needs no MON."
+        : `Sent 5 ${CURRENCY} and 20 USDC.`,
+      );
       void s.refetchBalance(); void refetch();
     } catch (e) {
       setNote(e instanceof Error ? e.message : "The faucet did not answer.");
@@ -88,6 +103,30 @@ export default function LocalnetPage() {
           {note ? <p className="text-[13px] text-scribe-2">{note}</p> : null}
         </div>
       )}
+
+      {SPONSORED_ACCOUNT ? (
+        <section className="mt-8 border border-rule px-5 py-4" aria-labelledby="sponsor-title">
+          <h2 id="sponsor-title" className="label">Gas</h2>
+          <label className="mt-2 flex items-start gap-3 text-[14px] text-scribe-2">
+            <input
+              type="checkbox"
+              className="mt-1"
+              checked={sponsored}
+              onChange={(e) => { setLocalSponsored(e.target.checked); setSponsored(e.target.checked); }}
+            />
+            <span>
+              A sponsor pays this wallet&rsquo;s gas. On Monad, Privy does this for operators who sign in with email.
+              Here the wallet delegates its address to a smart account under EIP-7702, signs each call, and a
+              sponsor&rsquo;s key sends it. The protocol still sees this address, and pays it.
+            </span>
+          </label>
+          {s.connected ? (
+            <p className="mt-2 font-mono text-[12px] text-scribe-3" data-testid="local-delegation">
+              {delegated ? `Delegated to ${SPONSORED_ACCOUNT}` : "Not delegated yet: the first sponsored transaction signs the authorisation."}
+            </p>
+          ) : null}
+        </section>
+      ) : null}
     </div>
   );
 }

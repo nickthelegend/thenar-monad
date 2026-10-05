@@ -28,7 +28,7 @@ async function handlePOST(req: Request) {
   const gate = rateLimit(`fund:${callerKey(req)}`, 10, 60_000);
   if (!gate.ok) return NextResponse.json({ error: "Too many requests. Wait a moment." }, { status: 429 });
 
-  const body = (await req.json().catch(() => null)) as { address?: string } | null;
+  const body = (await req.json().catch(() => null)) as { address?: string; gas?: boolean } | null;
   if (!body?.address || !/^0x[0-9a-fA-F]{40}$/.test(body.address)) {
     return NextResponse.json({ error: "address must be an address" }, { status: 400 });
   }
@@ -37,15 +37,28 @@ async function handlePOST(req: Request) {
     return NextResponse.json({ error: "The node at this RPC is not the local chain." }, { status: 503 });
   }
 
-  const balance = await monad.getBalance({ address: to });
-  if (balance >= parseEther("1")) return NextResponse.json({ funded: false, balance: balance.toString() });
-
   const wallet = createWalletClient({ account: privateKeyToAccount(key as `0x${string}`), chain: thenarLocalnet, transport: http(LOCAL_RPC) });
-  const mon = await wallet.sendTransaction({ to, value: MON });
-  const usdc = await wallet.writeContract({
+  const sendUsdc = () => wallet.writeContract({
     address: USDC, abi: parseAbi(["function transfer(address,uint256) returns (bool)"]),
     functionName: "transfer", args: [to, USDC_DRIP],
   });
+
+  // A wallet whose gas a sponsor pays is sent USDC only, and only while it has less than a drip.
+  if (body.gas === false) {
+    const held = await monad.readContract({
+      address: USDC, abi: parseAbi(["function balanceOf(address) view returns (uint256)"]), functionName: "balanceOf", args: [to],
+    });
+    if (held >= USDC_DRIP) return NextResponse.json({ funded: false, usdc: held.toString() });
+    const usdc = await sendUsdc();
+    await monad.waitForTransactionReceipt({ hash: usdc });
+    return NextResponse.json({ funded: true, mon: null, usdc });
+  }
+
+  const balance = await monad.getBalance({ address: to });
+  if (balance >= parseEther("1")) return NextResponse.json({ funded: false, balance: balance.toString() });
+
+  const mon = await wallet.sendTransaction({ to, value: MON });
+  const usdc = await sendUsdc();
   await Promise.all([monad.waitForTransactionReceipt({ hash: mon }), monad.waitForTransactionReceipt({ hash: usdc })]);
   return NextResponse.json({ funded: true, mon, usdc });
 }

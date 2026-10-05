@@ -1,10 +1,11 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { encodeFunctionData, type Abi } from "viem";
 import { useAccount, useWriteContract } from "wagmi";
 import { useSendTransaction, useWallets } from "@privy-io/react-auth";
 import { LOCALNET, appChain } from "./chain";
+import { localSponsored } from "./local-sponsor";
 
 /**
  * Whether Privy pays the gas for operators' writes.
@@ -74,4 +75,13 @@ function useSponsoredGas() {
   const { address } = useAccount();
   return wallets.some((w) => w.walletClientType === "privy" && w.address.toLowerCase() === address?.toLowerCase());
 }
-export const useGasSponsored: () => boolean = GAS_SPONSORED ? useSponsoredGas : () => false;
+/** On the local chain, the local wallet's sponsored mode (lib/local-sponsor.ts), read after mount. */
+function useLocalSponsoredGas() {
+  const [on, setOn] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setOn(localSponsored()), 0);
+    return () => clearTimeout(t);
+  }, []);
+  return on;
+}
+export const useGasSponsored: () => boolean = GAS_SPONSORED ? useSponsoredGas : LOCALNET ? useLocalSponsoredGas : () => false;

@@ -15,7 +15,10 @@
     "localnet": "node scripts/localnet.mjs",
     "localnet:app": "node scripts/localnet-app.mjs",
     "localnet:facilitator": "NEXT_PUBLIC_CHAIN=local node --import ./test/register.mjs scripts/x402-facilitator.mjs",
-    "test:localnet": "NEXT_PUBLIC_CHAIN=local node --import ./test/register.mjs test/live-localnet.mjs"
+    "test:localnet": "NEXT_PUBLIC_CHAIN=local node --import ./test/register.mjs test/live-localnet.mjs",
+    "test:localnet:sponsored": "SPONSORED=1 NEXT_PUBLIC_CHAIN=local node --import ./test/register.mjs test/live-localnet.mjs",
+    "test:agent": "NEXT_PUBLIC_CHAIN=local node --import ./test/register.mjs test/live-agent.mjs",
+    "test:cre": "NEXT_PUBLIC_CHAIN=local node --import ./test/register.mjs test/live-cre-audit.mjs"
   },
   "dependencies": {
     "@category-labs/mera": "0.2.0",

@@ -4,6 +4,7 @@ import { useCallback, useMemo } from "react";
 import { useAccount, useBalance, useConnect, useDisconnect, useSwitchChain } from "wagmi";
 import { usePrivy } from "@privy-io/react-auth";
 import { LOCALNET, appChain } from "@/lib/chain";
+import { localSponsored } from "@/lib/local-sponsor";
 
 /**
  * The operator's wallet, as the rest of the app sees it.
@@ -73,7 +74,8 @@ function useLocalSession(): ReturnType<typeof usePrivySession> {
       const { accounts } = await connectAsync({ connector });
       await fetch("/api/localnet/fund", {
         method: "POST", headers: { "content-type": "application/json" },
-        body: JSON.stringify({ address: accounts[0] }),
+        // A sponsored wallet is sent USDC only: its gas is the sponsor's.
+        body: JSON.stringify({ address: accounts[0], gas: !localSponsored() }),
       });
       void refetchBalance();
     } catch (e) {
