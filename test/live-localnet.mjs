@@ -20,14 +20,23 @@
  *     and the wallet sends submitTrajectory, which pays the operator.
  *  5. The run's page replays it, and the chain has the TrajectoryAccepted
  *     event, the payment and the corpus shares.
+ *  6. /passkey derives the SO-101 key from the passkey's PRF, signs a command
+ *     and verifies it in the page; Node verifies the same signature as the arm
+ *     relay does; with nothing stored in the browser, the passkey gives the
+ *     same key again.
+ *  7. /corpus buys the task's corpus over x402 from the operator's own wallet:
+ *     USDC moves, the file downloads, and SalesLog holds its SHA-256.
+ *  8. /leaderboard shows the run and the sale as the Envio indexer has them
+ *     (needs ENVIO_GRAPHQL_URL on the app and indexer/ running; skipped if not).
  *
  * Every transaction is real and signed, on chain 31337. Nothing is mocked.
  */
 import { chromium } from "playwright";
 import assert from "node:assert/strict";
-import { createPublicClient, formatEther, http, parseAbi, parseAbiItem } from "viem";
+import { createPublicClient, erc20Abi, formatEther, http, parseAbi, parseAbiItem } from "viem";
 import { spawn } from "node:child_process";
-import { writeFileSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
+import { createHash, createPublicKey, verify as verifySig } from "node:crypto";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -58,11 +67,13 @@ const until = async (fn, ms = 30_000, what = "condition") => {
 const browser = await chromium.launch({ headless: false, args: ["--window-size=1500,1000"], executablePath: process.env.CHROMIUM });
 const page = await browser.newPage({ viewport: { width: 1480, height: 900 } });
 const errors = [], failed = [];
-page.on("console", (m) => m.type() === "error" && errors.push(m.text()));
+// x402's offer is a 402 by design: the browser logs it, and the paid retry follows.
+const offer = (s) => /\/api\/agent\/corpus/.test(s) && /402/.test(s);
+page.on("console", (m) => m.type() === "error" && !(offer(`${m.location()?.url} ${m.text()}`)) && errors.push(m.text()));
 page.on("pageerror", (e) => errors.push(e.message));
 // A prefetch the next navigation cancels is aborted by design, not a failure.
 page.on("requestfailed", (r) => r.failure()?.errorText !== "net::ERR_ABORTED" && failed.push(`${r.method()} ${r.url()} ${r.failure()?.errorText}`));
-page.on("response", (r) => r.status() >= 400 && failed.push(`${r.status()} ${r.request().method()} ${r.url()}`));
+page.on("response", (r) => r.status() >= 400 && !offer(`${r.url()} ${r.status()}`) && failed.push(`${r.status()} ${r.request().method()} ${r.url()}`));
 const cdp = await page.context().newCDPSession(page);
 await cdp.send("WebAuthn.enable");
 await cdp.send("WebAuthn.addVirtualAuthenticator", {
@@ -214,6 +225,92 @@ try {
   await page.goto(`${BASE}/explorer/tx/${accepted[0].transactionHash}`);
   assert.match(await text(), /Success/);
   assert.match(await text(), /TrajectoryAccepted/);
+
+  // 6. One passkey, more than one key.
+  await page.goto(`${BASE}/passkey`);
+  const deriveKey = async () => {
+    await page.getByRole("button", { name: /^Derive (my SO-101 key|it again)$/ }).click();
+    await until(async () => /Verified in this page|did not verify/.test(await text()), 30_000, "the SO-101 key");
+    const box = await page.getByTestId("robot-key").innerText();
+    return {
+      key: box.match(/public key\s+([0-9a-f]{64})/i)[1],
+      message: box.match(/(thenar-so101-cmd-v1\|[^\n]+)/)[1].trim(),
+      signature: box.match(/signature ([0-9a-f]{128})/)[1],
+      verified: /Verified in this page/.test(box),
+    };
+  };
+  const k1 = await deriveKey();
+  assert.equal(k1.verified, true, "the page verified its own signed command");
+  // The relay's check (scripts/arm-relay.mjs): Ed25519 with the raw key in SPKI.
+  const spki = createPublicKey({ key: Buffer.concat([Buffer.from("302a300506032b6570032100", "hex"), Buffer.from(k1.key, "hex")]), format: "der", type: "spki" });
+  assert.equal(verifySig(null, Buffer.from(k1.message), spki, Buffer.from(k1.signature, "hex")), true, "the relay's check accepts the page's command");
+  // A device that holds nothing: forget the stored credential, reload, derive again.
+  const stored = await page.evaluate((a) => {
+    const k = `thenar:passkey:v2:${a.toLowerCase()}`, v = localStorage.getItem(k);
+    localStorage.removeItem(k);
+    return [k, v];
+  }, address);
+  await page.reload();
+  const k2 = await deriveKey();
+  await page.evaluate(([k, v]) => localStorage.setItem(k, v), stored);
+  assert.equal(k2.key, k1.key, "the same passkey gives the same key with nothing stored");
+  assert.notEqual(k2.signature, k1.signature, "a fresh command, freshly signed");
+  const kept = await page.evaluate((key) => {
+    const all = [...Object.values(localStorage), ...Object.values(sessionStorage), document.cookie].join("\n");
+    return all.includes(key);
+  }, k1.key);
+  assert.equal(kept, false, "nothing about the key is stored in the browser");
+  log("robot key", { key: `${k1.key.slice(0, 16)}…`, sameWithNothingStored: k2.key === k1.key, relayVerifies: true });
+  await shot("localnet-robot-key");
+
+  // 7. The corpus, bought from the page over x402.
+  const usdcOf = () => chain.readContract({ address: LOCAL_DEPLOYMENT.usdc, abi: erc20Abi, functionName: "balanceOf", args: [address] });
+  const usdcBefore = await usdcOf();
+  const saleHead = await chain.getBlockNumber();
+  await page.goto(`${BASE}/corpus?task=${TASK}`);
+  const buy = page.getByRole("button", { name: /^Buy task #\d+ for/ });
+  await buy.waitFor({ timeout: 30_000 });
+  await until(async () => !(await buy.isDisabled()), 15_000, "the USDC balance");
+  const downloading = page.waitForEvent("download", { timeout: 60_000 });
+  await buy.click();
+  await until(async () => {
+    const box = await page.getByTestId("corpus-pull").innerText();
+    const alert = box.match(/\n([^\n]*(not accepted|answered|did not sign)[^\n]*)/);
+    if (alert) throw new Error(`the purchase failed: ${alert[1]}`);
+    return /Paid and saved/.test(box);
+  }, 60_000, "the purchase");
+  const file = readFileSync(await (await downloading).path());
+  const fileSha = createHash("sha256").update(file).digest("hex");
+  const usdcAfter = await usdcOf();
+  const sold = await chain.getLogs({
+    address: C.salesLog, fromBlock: saleHead, toBlock: "latest",
+    event: parseAbiItem("event CorpusSold(uint256 indexed seq, bytes32 indexed saleId, uint256 indexed taskId, uint8 terms, address buyer, address asset, uint256 amount, bytes32 sha256)"),
+  });
+  const mine = sold.find((l) => l.args.buyer.toLowerCase() === address.toLowerCase());
+  log("bought", { bytes: file.length, sha256: `${fileSha.slice(0, 16)}…`, usdcSpent: String(usdcBefore - usdcAfter), saleOnChain: mine ? String(mine.args.seq) : null });
+  assert.equal(usdcBefore - usdcAfter, 10_000n, "one cent of USDC left the wallet");
+  assert.ok(mine, "SalesLog recorded the sale to this wallet");
+  assert.equal(mine.args.sha256, `0x${fileSha}`, "the file downloaded is the file the log names");
+  assert.equal(Number(mine.args.taskId), TASK);
+  await shot("localnet-bought");
+
+  // 8. The indexer's history, on the leaderboard.
+  const indexed = await (await fetch(`${BASE}/api/indexer`)).json();
+  if (indexed.configured) {
+    const caught = await until(async () => {
+      const d = await (await fetch(`${BASE}/api/indexer`)).json();
+      return d.stats && d.stats.runs >= 1 && d.stats.sales >= 1 && d.recent?.some((o) => o.id.toLowerCase() === address.toLowerCase()) ? d : null;
+    }, 60_000, "the indexer to see the run and the sale");
+    await page.goto(`${BASE}/leaderboard`);
+    const panel = await until(async () => page.getByTestId("indexed-activity").innerText().catch(() => null), 30_000, "the indexer panel");
+    assert.match(panel, new RegExp(`${address.slice(0, 6)}`, "i"), "the panel lists the operator who just ran");
+    const today = caught.days.at(-1);
+    log("indexer", { runs: caught.stats.runs, sales: caught.stats.sales, passkeys: caught.stats.passkeys, today: today && { id: today.id, runs: today.runs, sales: today.sales } });
+    assert.ok(today && today.runs >= 1, "today's bar has the run");
+    await shot("localnet-indexer");
+  } else {
+    log("indexer", "not configured on this build; skipped");
+  }
 
   if (leaderPoses) {
     // The recording is the leader's motion: every sample's joints are a pose

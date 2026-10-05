@@ -63,6 +63,8 @@ if (await up()) {
     "--block-time", "1", "--mixed-mining",
     "--state", STATE, "--state-interval", "5",
     "--mnemonic", MNEMONIC, "--balance", "100000",
+    // Keep only recent states in memory: this machine runs other chains too.
+    "--prune-history", "300",
   ], { stdio: ["ignore", "pipe", "inherit"] });
   anvil.stdout.on("data", (b) => {
     const s = String(b);
