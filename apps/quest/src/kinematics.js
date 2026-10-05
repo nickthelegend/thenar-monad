@@ -69,7 +69,8 @@ const _dq = new THREE.Quaternion();
 
 /**
  * Pose error as a 6-vector: position (mm) then orientation as a rotation vector
- * scaled to mm by `orientWeight` (mm per radian). Orientation matters less than
+ * scaled to mm by `orientWeight` (mm per radian; 25 keeps position within a few
+ * mm near the base, where 60 cost 10–27 mm). Orientation matters less than
  * position for a 5-DOF arm, which cannot reach every orientation anyway.
  */
 function poseError(target, current, orientWeight, out) {
@@ -121,7 +122,7 @@ function solve(A, b, n) {
  * part of the reach). Mutates `joints` toward `target` (a Matrix4 in the root
  * frame, mm) and returns the residual position error in mm.
  */
-export function solveIK(joints, target, { count = 5, iterations = 16, orientWeight = 60, lambda = 1.5, maxStepDeg = 6, tolMm = 0.5 } = {}) {
+function descend(joints, target, { count = 5, iterations = 16, orientWeight = 25, lambda = 1.5, maxStepDeg = 6, tolMm = 0.5 } = {}) {
   const n = count;
   const e = new Float64Array(6);
   const e2 = new Float64Array(6);
@@ -144,26 +145,60 @@ export function solveIK(joints, target, { count = 5, iterations = 16, orientWeig
       for (let r = 0; r < 6; r++) J[r * n + j] = (e[r] - e2[r]) / h;
     }
     joints.set(q0);
-    // (J Jᵀ + λ² I) y = e ;  dq = Jᵀ y
-    for (let r = 0; r < 6; r++)
-      for (let c = 0; c < 6; c++) {
-        let s = r === c ? lambda * lambda : 0;
-        for (let k = 0; k < n; k++) s += J[r * n + k] * J[c * n + k];
-        A[r * 6 + c] = s;
+    // (J Jᵀ + λ² I) y = e ;  dq = Jᵀ y. A joint pinned at a limit that the
+    // step would push further is taken out and the step solved again without
+    // it, so the others do the work instead of the solver stalling against it.
+    const dq = new Float64Array(n);
+    const locked = new Array(n).fill(false);
+    for (let pass = 0; pass < 3; pass++) {
+      for (let r = 0; r < 6; r++)
+        for (let c = 0; c < 6; c++) {
+          let s = r === c ? lambda * lambda : 0;
+          for (let k = 0; k < n; k++) if (!locked[k]) s += J[r * n + k] * J[c * n + k];
+          A[r * 6 + c] = s;
+        }
+      y.set(e);
+      solve(A, y, 6);
+      let changed = false;
+      for (let j = 0; j < n; j++) {
+        dq[j] = 0;
+        if (locked[j]) continue;
+        for (let r = 0; r < 6; r++) dq[j] += J[r * n + j] * y[r];
+        const [lo, hi] = joints.limits[j];
+        if ((q0[j] <= lo + 1e-6 && dq[j] < 0) || (q0[j] >= hi - 1e-6 && dq[j] > 0)) {
+          locked[j] = true;
+          changed = true;
+        }
       }
-    y.set(e);
-    solve(A, y, 6);
+      if (!changed) break;
+    }
     const q = q0.slice();
     let biggest = 0;
-    const dq = new Float64Array(n);
-    for (let j = 0; j < n; j++) {
-      for (let r = 0; r < 6; r++) dq[j] += J[r * n + j] * y[r];
-      biggest = Math.max(biggest, Math.abs(dq[j]));
-    }
+    for (let j = 0; j < n; j++) biggest = Math.max(biggest, Math.abs(dq[j]));
     const scale = biggest > maxStepDeg ? maxStepDeg / biggest : 1;
     for (let j = 0; j < n; j++) q[j] += dq[j] * scale;
     joints.set(q);
   }
   poseError(target, joints.tcpPose(_cur), orientWeight, e);
   return Math.hypot(e[0], e[1], e[2]);
+}
+
+/**
+ * Damped least squares from where the arm is, and, when that stalls more
+ * than `restartMm` short (a local minimum against a joint limit, typically
+ * with the arm reached over itself), again from `seed`; whichever gets closer
+ * wins. The follower's firmware slews at most 10°/s, so a jump to the better
+ * branch is a move, not a snap.
+ */
+export function solveIK(joints, target, opts = {}) {
+  const err = descend(joints, target, opts);
+  const { seed, restartMm = 8 } = opts;
+  if (!seed || err <= restartMm) return err;
+  const here = joints.q.slice();
+  joints.set([...seed.slice(0, 5), here[5]]);
+  let alt = Infinity;
+  for (let i = 0; i < 4 && alt > restartMm; i++) alt = descend(joints, target, opts);
+  if (alt < err / 2) return alt;
+  joints.set(here);
+  return descend(joints, target, { ...opts, iterations: 0 });
 }

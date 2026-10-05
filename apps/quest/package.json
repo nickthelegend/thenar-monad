@@ -8,10 +8,15 @@
     "relay": "node server/relay.mjs",
     "build": "vite build",
     "test": "node --test test/*.test.mjs",
-    "e2e": "node test/e2e.mjs"
+    "e2e": "node test/e2e.mjs",
+    "vision": "mkdir -p public/vision/wasm && cp node_modules/@mediapipe/tasks-vision/wasm/vision_wasm_internal.* public/vision/wasm/",
+    "predev": "pnpm vision",
+    "prebuild": "pnpm vision"
   },
   "dependencies": {
-    "three": "0.186.0"
+    "@mediapipe/tasks-vision": "1.0.1",
+    "three": "0.186.0",
+    "viem": "^2.56.0"
   },
   "devDependencies": {
     "@gltf-transform/core": "^4.5.0",

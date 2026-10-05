@@ -2,7 +2,7 @@
 // second. No DOM in XR, and no font files to fetch on a headset.
 import * as THREE from "three";
 
-const W = 1024, H = 600;
+const W = 1024, H = 700;
 const INK = "#f4f1ea", DIM = "#9aa3b2", AMBER = "#f2b845", RED = "#ff5a4f", GREEN = "#4fd18b", BLUE = "#6f9cf0";
 
 export class Hud {
@@ -91,11 +91,23 @@ export class Hud {
     c.fillStyle = DIM;
     c.font = "500 24px ui-monospace, Menlo, monospace";
     c.fillText(`reach err ${s.ikError.toFixed(1)} mm   ${s.fps.toFixed(0)} fps   episodes ${s.episodes}`, 44, fy);
-    c.fillStyle = INK;
-    c.font = "500 23px ui-sans-serif, system-ui, sans-serif";
-    c.fillText(s.hint, 44, fy + 44);
+    c.fillStyle = AMBER;
+    c.font = "600 24px ui-sans-serif, system-ui, sans-serif";
+    c.fillText(clip(c, s.task ?? "", W - 88), 44, fy + 44);
+    c.fillStyle = s.line?.startsWith("Accepted") ? GREEN : s.line?.startsWith("Not") ? RED : INK;
+    c.font = "500 22px ui-sans-serif, system-ui, sans-serif";
+    c.fillText(clip(c, s.line ?? "", W - 88), 44, fy + 84);
+    c.fillStyle = DIM;
+    c.font = "500 21px ui-sans-serif, system-ui, sans-serif";
+    c.fillText(clip(c, s.hint, W - 88), 44, fy + 128);
     this.texture.needsUpdate = true;
   }
+}
+
+function clip(c, text, max) {
+  if (c.measureText(text).width <= max) return text;
+  while (text.length > 1 && c.measureText(text + "…").width > max) text = text.slice(0, -1);
+  return text + "…";
 }
 
 function round(c, x, y, w, h, r) {

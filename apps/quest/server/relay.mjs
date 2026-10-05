@@ -11,6 +11,7 @@
 // and stops itself if a target is more than 250 ms old. Nothing here arms the
 // follower unless --arm was given, and then only from the displayed home pose,
 // exactly as bridge.py does.
+import { createServer } from "node:http";
 import { WebSocketServer } from "ws";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
@@ -134,7 +135,16 @@ if (opt.leader) {
 
 // ---- websocket ------------------------------------------------------------------
 
-const wss = new WebSocketServer({ port: +opt.port, maxPayload: 32 * 1024 * 1024 });
+// One port for everything: the station API over HTTP, the relay over WebSocket.
+const { createApi } = await import("./api.mjs");
+const { openDb } = await import("./db.mjs");
+const db = openDb();
+const api = createApi({ db, broadcast: (m) => broadcast(m) });
+const server = createServer(async (req, res) => {
+  if (await api(req, res)) return;
+  res.writeHead(426, { "content-type": "text/plain" }).end("THENAR station: WebSocket at /relay, API at /api/*\n");
+});
+const wss = new WebSocketServer({ server, maxPayload: 32 * 1024 * 1024 });
 const clients = new Map();
 let lastOperatorState = 0;
 
@@ -214,8 +224,8 @@ const shutdown = () => {
 process.on("SIGINT", shutdown);
 process.on("SIGTERM", shutdown);
 
-wss.on("listening", () => console.log(`THENAR relay on ws://0.0.0.0:${opt.port} · episodes → ${episodesDir}`));
-wss.on("error", (e) => {
+server.listen(+opt.port, () => console.log(`THENAR relay on ws://0.0.0.0:${opt.port} · API /api · episodes → ${episodesDir}`));
+server.on("error", (e) => {
   console.error(e.code === "EADDRINUSE" ? `Port ${opt.port} is taken: is another relay running?` : e.message);
   followerStop("relay failed to start");
   process.exit(1);

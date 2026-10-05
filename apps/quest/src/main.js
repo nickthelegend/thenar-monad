@@ -21,6 +21,8 @@ import { Recorder, stateAt, download } from "./recorder.js";
 import { Link } from "./link.js";
 import { Hud } from "./hud.js";
 import { Task } from "./task.js";
+import { Station } from "./station.js";
+import { poseAt } from "./teach.js";
 import "./style.css";
 
 const params = new URLSearchParams(location.search);
@@ -216,8 +218,11 @@ let ikError = 0;
 let grip = arm.home[5];
 let replay = null; // { episode, t0 }
 let demo = null; // { t0 }
+let repeat = null; // { skill, t0 }: the taught skill, running on its own
+let stationLine = "";
 let leaderStream = null; // { q, at }
 let remote = null; // spectator: last operator state
+let spectatorTask = null;
 let motionScale = 1;
 const q = [...arm.home];
 
@@ -233,6 +238,20 @@ link.on("state", (m) => {
   if (SPECTATE) remote = { ...m, at: performance.now() };
 });
 link.on("status:link", () => renderPanel());
+
+const station = new Station({
+  onTask: (t) => {
+    stopAuto();
+    task.setScene(t.scene);
+    goHome();
+    setLine(t.instruction);
+    renderEpisodeButtons();
+  },
+  onLine: (t) => (stationLine = t),
+  toast: (m) => toast(m),
+});
+if (!SPECTATE) station.refresh();
+link.on("task", () => station.refresh());
 
 // ---- helpers ----------------------------------------------------------------
 
@@ -264,8 +283,10 @@ function setPose(next) {
   q.splice(0, 6, ...follower.q);
 }
 /** Pose tuple in the arm frame, metres: [x, y, z, qx, qy, qz, qw]. */
+const _pose = new THREE.Matrix4(), _tcpWorld = new THREE.Matrix4();
 function armPose(worldMatrix) {
-  worldToArm(worldMatrix, _m).decompose(_p, _q, _s);
+  // Its own scratch matrix: callers pass matrices that may be _m.
+  worldToArm(worldMatrix, _pose).decompose(_p, _q, _s);
   return [_p.x / 1000, _p.y / 1000, _p.z / 1000, _q.x, _q.y, _q.z, _q.w].map((v) => +v.toFixed(5));
 }
 
@@ -275,7 +296,7 @@ function solveToTarget() {
   local.decompose(_p, _q, _s);
   if (_p.z < TABLE_Z_MM) _p.z = TABLE_Z_MM;
   local.compose(_p, _q, ONE);
-  ikError = solveIK(follower, local);
+  ikError = solveIK(follower, local, { seed: arm.home });
   q.splice(0, 5, ...follower.q.slice(0, 5));
   return ikError;
 }
@@ -291,6 +312,7 @@ const gizmo = new TransformControls(camera, renderer.domElement);
 gizmo.setSize(0.8);
 gizmo.setSpace("local");
 let dragging = false;
+let nudgeUntil = 0; // keyboard teleop keeps the solver on for a moment after each key
 gizmo.addEventListener("dragging-changed", (e) => {
   orbit.enabled = !e.value;
   dragging = e.value;
@@ -316,16 +338,36 @@ addEventListener("keydown", (e) => {
   } else if (e.key === "h") goHome();
   else if (e.key === "p") startReplay();
   else if (e.key === "d") toggleDemo();
+  else if (nudge(e)) e.preventDefault();
   else if (e.key === "[") setGrip(grip - 10);
   else if (e.key === "]") setGrip(grip + 10);
 });
 
+// Keyboard teleop, in the arm's own frame: ↑↓ reach out and in, ←→ left and
+// right, PageUp/PageDown up and down; Shift for bigger steps. A person driving
+// the arm without a headset, and without a mouse.
+const NUDGE = { ArrowUp: [1, 0, 0], ArrowDown: [-1, 0, 0], ArrowLeft: [0, 1, 0], ArrowRight: [0, -1, 0], PageUp: [0, 0, 1], PageDown: [0, 0, -1] };
+function nudge(e) {
+  const d = NUDGE[e.key];
+  if (!d || SPECTATE) return false;
+  stopAuto();
+  const step = e.shiftKey ? 20 : 5;
+  target.updateMatrixWorld(true);
+  const local = worldToArm(target.matrixWorld, new THREE.Matrix4());
+  local.decompose(_p, _q, _s);
+  _p.add(new THREE.Vector3(...d).multiplyScalar(step));
+  armToWorld(local.compose(_p, _q, ONE), _m).decompose(target.position, target.quaternion, _s);
+  nudgeUntil = performance.now() + 400;
+  return true;
+}
 function setGrip(v) {
   grip = THREE.MathUtils.clamp(v, ...arm.limits[5]);
+  if (!demo && !repeat && !replay) nudgeUntil = performance.now() + 400;
 }
 function stopAuto() {
   replay = null;
   demo = null;
+  repeat = null;
 }
 function goHome() {
   stopAuto();
@@ -341,15 +383,22 @@ function toggleRecord() {
   if (recorder.recording) {
     const ep = recorder.stop();
     if (ep) {
-      ep.task = task.summary();
+      ep.input = inputOf(ep);
+      ep.task = { ...task.summary(), goal: [task.goal.x, task.goal.y], specHash: station.current?.specHash ?? null };
       episodes.push(ep);
       link.send({ type: "episode", episode: ep }) || toast(`Episode ${episodes.length} kept in this tab (relay offline)`);
+      // In the headset there is no Submit button: a placed object goes straight to the station.
+      if (renderer.xr.isPresenting && station.current) {
+        if (ep.task.success) submitEpisode(ep);
+        else setLine(`Not placed on the ${task.label.place}, so not sent. X replays it.`);
+      }
     }
+    renderEpisodeButtons();
     buzz(0.8, 80);
   } else {
     stopAuto();
     task.reset();
-    recorder.start({ input: source === "hand" ? "quest-hand" : xrMode() ? "quest-controller" : "desktop", xr: xrMode() || "none" });
+    recorder.start({ input: repeat ? "taught-repeat" : source === "hand" ? "quest-hand" : xrMode() ? "quest-controller" : "desktop", xr: xrMode() || "none" });
     buzz(0.8, 80);
   }
   renderPanel();
@@ -361,6 +410,58 @@ function startReplay() {
   demo = null;
   replay = { episode: ep, t0: performance.now() };
   task.reset(ep.task?.cubeStart);
+}
+/** Who drove the arm, read from every frame: any machine-driven frame makes it the machine's take. */
+function inputOf(ep) {
+  const seen = new Set(ep.frames.map((f) => f.source));
+  if (seen.has("repeat")) return "taught-repeat";
+  if (seen.has("demo")) return "scripted-demo";
+  if (seen.has("replay")) return "replay";
+  if (seen.has("hand")) return "quest-hand";
+  if (seen.has("controller")) return "quest-controller";
+  if (seen.has("leader")) return "leader-arm";
+  return seen.has("desktop") ? "desktop" : "idle";
+}
+async function submitEpisode(ep = episodes.at(-1)) {
+  if (!ep) return toast("Record an episode first.");
+  if (!station.current) return toast("Choose a scanned task first.");
+  if (ep.task?.specHash !== station.current.specHash) return toast("That episode was recorded on another task.");
+  if (ep.submitted) return toast("That episode was already sent.");
+  $("#submit").disabled = true;
+  try {
+    const r = await station.submit(ep);
+    ep.submitted = r.leafIndex;
+    buzz(r.accepted ? 1 : 0.4, r.accepted ? 150 : 60);
+  } catch (e) {
+    toast(e.message);
+  } finally {
+    renderEpisodeButtons();
+  }
+}
+function setLine(t) {
+  stationLine = t;
+  $("#station-line").textContent = t;
+}
+async function teach() {
+  try {
+    await station.teach();
+    toast("Taught. Repeat runs it wherever the scan put things.");
+  } catch (e) {
+    toast(e.message);
+    setLine(e.message);
+  }
+}
+function startRepeat() {
+  if (!station.skill) return toast("Teach the arm first: Teach learns from your best accepted episode.");
+  stopAuto();
+  task.reset();
+  repeat = { skill: station.skill, t0: performance.now() };
+  setLine("Repeating the taught skill on its own.");
+}
+function renderEpisodeButtons() {
+  const last = episodes.at(-1);
+  $("#submit").disabled = !last || !station.current || last.submitted != null || last.task?.specHash !== station.current?.specHash;
+  $("#teach").disabled = !station.current;
 }
 function toggleDemo() {
   if (demo) return (demo = null);
@@ -521,6 +622,7 @@ function pollXR() {
     if (edge(left, 4)) startReplay();
     if (edge(left, 5)) goHome();
     if (edge(left, 1)) leaderMount.visible = !leaderMount.visible;
+    if (edge(left, 3)) startRepeat();
     const ax = left.source.gamepad.axes;
     if (ax.length >= 4 && Math.abs(ax[3]) > 0.5) motionScale = THREE.MathUtils.clamp(motionScale - ax[3] * 0.01, 0.3, 1.5);
   }
@@ -599,6 +701,10 @@ renderer.setAnimationLoop((time, frame) => {
     if (remote && now - remote.at < 1000) {
       setPose(remote.q);
       source = "remote";
+      if (remote.task?.specHash && remote.task.specHash !== spectatorTask) {
+        spectatorTask = remote.task.specHash;
+        fetch(`api/tasks/${spectatorTask}`).then((r) => r.json()).then((d) => d.task && task.setScene(d.task.scene)).catch(() => {});
+      }
       if (remote.task) task.apply(remote.task);
       ghost.visible = remote.source === "controller" || remote.source === "hand" || !!remote.hand;
       placeGhost(ghost.userData.head, remote.head);
@@ -610,6 +716,19 @@ renderer.setAnimationLoop((time, frame) => {
     grip = q[5];
     source = "replay";
     if (t > replay.episode.duration_s + 0.5) replay = null;
+  } else if (repeat) {
+    const t = (now - repeat.t0) / 1000;
+    if (t > repeat.skill.duration_s + 0.3) {
+      repeat = null;
+      setLine(task.success ? `The taught skill put the ${task.label.pick} on the ${task.label.place} ✓` : `The taught skill missed the ${task.label.place}.`);
+    } else {
+      const r = poseAt(repeat.skill, t, [task.cubeStart.x / 1000, task.cubeStart.y / 1000], [task.goal.x / 1000, task.goal.y / 1000]);
+      const local = new THREE.Matrix4().compose(new THREE.Vector3(r.p[0] * 1000, r.p[1] * 1000, r.p[2] * 1000), new THREE.Quaternion(...r.q), ONE);
+      armToWorld(local, _m).decompose(target.position, target.quaternion, _s);
+      grip = r.grip;
+      solveToTarget();
+      source = "repeat";
+    }
   } else if (demo) {
     const d = demoPose((now - demo.t0) / 1000);
     if (!d) {
@@ -628,7 +747,7 @@ renderer.setAnimationLoop((time, frame) => {
     source = "leader";
   } else {
     if (renderer.xr.isPresenting) pollXR();
-    if (dragging) source = "desktop";
+    if (dragging || now < nudgeUntil) source = "desktop";
     if (source === "controller" || source === "hand" || source === "desktop") {
       const before = follower.q.slice(0, 5);
       solveToTarget();
@@ -647,7 +766,7 @@ renderer.setAnimationLoop((time, frame) => {
   if (source === "idle" || source === "replay" || source === "leader" || source === "remote") snapTargetToTcp();
 
   // Reach line: only when the solver cannot get there.
-  const tcp = tcpWorld(_m);
+  const tcp = tcpWorld(_tcpWorld);
   const showLine = ikError > 8 && (source === "controller" || source === "hand" || source === "desktop");
   reachLine.visible = showLine;
   if (showLine) {
@@ -679,7 +798,7 @@ renderer.setAnimationLoop((time, frame) => {
       source,
       head: armPose(camPose.matrixWorld),
       hand: right ? armPose(right.grip.matrixWorld) : null,
-      task: task.summary(),
+      task: { ...task.summary(), specHash: station.current?.specHash ?? null },
     });
   }
   if (recorder.recording) {
@@ -691,6 +810,7 @@ renderer.setAnimationLoop((time, frame) => {
       action: q.map((v) => +v.toFixed(3)),
       "observation.tcp": armPose(tcp),
       "observation.cube": task.cubePose(),
+      "observation.held": !!task.held,
       target: armPose(target.matrixWorld),
       head: armPose(camPose.matrixWorld),
       controller: renderer.xr.isPresenting && right ? armPose(right.grip.matrixWorld) : null,
@@ -713,13 +833,15 @@ renderer.setAnimationLoop((time, frame) => {
       ikError,
       fps,
       episodes: episodes.length,
+      task: station.current ? station.current.instruction : `Practice: ${task.status()}`,
+      line: stationLine,
       linkLabel: linkLabel(),
       linkColor: link.status === "online" ? (relay.follower?.armed ? "amber" : "green") : "dim",
       hint: clutch
         ? "Holding the arm · trigger closes the gripper · let go to stop"
         : byHand("right")?.source?.hand
           ? "Pinch with your LEFT hand to hold the arm · your right hand is the gripper"
-          : "Squeeze GRIP to hold · A place on table · B record · X replay · Y home",
+          : "GRIP hold · trigger grip · A place · B record · X replay · Y home · L-stick click repeat",
     });
   } else {
     orbit.update();
@@ -785,6 +907,9 @@ $("#rec").onclick = toggleRecord;
 $("#replay").onclick = startReplay;
 $("#home").onclick = goHome;
 $("#demo").onclick = toggleDemo;
+$("#submit").onclick = () => submitEpisode();
+$("#teach").onclick = teach;
+$("#repeat").onclick = startRepeat;
 $("#show-leader").checked = leaderMount.visible;
 $("#show-leader").onchange = (e) => (leaderMount.visible = e.target.checked);
 $("#download").onclick = () => episodes.forEach((ep, i) => download(ep, `thenar-episode-${i + 1}.json`));
@@ -798,7 +923,7 @@ renderPanel();
 snapTargetToTcp();
 
 // Handles for scripted checks (and curious people with a console open).
-window.thenar = { arm, follower, leader, q, target, task, episodes, recorder, setPose, solveToTarget, toggleDemo, toggleRecord, startReplay, get source() { return source; }, get ikError() { return ikError; } };
+window.thenar = { station, submitEpisode, teach, startRepeat, get repeating() { return !!repeat; }, arm, follower, leader, q, target, task, episodes, recorder, setPose, solveToTarget, toggleDemo, toggleRecord, startReplay, get source() { return source; }, get ikError() { return ikError; } };
 
 // ---- emulator -------------------------------------------------------------------
 

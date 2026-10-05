@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#0d1017" />
+    <title>Scan a task · THENAR Quest</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M6 26h20M10 24l4-12 10-6M14 12l10 9' stroke='%23f2b845' stroke-width='2.5' stroke-linecap='round' fill='none'/%3E%3Ccircle cx='14' cy='12' r='3' fill='%23f2b845'/%3E%3C/svg%3E" />
+  </head>
+  <body>
+    <main class="scan">
+      <section class="stage">
+        <video id="video" playsinline muted hidden></video>
+        <div class="frame-wrap">
+          <canvas id="frame"></canvas>
+          <canvas id="overlay" aria-label="Camera picture of the table. Click the sheet's corners, then objects to add."></canvas>
+        </div>
+        <p id="status" class="status" role="status"></p>
+      </section>
+      <aside class="side">
+        <header><a class="brand" href="./">THENAR <small>SCAN</small></a></header>
+        <h1>Scan the table into a task</h1>
+        <ol class="steps">
+          <li>Lay a sheet of <b>A4</b> flat in front of the arm, long side pointing away, near edge centred 9 cm ahead of the base.</li>
+          <li>Point a camera at it, freeze a frame, and click the sheet's corners: near left, near right, far right, far left.</li>
+          <li>Pick the object to move and the one to put it on.</li>
+        </ol>
+        <div class="buttons">
+          <button id="start" class="primary">Start camera</button>
+          <button id="freeze" disabled>Freeze frame</button>
+          <button id="rescan" disabled>Scan again</button>
+          <label class="file">Upload photo<input id="file" type="file" accept="image/*" capture="environment" /></label>
+        </div>
+        <div class="buttons"><button id="reset-corners">Re-mark the sheet</button></div>
+        <label class="field">Name for objects you click to add <input id="add-label" value="block" maxlength="32" /></label>
+        <h2>On the table</h2>
+        <div id="objects"></div>
+        <h2>Task</h2>
+        <p id="task-line" class="note"></p>
+        <label class="field">Reward per accepted episode, MON <input id="reward" value="0.001" inputmode="decimal" /></label>
+        <button id="publish" class="primary" disabled>Publish on Monad</button>
+        <p id="published" class="note"></p>
+      </aside>
+    </main>
+    <script type="module" src="/src/scan.js"></script>
+  </body>
+</html>

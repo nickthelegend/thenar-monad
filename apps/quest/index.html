@@ -25,6 +25,26 @@
         </section>
 
         <section>
+          <h2>Task on Monad</h2>
+          <p id="station-state" class="note">Connecting to the station…</p>
+          <div id="tasks" class="tasks"></div>
+          <div class="buttons"><a class="button" href="scan.html">Scan a new task</a><button id="refresh-tasks">Refresh</button></div>
+          <label class="field">Your payout address (Monad)<input id="payout" placeholder="0x…" autocomplete="off" spellcheck="false" /></label>
+          <p id="payout-note" class="note"></p>
+          <div id="task-actions" hidden>
+            <p id="task-links" class="note"></p>
+            <div class="buttons">
+              <button id="submit" class="primary" disabled>Submit last episode</button>
+              <button id="teach" disabled>Teach</button>
+              <button id="repeat" disabled>Repeat</button>
+            </div>
+            <p id="skill-state" class="note"></p>
+          </div>
+          <p id="station-line" class="note"></p>
+          <div id="result"></div>
+        </section>
+
+        <section>
           <h2>Episode</h2>
           <div class="buttons">
             <button id="rec">Record</button>
@@ -62,11 +82,14 @@
             <tr><td>X · Y</td><td>replay last · home</td></tr>
             <tr><td>Left grip</td><td>show / hide the leader</td></tr>
             <tr><td>Left stick ↕</td><td>motion scale (fine ↔ coarse)</td></tr>
+            <tr><td>Left stick click</td><td>repeat the taught skill</td></tr>
             <tr><th colspan="2">Hands</th></tr>
             <tr><td>Left pinch</td><td>hold the arm, it follows your right hand</td></tr>
             <tr><td>Right thumb–index</td><td>gripper opening</td></tr>
             <tr><th colspan="2">Desktop</th></tr>
             <tr><td>Drag gizmo</td><td>move the target · W move · E rotate</td></tr>
+            <tr><td>↑ ↓ ← →</td><td>reach out / in / left / right (Shift: ×4)</td></tr>
+            <tr><td>PageUp · PageDown</td><td>up · down</td></tr>
             <tr><td>Space · P · H · D</td><td>record · replay · home · demo</td></tr>
             <tr><td>[ ]</td><td>gripper</td></tr>
           </table>

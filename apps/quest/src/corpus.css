@@ -1,0 +1,22 @@
+.corpus { max-width: 1060px; margin: 0 auto; padding: 20px 16px 60px; }
+.corpus header { display: flex; justify-content: space-between; align-items: baseline; }
+.corpus nav a, .corpus a { color: var(--amber); }
+.corpus h1 { font-size: 22px; }
+.corpus section { margin-top: 18px; }
+.task { text-align: left; display: grid; gap: 2px; width: 100%; margin: 4px 0; }
+.task small { color: var(--dim); }
+.task.on { border-color: var(--amber); background: rgba(242, 184, 69, 0.1); }
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 8px 0; }
+th { text-align: left; color: var(--dim); font-weight: 600; padding: 6px 8px; border-bottom: 1px solid var(--line); }
+td { padding: 6px 8px; border-bottom: 1px solid var(--line); }
+tr.rejected td { color: var(--dim); }
+button.ok { color: var(--green); } button.no { color: var(--red); }
+.row { display: flex; gap: 12px; align-items: end; flex-wrap: wrap; }
+.card { border: 1px solid var(--line); border-radius: 12px; padding: 14px; margin: 12px 0; display: grid; gap: 8px; }
+.licence { border-top: 1px solid var(--line); padding-top: 8px; color: var(--dim); font-size: 13px; }
+.note.bad { color: var(--red); }
+code { font: 12px ui-monospace, Menlo, monospace; }
+/* The verify column keeps its width when a button turns into its verdict. */
+[data-verify] { min-width: 150px; }
+.card-head { margin: 0; }

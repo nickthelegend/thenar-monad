@@ -25,7 +25,8 @@ function run(cmd, args, env, ready) {
     p.on("exit", (c) => fail(new Error(`${cmd} exited ${c}`)));
   });
 }
-const relay = await run(process.execPath, ["server/relay.mjs", "--port", String(RELAY_PORT), "--episodes", episodes], {}, "THENAR relay on");
+// The station opens its databases at start; keep them out of the repository's real ones.
+const relay = await run(process.execPath, ["server/relay.mjs", "--port", String(RELAY_PORT), "--episodes", episodes], { THENAR_STATION_DB: join(episodes, "station.db"), THENAR_LOG_DB: join(episodes, "log.db") }, "THENAR relay on");
 const web = await run("npx", ["vite", "--port", String(WEB_PORT), "--strictPort"], { HTTP: "1", RELAY_PORT: String(RELAY_PORT) }, "ready in");
 const BASE = `http://localhost:${WEB_PORT}`;
 
@@ -69,7 +70,7 @@ try {
   assert.ok(rest < 0.01, `spectator settled ${rest}° away from the operator`);
   step(`demo placed the cube; spectator mirrored it live (${mirrored}/16 samples) and settled on the same pose`);
   await wait(500);
-  const files = readdirSync(episodes);
+  const files = readdirSync(episodes).filter((f) => f.endsWith(".json"));
   assert.equal(files.length, 1, "the relay saved the episode");
   const ep = JSON.parse(readFileSync(join(episodes, files[0])));
   assert.equal(ep.format, "thenar-quest-episode/1");

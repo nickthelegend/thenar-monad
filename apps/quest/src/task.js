@@ -32,6 +32,43 @@ export class Task {
     this.pad = pad;
     parent.add(this.cube, pad);
 
+    this.others = new THREE.Group();
+    parent.add(this.others);
+    this.label = { pick: "cube", place: "pad" };
+
+    this.placed = 0;
+    this.reset();
+  }
+
+  /**
+   * Stand in for a scanned table: the object to pick at its measured place and
+   * colour, the target it goes on, and everything else as fixed obstacles.
+   * Positions are the scan's millimetres in the arm frame.
+   */
+  setScene(scene) {
+    if (!scene) {
+      this.cubeStart.set(285, 90, SIZE / 2);
+      this.goal.set(280, -105, 0);
+      this.cube.material.color.set(0xe8543f);
+      this.pad.material.color.set(0x4fd18b);
+      this.label = { pick: "cube", place: "pad" };
+      this.others.clear();
+    } else {
+      this.cubeStart.set(scene.pick.x_mm, scene.pick.y_mm, SIZE / 2);
+      this.goal.set(scene.place.x_mm, scene.place.y_mm, 0);
+      this.cube.material.color.set(scene.pick.colour ?? 0xe8543f);
+      this.pad.material.color.set(scene.place.colour ?? 0x4fd18b);
+      this.label = { pick: scene.pick.label, place: scene.place.label };
+      this.others.clear();
+      for (const o of scene.others ?? []) {
+        const m = new THREE.Mesh(new THREE.CylinderGeometry(18, 18, 50, 24), new THREE.MeshStandardMaterial({ color: o.colour ?? 0x8a93a3, roughness: 0.6, transparent: true, opacity: 0.8 }));
+        m.rotation.x = Math.PI / 2;
+        m.position.set(o.x_mm, o.y_mm, 25);
+        m.castShadow = true;
+        this.others.add(m);
+      }
+    }
+    this.pad.position.copy(this.goal).setZ(1);
     this.placed = 0;
     this.reset();
   }
@@ -90,9 +127,10 @@ export class Task {
     return { cubeStart: this.cubeStart.toArray(), cube: this.cubePose(), held: !!this.held, success: this.success, placed: this.placed };
   }
   status() {
-    if (this.held) return "holding the cube";
-    if (this.success) return `on the pad ✓ (${this.placed})`;
-    return this.placed ? `placed ${this.placed}× · pick it again` : "pick the red cube, put it on the green pad";
+    const { pick, place } = this.label;
+    if (this.held) return `holding the ${pick}`;
+    if (this.success) return `on the ${place} ✓ (${this.placed})`;
+    return this.placed ? `placed ${this.placed}× · pick it again` : `pick the ${pick}, put it on the ${place}`;
   }
   /** Spectator: mirror the operator's cube. */
   apply(s) {

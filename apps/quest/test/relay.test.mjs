@@ -8,11 +8,14 @@ import { fileURLToPath } from "node:url";
 import { WebSocket } from "ws";
 
 let PORT = 18787;
+// Keep the station's databases out of the repository's real ones.
+const scratch = mkdtempSync(join(tmpdir(), "thenar-station-"));
+const env = { ...process.env, THENAR_STATION_DB: join(scratch, "station.db"), THENAR_LOG_DB: join(scratch, "log.db") };
 const nextPort = () => ++PORT;
 
 function start(dir) {
   nextPort();
-  const p = spawn(process.execPath, ["server/relay.mjs", "--port", String(PORT), "--episodes", dir], { cwd: new URL("..", import.meta.url) });
+  const p = spawn(process.execPath, ["server/relay.mjs", "--port", String(PORT), "--episodes", dir], { cwd: new URL("..", import.meta.url), env });
   return new Promise((ok, fail) => {
     p.stdout.on("data", (d) => String(d).includes("THENAR relay on") && ok(p));
     p.on("exit", (c) => fail(new Error(`relay exited ${c}`)));
@@ -76,6 +79,7 @@ function startWith(args) {
   nextPort();
   const p = spawn(process.execPath, ["server/relay.mjs", "--port", String(PORT), "--episodes", mkdtempSync(join(tmpdir(), "thenar-relay-")), ...args], {
     cwd: new URL("..", import.meta.url),
+    env,
   });
   return new Promise((ok, fail) => {
     p.stdout.on("data", (d) => String(d).includes("THENAR relay on") && ok(p));

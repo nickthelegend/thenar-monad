@@ -70,3 +70,18 @@ body.spectate .panel .xr, body.spectate #rec, body.spectate #demo, body.spectate
 }
 
 [hidden] { display: none !important; }
+
+a.button { font: inherit; color: var(--ink); background: rgba(255, 255, 255, 0.06); border: 1px solid var(--line); border-radius: 10px; padding: 9px 12px; text-decoration: none; }
+.note a { color: var(--amber); }
+.note.bad { color: var(--red); }
+.field { display: grid; gap: 4px; color: var(--dim); margin-top: 10px; font-size: 12.5px; }
+.field input { font: 12.5px ui-monospace, Menlo, monospace; color: var(--ink); background: #0d1017; border: 1px solid var(--line); border-radius: 8px; padding: 7px 9px; }
+.tasks { display: grid; gap: 6px; margin: 8px 0; }
+.task { text-align: left; display: grid; gap: 2px; }
+.task small { color: var(--dim); }
+.task.on { border-color: var(--amber); background: rgba(242, 184, 69, 0.1); }
+.result { display: grid; gap: 3px; border: 1px solid var(--line); border-radius: 10px; padding: 10px; margin-top: 8px; }
+.result.good { border-color: rgba(79, 209, 139, 0.5); }
+.result.bad { border-color: rgba(255, 90, 79, 0.5); }
+.result small { color: var(--dim); }
+.result a { color: var(--amber); }

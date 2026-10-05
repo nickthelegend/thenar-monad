@@ -9,8 +9,11 @@ export default defineConfig({
   server: {
     host: true,
     port: 5174,
-    proxy: { "/relay": { target: `ws://127.0.0.1:${process.env.RELAY_PORT ?? 8787}`, ws: true } },
+    proxy: {
+      "/relay": { target: `ws://127.0.0.1:${process.env.RELAY_PORT ?? 8787}`, ws: true },
+      "/api": { target: `http://127.0.0.1:${process.env.RELAY_PORT ?? 8787}` },
+    },
   },
   preview: { host: true, port: 4174 },
-  build: { target: "esnext" },
+  build: { target: "esnext", rollupOptions: { input: { main: "index.html", scan: "scan.html", corpus: "corpus.html" } } },
 });
