@@ -206,6 +206,7 @@ try {
   log("verdict", verdict?.[0]);
   await shot("localnet-verdict");
   assert.equal(verdict?.[1], "IN", "the run was placed within tolerance");
+  if (SPONSORED) assert.match(await text(), /Gas on submit is paid by the sponsor/, "the station says the sponsor pays");
 
   const before = await chain.getBalance({ address });
   const head = await chain.getBlockNumber();

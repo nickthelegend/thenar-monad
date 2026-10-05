@@ -1153,6 +1153,16 @@ function Key({ keys, action }: { keys: string[]; action: string }) {
  */
 function SubmitCostLine({ withPasskey, payoutMon }: { withPasskey: boolean; payoutMon: number }) {
   const cost = useSubmitCost(withPasskey);
+  const sponsored = useGasSponsored();
+  // A sponsored wallet pays no gas, so quoting what others paid would understate its payout.
+  if (sponsored) {
+    return (
+      <p className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-t border-rule pt-3 font-mono text-[12px] text-scribe-3">
+        <span>Gas on submit is paid by the sponsor, not by you</span>
+        <span>net <span className="tabular-nums text-scribe-2">{fmtMon(payoutMon, 4)}</span> {CURRENCY}</span>
+      </p>
+    );
+  }
   if (!cost) return null;
 
   // Nothing has gone down this path yet, so there is nothing to quote. Said
