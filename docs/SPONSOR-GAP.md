@@ -36,12 +36,12 @@ Status: ✅ meets the stated requirement · 🟡 partly · ❌ not built · ⛔ 
 
 | Bounty | Prize | Lock | Thenar today | Gap against the stated requirement | Effort | Value | Plan |
 |---|---|---|---|---|---|---|---|
-| **Privy — beyond authentication** | $5k | All | ✅ Login + embedded wallet signs every run, passkey registration and task post. ✅ **Server wallet + policy engine**: the lab budget can only fund Thenar bounties, and the refusal is shown live on /lab. | "Multiple Privy features" earns a bonus. Gas sponsorship and Privy's x402 client are unused, and operators must find MON for gas before their first paid run. | M | **High** | Build `sponsor: true` for operator writes, behind a flag (needs gas sponsorship enabled for Monad Testnet in the Privy dashboard). Build an in-browser x402 corpus purchase with `useX402Fetch`. |
-| **Mera: One Passkey, Many Keys** | $2.5k | All | 🟡 A PRF namespace does non-account work: the salt "so101-commands" → HKDF → an Ed25519 key that the arm relay requires on every command. Nothing derived is stored, and the session zeroes it. | Judges need a **live** demo and a **cross-device test**. Today the key is only exercised with the physical arm and relay. No screen shows it, so there's nothing to compare across devices. | S | **High** | Add a "Keys from this passkey" panel on /passkey: namespaces listed, robot key fingerprint shown, a signed command verified in the page, the same fingerprint on any device. |
-| **Envio — Best use** | $1k + hosting | All | 🟡 HyperIndex V3 indexer (`indexer/`) over Axon, SalesLog, CorpusShares, CorpusAccess and PasskeyRegistry. Derived and aggregate entities (`Stats`, `DailyStat`, `DailyOperator`, `TaskContributor`, `@derivedFrom` relations). Runs against the local chain. | "Real on-chain data driving a core feature" plus "a consumer": **no screen reads the indexer**. Not deployed against Monad testnet (needs an Envio token or Envio Cloud). | S–M | Medium | Build an API route and a panel that read the indexer's aggregates. ⛔ Deploy to Envio Cloud or self-host with `ENVIO_API_TOKEN`. |
+| **Privy — beyond authentication** | $5k | All | ✅ Login + embedded wallet signs every run, passkey registration and task post. ✅ **Server wallet + policy engine**: the lab budget can only fund Thenar bounties, and the refusal is shown live on /lab. ✅ **Gas sponsorship** (shipped, behind `NEXT_PUBLIC_PRIVY_GAS_SPONSORSHIP`). ✅ **The embedded wallet buys a corpus over x402** on /corpus (shipped). | ⛔ Sponsorship is off until it is enabled for Monad Testnet in the Privy dashboard. | — | **High** | Shipped: every operator write through `sendTransaction(…, { sponsor: true })` for the embedded wallet (`lib/contract-write.ts`); a one-cent in-page purchase signed by the embedded wallet. Privy's `useX402Fetch` speaks x402 v1 and Thenar's paywall is v2, so the purchase uses x402's v2 client over the same wallet. |
+| **Mera: One Passkey, Many Keys** | $2.5k | All | ✅ A PRF namespace does non-account work: the salt "so101-commands" → HKDF → an Ed25519 key that the arm relay requires on every command. Nothing derived is stored, and the session zeroes it. ✅ **Live on /passkey** (shipped): both keys listed with their salts, the SO-101 key derived on demand, a command signed and verified in the page. | ⛔ The cross-device test is yours: open /passkey on two devices your passkey syncs to and compare the key. Chromium's virtual authenticator cannot copy a PRF secret, so it can't be simulated. | — | **High** | Shipped. `test/live-localnet.mjs` checks the key verifies with the relay's own check, and is the same with nothing stored. |
+| **Envio — Best use** | $1k + hosting | All | ✅ HyperIndex V3 indexer (`indexer/`) over Axon, SalesLog, CorpusShares, CorpusAccess and PasskeyRegistry, with aggregate entities. ✅ **A consumer** (shipped): `/api/indexer` reads `Stats`, `DailyStat` and recent `Operator`s server-side, and /leaderboard draws the history the RPC cannot serve. | ⛔ Not hosted against Monad testnet yet (Envio Cloud or an `ENVIO_API_TOKEN`), so the panel stays hidden in production until `ENVIO_GRAPHQL_URL` is set. | — | Medium | Shipped; verified against the local chain's indexer. |
 | **Alibaba Qwen 3.8 Max** | $5k credits (top 3 T4) | T4 | ✅ `scripts/qwen-agent.mjs`: Qwen picks a corpus with tool calls, pays 0.01 USDC over x402 on Monad, and verifies the bytes against SalesLog on chain. Verified end to end on the local chain with qwen3:4b. | ⛔ Needs a DashScope / Model Studio key to run on `qwen3.8-max`, and the agent wallet needs Monad testnet USDC. Credits go only to the top 3 T4 projects. | S | Medium (tied to placing) | User: key + 1 USDC to `0x9a6C…63aA`. |
-| **Kimi** | $3k credits (10 teams) | All | ❌ | The same agent loop can run on Kimi; Kimi must be load-bearing, not a chat widget. | S | Low–Medium | Add Kimi as a model provider for the buyer agent. ⛔ Needs `MOONSHOT_API_KEY`. |
-| **Chainlink CRE** | $3k | All | ❌ | Needs a CRE workflow used as an **orchestration layer**, with a correct on-chain receiver. Simulation is accepted. | M | Medium | A cron workflow that reads `/api/task/{id}/manifest` with consensus and writes the corpus Merkle root to a `ReceiverTemplate` contract on monad-testnet. ⛔ `cre login` (user account) and MON for the receiver deploy. |
+| **Kimi** | $3k credits (10 teams) | All | ✅ `AGENT_LLM=kimi` runs the buyer agent on `kimi-k2.6` (shipped): Kimi chooses the corpus with tool calls, pays over x402 and verifies on chain. | ⛔ Needs `MOONSHOT_API_KEY`; not yet run against Moonshot. | — | Low–Medium | Shipped. |
+| **Chainlink CRE** | $3k | All | ✅ `cre/corpus-audit` (shipped): cron → every node fetches the episodes Thenar sells and builds the roots itself → consensus → `CorpusManifest` read through Multicall3 → a verdict per task → `writeReport` to `CorpusAudit` (a `ReceiverTemplate`). `/api/task/{id}/manifest` reports the verdict. | ⛔ `cre login` and MON for one receiver deploy, then `cre workflow simulate … --broadcast`. Compiled to WASM and tested locally without a DON (Foundry + `test/live-cre-audit.mjs`). | — | Medium | Shipped; see `cre/README.md`. |
 | **Cleanverse CVI/CVA** | $2k cash | T4 | ❌ | Requires gating CVA movement behind CVI. Docs are invite-gated. | M + access | Low–Medium | ⛔ Ask Cleanverse for docs first (Telegram / support@cleanverse.com). A natural fit is CorpusShares or dividend transfers gated by A-Pass as well as the passkey. |
 | **Alchemy** | $1k credits | All | ❌ | "Meaningful" needs more than an RPC URL (Gas Manager, `monadLogs`). | S | Low | ⛔ Needs an Alchemy key. Overlaps Privy sponsorship, so skip unless the key appears. |
 | **Mera UX** | $2.5k | All | ❌ by design | Requires Mera as the *entire* account layer; Thenar's account layer is Privy. | L | Low | Skip: it conflicts with the Privy bounty. |
@@ -54,16 +54,38 @@ Status: ✅ meets the stated requirement · 🟡 partly · ❌ not built · ⛔ 
 
 ## Shipped from this list
 
-See the commits after this file; each section of the gap table above is updated as items land.
+| Commit | What |
+|---|---|
+| `de7a7dd` | Mera: "Keys from this passkey" on /passkey. |
+| `803d3db` | Privy: gas sponsorship for operator writes, behind `NEXT_PUBLIC_PRIVY_GAS_SPONSORSHIP`. |
+| `b035d22` | Privy + x402: buy one task's corpus from /corpus with the embedded wallet. |
+| `de2d4d0` | Envio: `/api/indexer` and the history on /leaderboard. |
+| `bf5aa03` | Kimi: `AGENT_LLM=kimi` for the buyer agent. |
+| `ce539e0` | The local journey test covers the key, the purchase and the indexer. |
+| `0716d2e`, `eef06df` | Chainlink CRE: `cre/corpus-audit`, `CorpusAudit`, `/api/corpus/episodes`, the verdict on the manifest route. |
+
+Verified on the local chain, every transaction real and signed:
+- `test/live-localnet.mjs`: passkey, run, payout, shares, SO-101 key, x402 purchase with a matching SalesLog hash, indexer panel.
+- `test/live-cre-audit.mjs`
+- `forge test --match-contract CorpusAuditTest`
+
+Not verifiable here: Privy sponsorship (the dashboard setting), Kimi and Qwen 3.8 Max (keys), and the CRE simulation against Monad (`cre login`).
 
 ## Left for the user
 
 1. **Register the team and project on the portal before 6 Oct 23:59 UTC** (registration and team formation close then, per a participant's capture).
 2. Privy dashboard:
    - enable **gas sponsorship for Monad Testnet** (testnet subsidy: email monad@privy.io);
-   - then set `NEXT_PUBLIC_PRIVY_GAS_SPONSORSHIP=1` on Vercel.
-3. Envio: create an account and an API token (or deploy `indexer/` to Envio Cloud) so the indexer runs against Monad testnet.
+   - then set `NEXT_PUBLIC_PRIVY_GAS_SPONSORSHIP=1` on Vercel and redeploy (it is read at build time).
+3. Envio:
+   - create an account and an API token (or deploy `indexer/` to Envio Cloud) so the indexer runs against Monad testnet;
+   - then set `ENVIO_GRAPHQL_URL` on the Railway web service.
 4. A DashScope key (Qwen 3.8 Max), and optionally a Moonshot key (Kimi).
 5. Monad testnet USDC (1 USDC) for the demo agent `0x9a6C46E7115CfB5FF5a2265E5a1B955038cb63aA`, and some for your own Privy wallet if you demo the in-browser purchase.
-6. `cre login` if the CRE workflow is to be simulated with `--broadcast`, plus MON for one receiver deploy from a key that is not the protocol deployer.
+6. Chainlink CRE, following `cre/README.md`:
+   - `cre login`;
+   - deploy `CorpusAudit` from a throwaway key with a little MON (not the deployer, verifier or issuer);
+   - simulate with `--broadcast`;
+   - set `CORPUS_AUDIT` on the Railway web service.
 7. Real runs on Monad from your own Privy login (the deployment had none on 2 Oct): judges look for live activity.
+8. The Mera cross-device check: derive the SO-101 key on /passkey on two devices your passkey syncs to, and film it for the demo.
