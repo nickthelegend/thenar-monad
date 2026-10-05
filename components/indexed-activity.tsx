@@ -13,7 +13,7 @@ type Stats = {
 };
 type Day = { id: string; dayStart: string; runs: number; paid: string; activeOperators: number; newOperators: number; sales: number };
 type Operator = { id: string; runCount: number; passkeyRunCount: number; paidTotal: string; lastRunAt: string | null };
-type Activity = { configured: boolean; error?: string; stats?: Stats | null; days?: Day[]; recent?: Operator[] };
+type Activity = { configured: boolean; local?: boolean; error?: string; stats?: Stats | null; days?: Day[]; recent?: Operator[] };
 
 const DAY = 86_400;
 const wei = (s: string) => Number(BigInt(s)) / 1e18;
@@ -63,9 +63,20 @@ export function IndexedActivity() {
     <section aria-labelledby="indexed-title" className="mt-10" data-testid="indexed-activity">
       <DimRule note="History, from the Envio indexer" />
       <h2 id="indexed-title" className="sr-only">History, from the Envio indexer</h2>
-      {data.error || !data.stats ? (
+      {data.error ? (
+        <div className="mt-4 border border-rule px-5 py-4" role="status">
+          <p className="text-[14px] text-scribe-2">{data.error}</p>
+          {data.local ? (
+            <p className="mt-2 text-[13px] leading-relaxed text-scribe-3">
+              The local indexer runs beside the chain. Start it with{" "}
+              <code className="font-mono text-[12px] text-scribe">sh indexer/scripts/start.sh --bg</code>, and this
+              history fills in as it catches up.
+            </p>
+          ) : null}
+        </div>
+      ) : !data.stats ? (
         <p className="mt-4 text-[14px] text-scribe-3">
-          {data.error ?? "The indexer has not seen this chain yet."}
+          The indexer is running but has not seen an event on this chain yet. Post a task or record a run and it appears here.
         </p>
       ) : (
         <Indexed stats={data.stats} days={fortnight(data.days ?? [])} recent={data.recent ?? []} />

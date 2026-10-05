@@ -1,3 +1,5 @@
+import { LOCALNET } from "@/lib/chain";
+
 /**
  * The Envio indexer, read from the server.
  *
@@ -9,7 +11,14 @@
  * admin secret, if one is needed, is ENVIO_GRAPHQL_SECRET. Neither is public:
  * the browser only ever sees /api/indexer.
  */
-export const INDEXER_URL = process.env.ENVIO_GRAPHQL_URL?.trim() || null;
+
+/**
+ * A local-chain build reads the indexer that indexer/scripts/start.sh runs
+ * beside it (its Hasura on 8089) unless told otherwise, so the history is
+ * there to see wherever the indexer is.
+ */
+export const INDEXER_URL =
+  process.env.ENVIO_GRAPHQL_URL?.trim() || (LOCALNET ? "http://localhost:8089/v1/graphql" : null);
 
 export class IndexerError extends Error {}
 

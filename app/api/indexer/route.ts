@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { appChain } from "@/lib/chain";
+import { LOCALNET, appChain } from "@/lib/chain";
 import { logged } from "@/lib/server/log";
 import { INDEXER_URL, IndexerError, indexerQuery } from "@/lib/server/indexer";
 
@@ -50,7 +50,7 @@ async function handleGET() {
     );
   } catch (e) {
     const reason = e instanceof IndexerError ? e.message : "the indexer could not be reached";
-    return NextResponse.json({ configured: true, error: `The indexer is unavailable: ${reason}.` }, { status: 503 });
+    return NextResponse.json({ configured: true, local: LOCALNET, error: `The indexer is unavailable: ${reason}.` }, { status: 503 });
   }
 }
 
