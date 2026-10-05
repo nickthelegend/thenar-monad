@@ -13,7 +13,8 @@
  * The model, through any OpenAI-compatible endpoint with tool calling:
  *   DASHSCOPE_API_KEY set  Qwen on Alibaba Cloud Model Studio (QWEN_MODEL, default qwen3.8-max)
  *   otherwise              Qwen 3 on this machine through Ollama (QWEN_MODEL, default qwen3:4b)
- * QWEN_BASE_URL overrides either.
+ *   AGENT_LLM=kimi         Kimi on Moonshot (MOONSHOT_API_KEY, KIMI_MODEL, default kimi-k2.6)
+ * QWEN_BASE_URL overrides the Qwen endpoints.
  *
  * AGENT_PRIVATE_KEY is the agent's wallet. AGENT_BUDGET_USDC caps what it
  * may spend in one session (default 0.05).
@@ -34,12 +35,21 @@ const BASE = process.argv[2] ?? "http://localhost:3336";
 const GOAL = process.argv[3] ??
   "Find the robot manipulation corpus with the most accepted episodes and buy it, then check on chain that what you received is what was sold.";
 
-const cloud = Boolean(env("DASHSCOPE_API_KEY"));
-const LLM = {
-  url: (env("QWEN_BASE_URL") ?? (cloud ? "https://dashscope-intl.aliyuncs.com/compatible-mode/v1" : "http://127.0.0.1:11434/v1")).replace(/\/$/, ""),
-  model: env("QWEN_MODEL") ?? (cloud ? "qwen3.8-max" : "qwen3:4b"),
-  key: env("DASHSCOPE_API_KEY") ?? "ollama",
-};
+const kimi = env("AGENT_LLM") === "kimi";
+const cloud = kimi || Boolean(env("DASHSCOPE_API_KEY"));
+const LLM = kimi
+  ? {
+      url: "https://api.moonshot.ai/v1",
+      model: env("KIMI_MODEL") ?? "kimi-k2.6",
+      key: need(env("MOONSHOT_API_KEY"), "MOONSHOT_API_KEY"),
+      where: "Moonshot",
+    }
+  : {
+      url: (env("QWEN_BASE_URL") ?? (cloud ? "https://dashscope-intl.aliyuncs.com/compatible-mode/v1" : "http://127.0.0.1:11434/v1")).replace(/\/$/, ""),
+      model: env("QWEN_MODEL") ?? (cloud ? "qwen3.8-max" : "qwen3:4b"),
+      key: env("DASHSCOPE_API_KEY") ?? "ollama",
+      where: cloud ? "Alibaba Cloud Model Studio" : "Ollama, this machine",
+    };
 const BUDGET = BigInt(Math.round(Number(env("AGENT_BUDGET_USDC") ?? "0.05") * 10 ** AGENT_CORPUS.decimals));
 const MAX_STEPS = 12;
 
@@ -189,7 +199,7 @@ let report = "";
 const strip = (s) => (s ?? "").replace(/<think>[\s\S]*?<\/think>/g, "").trim();
 
 console.log(`agent     ${wallet.address} on ${appChain.name}, budget ${usdc(BUDGET)}`);
-console.log(`model     ${LLM.model} at ${LLM.url}${cloud ? " (Alibaba Cloud Model Studio)" : " (Ollama, this machine)"}`);
+console.log(`model     ${LLM.model} at ${LLM.url} (${LLM.where})`);
 console.log(`goal      ${GOAL}\n`);
 
 /**
@@ -205,10 +215,11 @@ async function turn() {
   const r = await fetch(`${LLM.url}/chat/completions`, {
     method: "POST",
     headers: { "content-type": "application/json", authorization: `Bearer ${LLM.key}` },
-    body: JSON.stringify({ model: LLM.model, messages, tools, tool_choice: "auto", temperature: 0.2, stream: true }),
+    // Kimi's thinking models take only their own temperature, so it is left to them.
+    body: JSON.stringify({ model: LLM.model, messages, tools, tool_choice: "auto", ...(kimi ? {} : { temperature: 0.2 }), stream: true }),
   });
   if (!r.ok) throw new Error(`the model answered ${r.status}: ${(await r.text()).slice(0, 400)}`);
-  const msg = { role: "assistant", content: "", tool_calls: [] };
+  const msg = { role: "assistant", content: "", reasoning_content: "", tool_calls: [] };
   const decoder = new TextDecoder();
   let buffer = "";
   for await (const chunk of r.body) {
@@ -222,6 +233,7 @@ async function turn() {
       if (data === "[DONE]") continue;
       const delta = JSON.parse(data).choices?.[0]?.delta ?? {};
       if (delta.content) msg.content += delta.content;
+      if (delta.reasoning_content) msg.reasoning_content += delta.reasoning_content;
       for (const t of delta.tool_calls ?? []) {
         const at = msg.tool_calls[t.index ?? 0] ??= { id: t.id, type: "function", function: { name: "", arguments: "" } };
         if (t.id) at.id = t.id;
@@ -233,24 +245,30 @@ async function turn() {
     }
   }
   if (!msg.tool_calls.length) delete msg.tool_calls;
+  if (!msg.reasoning_content) delete msg.reasoning_content;
   return msg;
 }
 
 for (let step = 1; step <= MAX_STEPS; step++) {
   const msg = await turn();
-  messages.push({ role: "assistant", content: msg.content ?? "", tool_calls: msg.tool_calls });
   // One tool per turn, so every call is made knowing the last one's answer. A
   // small model asked to plan will otherwise buy and verify in one breath,
-  // before it has seen whether the purchase happened.
+  // before it has seen whether the purchase happened. The turn is kept with
+  // only that call, or the endpoint is sent a call that never got an answer.
   const calls = (msg.tool_calls ?? []).slice(0, 1);
-  if (msg.tool_calls?.length > 1) msg.tool_calls = calls;
+  for (const c of calls) c.id ??= `call_${step}`;
+  // Kimi asks for its reasoning back on every assistant turn it wrote.
+  messages.push({
+    role: "assistant", content: msg.content ?? "",
+    ...(calls.length ? { tool_calls: calls } : {}),
+    ...(msg.reasoning_content ? { reasoning_content: msg.reasoning_content } : {}),
+  });
   if (!calls.length) {
     report = strip(msg.content);
     console.log(`\nreport    ${report.replace(/\n/g, "\n          ")}`);
     break;
   }
   for (const c of calls) {
-    c.id ??= `call_${step}`;
     const args = typeof c.function.arguments === "string" ? JSON.parse(c.function.arguments || "{}") : c.function.arguments ?? {};
     const tool = TOOLS[c.function.name];
     const out = tool ? await tool.run(args).catch((e) => ({ error: e instanceof Error ? e.message.split("\n")[0] : String(e) })) : { error: `no tool ${c.function.name}` };
