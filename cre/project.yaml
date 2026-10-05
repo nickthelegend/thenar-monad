@@ -1,0 +1,10 @@
+# CRE project settings: the chains the workflows here read and write.
+# corpus-audit reads CorpusManifest and writes CorpusAudit, both on Monad testnet.
+staging-settings:
+  rpcs:
+    - chain-name: monad-testnet
+      url: https://testnet-rpc.monad.xyz
+production-settings:
+  rpcs:
+    - chain-name: monad-testnet
+      url: https://testnet-rpc.monad.xyz

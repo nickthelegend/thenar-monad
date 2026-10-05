@@ -1,0 +1,17 @@
+{
+  "name": "corpus-audit",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "postinstall": "bunx cre-setup",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@chainlink/cre-sdk": "latest",
+    "viem": "2.38.0"
+  },
+  "devDependencies": {
+    "typescript": "5.9.3"
+  }
+}

@@ -5,3 +5,5 @@ indexer/
 .next-local/
 .next/
 /.next-quest/
+# The Chainlink CRE workflow is built and run by the CRE CLI, not by the app.
+/cre/

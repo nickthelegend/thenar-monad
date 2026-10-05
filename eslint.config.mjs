@@ -14,6 +14,9 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
     // MediaPipe's WASM glue, copied from node_modules on install; not ours to lint.
     "public/vision/wasm/**",
+    // The CRE workflow's compiled bundle and its own dependencies.
+    "cre/**/dist/**",
+    "cre/**/node_modules/**",
   ]),
 ]);
 

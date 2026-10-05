@@ -1,0 +1,9 @@
+{
+  "schedule": "*/30 * * * * *",
+  "apiBase": "https://app.thenar.io",
+  "chainId": 10143,
+  "chainSelectorName": "monad-testnet",
+  "corpusManifest": "0x692190b7955821C050FFFbC7741D31a65Ecd5c48",
+  "corpusAudit": "0x0000000000000000000000000000000000000000",
+  "gasLimit": "600000"
+}

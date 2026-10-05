@@ -139,6 +139,18 @@ export async function trajectoriesForTask(taskId: number, limit = 200) {
   );
 }
 
+/** The tasks on this contract with at least one paid episode, lowest id first. */
+export async function tasksWithEpisodes(limit = 50): Promise<number[]> {
+  await db();
+  const rows = await query<{ task_id: number }>(
+    `SELECT DISTINCT task_id FROM trajectory
+      WHERE settled = 1 AND chain_id = ? AND contract = ?
+      ORDER BY task_id LIMIT ?`,
+    [appChain.id, HERE(), limit],
+  );
+  return rows.map((r) => Number(r.task_id));
+}
+
 export async function countTrajectories(): Promise<number> {
   await db();
   return count(
