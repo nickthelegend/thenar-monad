@@ -1,9 +1,14 @@
 # Never uploaded to Railway: the Envio indexer runs on its own, and local-chain
 # state and builds stay on the machine that made them.
-indexer/
-.localnet/
-.next-local/
-.next/
+#
+# Anchored with a leading slash, every one. Unanchored, `indexer/` matched
+# `app/api/indexer/` as well, so the route that reads the indexer was never
+# uploaded and answered 404 in production (the same trap .vercelignore
+# describes for `contracts/`).
+/indexer/
+/.localnet/
+/.next-local/
+/.next/
 /.next-quest/
 # The Chainlink CRE workflow is built and run by the CRE CLI, not by the app.
 /cre/
