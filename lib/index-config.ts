@@ -9,8 +9,12 @@
  */
 export const INDEX_CONFIGURED = process.env.NEXT_PUBLIC_INDEX_CONFIGURED === "1";
 
-export const INDEX_MISSING =
-  "Monadscan's index needs an Etherscan API key, and this deployment has none, so these calls cannot be listed.";
+/** Read at build time, like the flag above: a local-chain build has no Monadscan at all. */
+const LOCAL = process.env.NEXT_PUBLIC_CHAIN === "local";
+
+export const INDEX_MISSING = LOCAL
+  ? "Monadscan does not index this local chain, so these calls are not listed here. Every transaction is in the local explorer."
+  : "Monadscan's index needs an Etherscan API key, and this deployment has none, so these calls cannot be listed.";
 
 /** GET an index route; a refusal rejects with the server's own sentence, not a guess at it. */
 export async function fetchIndex<T>(url: string): Promise<T> {

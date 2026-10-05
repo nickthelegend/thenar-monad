@@ -83,8 +83,9 @@ const nextConfig: NextConfig = {
         "https://explorer-api.walletconnect.com " +
         // The arm relay (scripts/arm-relay.mjs) on the operator's own machine:
         // the station mirrors a run onto their SO-101 through it. Loopback
-        // only, so a page can reach an arm on this desk and nowhere else.
-        "ws://localhost:8787 ws://127.0.0.1:8787" +
+        // only, so a page can reach an arm on this desk and nowhere else. Any
+        // port: 8787 by default, another when it is taken (?relay=…).
+        "ws://localhost:* ws://127.0.0.1:*" +
         // A local build talks to the local chain on this machine, and nothing else.
         (process.env.NEXT_PUBLIC_CHAIN === "local"
           ? ` ${process.env.NEXT_PUBLIC_LOCAL_RPC || "http://127.0.0.1:8645"}`

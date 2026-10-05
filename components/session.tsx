@@ -3,6 +3,7 @@
 import { useCallback, useMemo } from "react";
 import { useAccount, useBalance, useConnect, useDisconnect, useSwitchChain } from "wagmi";
 import { usePrivy } from "@privy-io/react-auth";
+import { useQueryClient } from "@tanstack/react-query";
 import { LOCALNET, appChain } from "@/lib/chain";
 import { localSponsored } from "@/lib/local-sponsor";
 
@@ -59,6 +60,7 @@ function usePrivySession() {
  * asks the local faucet for gas, as an operator on Monad would ask Monad's.
  */
 function useLocalSession(): ReturnType<typeof usePrivySession> {
+  const queryClient = useQueryClient();
   const { address, isConnected, chainId, status } = useAccount();
   const { connectAsync, connectors, error: connectError, isPending } = useConnect();
   const { disconnect: end } = useDisconnect();
@@ -77,11 +79,15 @@ function useLocalSession(): ReturnType<typeof usePrivySession> {
         // A sponsored wallet is sent USDC only: its gas is the sponsor's.
         body: JSON.stringify({ address: accounts[0], gas: !localSponsored() }),
       });
+      // Every balance on the page (MON here, USDC wherever it is shown) has just
+      // changed: re-read them all now rather than at the next poll, which a
+      // background tab may never reach.
+      void queryClient.invalidateQueries();
       void refetchBalance();
     } catch (e) {
       console.error("The local wallet did not connect", e);
     }
-  }, [connectors, connectAsync, refetchBalance]);
+  }, [connectors, connectAsync, refetchBalance, queryClient]);
 
   const balance = useMemo(() => (bal ? Number(bal.value) / 1e18 : 0), [bal]);
 

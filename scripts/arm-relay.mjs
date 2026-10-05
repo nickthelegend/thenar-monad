@@ -245,9 +245,13 @@ const shutdown = () => {
 process.on("SIGINT", shutdown);
 process.on("SIGTERM", shutdown);
 
-server.listen(+opt.port, opt.host, () => console.log(`THENAR arm relay on ws://${opt.host}:${opt.port}`));
+server.listen(+opt.port, opt.host, () => {
+  console.log(`THENAR arm relay on ws://${opt.host}:${opt.port}`);
+  // The page looks on 8787 unless told; tell it once and the browser remembers.
+  if (opt.port !== "8787") console.log(`Open the station once with ?relay=ws://${opt.host}:${opt.port} so the page finds this relay.`);
+});
 server.on("error", (e) => {
-  console.error(e.code === "EADDRINUSE" ? `Port ${opt.port} is taken: is another relay running?` : e.message);
+  console.error(e.code === "EADDRINUSE" ? `Port ${opt.port} is taken: is another relay running? Start this one with --port 8788 and open the station with ?relay=ws://127.0.0.1:8788.` : e.message);
   followerStop("relay failed to start");
   process.exit(1);
 });

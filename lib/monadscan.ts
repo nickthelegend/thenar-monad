@@ -1,4 +1,4 @@
-import { AXON_ADDRESS, appChain } from "@/lib/chain";
+import { AXON_ADDRESS, LOCALNET, appChain } from "@/lib/chain";
 import { PROTOCOL_METHODS } from "@/lib/protocol-methods";
 
 /**
@@ -105,6 +105,10 @@ export async function settlementsFor(address: string, pages = 2): Promise<Settle
 }
 
 async function readSettlements(address: string, pages: number): Promise<Settlement[]> {
+  // A local chain has no Monadscan, key or not: say that, rather than blame a missing key.
+  if (LOCALNET) {
+    throw new IndexUnavailable("Monadscan does not index this local chain. Every transaction is in the local explorer.");
+  }
   const key = process.env.ETHERSCAN_API_KEY;
   if (!key) {
     throw new IndexUnavailable(

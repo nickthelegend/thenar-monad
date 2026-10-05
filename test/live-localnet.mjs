@@ -61,6 +61,7 @@ const SHOTS = process.env.SHOTS;
 /** "keyboard" drives the arm from the keys; "leader" from a physical-leader stand-in through the relay. */
 const DRIVE = process.env.DRIVE ?? "keyboard";
 const SPONSORED = process.env.SPONSORED === "1";
+const RELAY_PORT = process.env.RELAY_PORT ?? "8797";
 const C = LOCAL_DEPLOYMENT.contracts;
 const chain = createPublicClient({ transport: http(RPC) });
 const log = (k, v) => console.log(k.padEnd(10), typeof v === "string" ? v : JSON.stringify(v));
@@ -141,11 +142,14 @@ try {
   // 4. A paid run at the station.
   let leaderPoses = null, fakeLeader = null, relay = null;
   if (DRIVE === "leader") ({ leaderPoses, fakeLeader, relay } = await startLeader());
-  await page.goto(`${BASE}/station/${TASK}`);
+  // The relay runs on RELAY_PORT (8787 may belong to something else on this machine); the page is told where.
+  await page.goto(`${BASE}/station/${TASK}${DRIVE === "leader" ? `?relay=ws://127.0.0.1:${RELAY_PORT}` : ""}`);
   const begin = page.getByRole("button", { name: /^Begin run$/ });
   await begin.waitFor({ timeout: 90_000 });
   await page.waitForTimeout(1500);
   if (DRIVE === "leader") {
+    // The leader's options sit behind "Drive with: Leader".
+    await page.getByRole("tab", { name: "Leader" }).click();
     await page.getByRole("button", { name: "My leader is on the arm relay" }).click();
     await until(async () => /Your leader is driving the arm/.test(await text()), 15_000, "the leader to drive the arm");
   }
@@ -410,7 +414,7 @@ async function startLeader() {
     new Promise((ok) => fakeLeader.stdout.once("data", (d) => ok(String(d).split("\n")[0].trim()))),
     new Promise((_, no) => setTimeout(() => no(new Error(`the fake leader did not start: ${err}`)), 5000)),
   ]);
-  const relay = spawn(process.execPath, ["scripts/arm-relay.mjs", "--leader", pty]);
+  const relay = spawn(process.execPath, ["scripts/arm-relay.mjs", "--leader", pty, "--port", RELAY_PORT]);
   let out = "";
   relay.stdout.on("data", (d) => (out += d));
   relay.stderr.on("data", (d) => (out += d));

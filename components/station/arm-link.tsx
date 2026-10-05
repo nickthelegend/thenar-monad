@@ -22,6 +22,25 @@ import { leaderFromRelay, relayLeaderGone } from "@/components/station/leader";
  * it live. The real arm never jumps.
  */
 export const RELAY_URL = "ws://127.0.0.1:8787";
+const RELAY_KEY = "thenar:relay-url";
+
+/**
+ * Where this browser finds the relay: ws://127.0.0.1:8787 unless told otherwise.
+ * A relay started with --port elsewhere (8787 already taken on the machine) is
+ * reached by opening the page once with ?relay=ws://127.0.0.1:PORT; this
+ * browser then remembers it. Only a loopback address is accepted, because the
+ * relay drives hardware and is never reached over the network.
+ */
+export function relayUrl(): string {
+  const loopback = (u: string | null) => (u && /^ws:\/\/(127\.0\.0\.1|localhost|\[::1\]):\d{2,5}$/.test(u) ? u : null);
+  try {
+    const asked = loopback(new URL(location.href).searchParams.get("relay"));
+    if (asked) localStorage.setItem(RELAY_KEY, asked);
+    return asked ?? loopback(localStorage.getItem(RELAY_KEY)) ?? RELAY_URL;
+  } catch {
+    return RELAY_URL;
+  }
+}
 const HZ = 30;
 const HOLD_S = 1.2;
 const EASE_S = 1.5;
@@ -64,7 +83,7 @@ export function connectRelay() {
   if (link.ws) return;
   setPhase("connecting");
   publish({ error: null });
-  const ws = new WebSocket(RELAY_URL);
+  const ws = new WebSocket(relayUrl());
   link.ws = ws;
   ws.onopen = () => setPhase("home");
   ws.onmessage = (e) => {

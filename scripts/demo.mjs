@@ -43,17 +43,28 @@ function start(name, cmd, args, env = {}) {
   return p;
 }
 
+/** A process and everything it started, children first, by PID: never by name, on a machine other projects share. */
+function killTree(pid) {
+  const kids = spawnSync("pgrep", ["-P", String(pid)], { encoding: "utf8" }).stdout.split("\n").filter(Boolean);
+  for (const k of kids) killTree(Number(k));
+  try { process.kill(pid, "SIGTERM"); } catch { /* already gone */ }
+}
+
 let stopping = false;
 function stop(code = 0) {
   if (stopping) return;
   stopping = true;
   for (const { name, p } of [...started].reverse()) {
-    if (p.exitCode === null) { p.kill("SIGTERM"); say(name, `stopped (pid ${p.pid})`); }
+    // localnet-app.mjs builds with spawnSync, so its child would outlive a signal to it alone.
+    if (p.exitCode === null) { killTree(p.pid); say(name, `stopped (pid ${p.pid} and its children)`); }
   }
   if (indexerStarted) spawnSync("sh", ["scripts/stop.sh"], { cwd: "indexer", stdio: "inherit" });
   setTimeout(() => process.exit(code), 500);
 }
 for (const sig of ["SIGINT", "SIGTERM"]) process.on(sig, () => stop(0));
+
+// A failure while starting stops what has started, rather than leaving it running.
+process.on("unhandledRejection", (e) => { say("failed", e instanceof Error ? e.message : String(e)); stop(1); });
 
 // 1. The chain. If one already answers on :8645, it is used as it is.
 if (await chainUp()) {
@@ -85,5 +96,6 @@ if (healthy("thenar-envio-pg") && healthy("thenar-envio-hasura")) {
 
 // 4. The app.
 start("app", process.execPath, ["scripts/localnet-app.mjs", ...(serveOnly && existsSync(".next-local") ? ["--serve"] : [])]);
-await until(() => listening(`${APP}/api/health`), 600_000, "the app");
+// A production build on a busy machine can take many minutes.
+await until(() => listening(`${APP}/api/health`), 1_800_000, "the app");
 say("ready", `${APP}/localnet  (Ctrl-C stops everything this started)`);
