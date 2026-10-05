@@ -1,10 +1,11 @@
 /**
- * FIXTURE: a scripted stand-in for the buyer agent's model. It is not Qwen and
- * it is not Kimi, and it never pretends to be.
+ * A test double for the buyer agent's model: scripted replies, for tests only.
+ * It is not Qwen and not Kimi, and the agent itself has no way to reach it: a
+ * test starts it and points QWEN_BASE_URL or KIMI_BASE_URL at it.
  *
  * It speaks the same OpenAI-compatible chat API the agent uses for both
- * (streamed, with tool calls), so with AGENT_LLM_FIXTURE=1 everything around
- * the model runs for real:
+ * (streamed, with tool calls), so in a test everything around the model runs
+ * for real:
  * - the agent's request building and stream parsing;
  * - its tool loop and its budget;
  * - the x402 payment on the chain;
@@ -41,7 +42,7 @@ const send = (res, status, body) => {
 /** The rules the real endpoint enforces, as far as this agent can break them. */
 function refusal(provider, req, reasoningByCallId) {
   if (req.model !== provider.model) return `model ${JSON.stringify(req.model)} does not exist here; expected ${provider.model}`;
-  if (req.stream !== true) return "this fixture serves streamed turns only";
+  if (req.stream !== true) return "this double serves streamed turns only";
   if (!Array.isArray(req.tools) || !req.tools.length) return "no tools were offered";
   if (!provider.temperature && "temperature" in req) return `invalid temperature: ${provider.model} only accepts its own`;
   const answered = new Map();
@@ -104,12 +105,12 @@ function* chunks(text, size = 24) {
 }
 
 /**
- * Start the fixture on a free local port. Returns its base URL (as the agent's
+ * Start the double on a free local port. Returns its base URL (as the agent's
  * LLM url) and the requests it saw, for tests to inspect.
  */
-export async function startFixture(name) {
+export async function startDouble(name) {
   const provider = PROVIDERS[name];
-  if (!provider) throw new Error(`no fixture for ${name}; one of ${Object.keys(PROVIDERS).join(", ")}`);
+  if (!provider) throw new Error(`no double for ${name}; one of ${Object.keys(PROVIDERS).join(", ")}`);
   const seen = [];
   const reasoningByCallId = new Map();
   let turn = 0;
@@ -128,11 +129,11 @@ export async function startFixture(name) {
       turn += 1;
       res.writeHead(200, { "content-type": "text/event-stream" });
       const emit = (delta, finish = null) =>
-        res.write(`data: ${JSON.stringify({ id: `fixture-${turn}`, model: provider.model, choices: [{ index: 0, delta, finish_reason: finish }] })}\n\n`);
+        res.write(`data: ${JSON.stringify({ id: `double-${turn}`, model: provider.model, choices: [{ index: 0, delta, finish_reason: finish }] })}\n\n`);
       const thought = provider.reasoning ? (next.why ?? "Report what the tools returned, and nothing else.") : "";
       for (const part of chunks(thought)) emit({ reasoning_content: part });
       if (next.tool) {
-        const id = `call_fixture_${turn}`;
+        const id = `call_double_${turn}`;
         if (thought) reasoningByCallId.set(id, thought);
         emit({ role: "assistant", tool_calls: [{ index: 0, id, type: "function", function: { name: next.tool, arguments: "" } }] });
         for (const part of chunks(JSON.stringify(next.args), 8)) emit({ tool_calls: [{ index: 0, function: { arguments: part } }] });

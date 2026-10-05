@@ -15,13 +15,9 @@
  *   kimi    Kimi on Moonshot (MOONSHOT_API_KEY; KIMI_MODEL, default kimi-k2.6)
  *   ollama  Qwen 3 on this machine through Ollama (QWEN_MODEL, default qwen3:4b)
  * Unset, it is qwen when DASHSCOPE_API_KEY is set and ollama otherwise.
- * QWEN_BASE_URL overrides the Qwen endpoints.
- *
- * AGENT_LLM_FIXTURE=1 swaps the model for scripts/llm-fixture.mjs: scripted
- * replies over the same API, labelled as such, with no key and no model.
- * The tool loop, the x402 payment and the on-chain check are all still real;
- * only the choices are scripted. The fixture also refuses requests the real
- * provider would refuse, so the run checks the agent speaks its dialect.
+ * QWEN_BASE_URL and KIMI_BASE_URL point a provider at another endpoint that
+ * speaks its API. Without the provider's key the agent does not start: it
+ * says which key it needs and exits.
  *
  * AGENT_PRIVATE_KEY is the agent's wallet. AGENT_BUDGET_USDC caps what it
  * may spend in one session (default 0.05).
@@ -43,17 +39,18 @@ const GOAL = process.argv[3] ??
   "Find the robot manipulation corpus with the most accepted episodes and buy it, then check on chain that what you received is what was sold.";
 
 const PROVIDER = env("AGENT_LLM") ?? (env("DASHSCOPE_API_KEY") ? "qwen" : "ollama");
-const FIXTURE = env("AGENT_LLM_FIXTURE") === "1";
 const kimi = PROVIDER === "kimi";
-const secret = (name) => (FIXTURE ? "fixture" : need(env(name), `${name} (or AGENT_LLM_FIXTURE=1 to run on scripted replies)`));
+const secret = (name) => need(env(name), `${name}: ${PROVIDER} is not configured on this machine`);
 const ENDPOINTS = {
   qwen: () => ({
     url: (env("QWEN_BASE_URL") ?? "https://dashscope-intl.aliyuncs.com/compatible-mode/v1").replace(/\/$/, ""),
-    model: env("QWEN_MODEL") ?? "qwen3.8-max", key: secret("DASHSCOPE_API_KEY"), where: "Alibaba Cloud Model Studio",
+    model: env("QWEN_MODEL") ?? "qwen3.8-max", key: secret("DASHSCOPE_API_KEY"),
+    where: env("QWEN_BASE_URL") ? "the endpoint QWEN_BASE_URL names" : "Alibaba Cloud Model Studio",
   }),
   kimi: () => ({
-    url: "https://api.moonshot.ai/v1",
-    model: env("KIMI_MODEL") ?? "kimi-k2.6", key: secret("MOONSHOT_API_KEY"), where: "Moonshot",
+    url: (env("KIMI_BASE_URL") ?? "https://api.moonshot.ai/v1").replace(/\/$/, ""),
+    model: env("KIMI_MODEL") ?? "kimi-k2.6", key: secret("MOONSHOT_API_KEY"),
+    where: env("KIMI_BASE_URL") ? "the endpoint KIMI_BASE_URL names" : "Moonshot",
   }),
   ollama: () => ({
     url: (env("QWEN_BASE_URL") ?? "http://127.0.0.1:11434/v1").replace(/\/$/, ""),
@@ -65,9 +62,6 @@ if (!ENDPOINTS[PROVIDER]) {
   process.exit(1);
 }
 const LLM = ENDPOINTS[PROVIDER]();
-// The fixture stands in for the endpoint, not for anything else.
-const fixture = FIXTURE ? await (await import("./llm-fixture.mjs")).startFixture(PROVIDER) : null;
-if (fixture) Object.assign(LLM, { url: fixture.url, where: `FIXTURE: scripted replies standing in for ${fixture.label}; no model is called` });
 const BUDGET = BigInt(Math.round(Number(env("AGENT_BUDGET_USDC") ?? "0.05") * 10 ** AGENT_CORPUS.decimals));
 const MAX_STEPS = 12;
 
@@ -307,5 +301,3 @@ if (!bought.size && /\bbought\b|\bpurchased\b/i.test(report) && !/not|nothing|no
   process.exitCode = 2;
 }
 
-// The fixture is a server in this process; close it or the process never exits.
-await fixture?.close();

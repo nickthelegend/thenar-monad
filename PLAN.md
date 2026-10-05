@@ -52,11 +52,11 @@ Bounty targets:
 | T4 | Qwen / Kimi buyer agent | It lists tasks, pays over x402 and verifies against SalesLog, driven by a real model | A real Qwen 3 on Ollama locally | DONE with a real local model; Model Studio and Moonshot are BLOCKED on keys |
 | T5 | Chainlink CRE corpus audit | Compiles to WASM; the receiver is tested; the local e2e passes | `pnpm test:cre`, `forge test` | DONE (simulate: BLOCKED, `cre login`) |
 | T6 | Cleanverse | Docs checked, contracts mapped, the blocker written down | docs/CLEANVERSE.md | BLOCKED (Cleanverse onboarding) |
-| T7 | Remove the LLM fixture from the product path (G1) | `scripts/qwen-agent.mjs` has no fixture mode. A missing key gives an honest "not configured" exit. The test double lives under `test/` | grep; `pnpm test:agent` | NOT STARTED |
+| T7 | Remove the LLM fixture from the product path (G1) | `scripts/qwen-agent.mjs` has no fixture mode. A missing key gives an honest "not configured" exit. The test double lives under `test/` | grep; `pnpm test:agent` | DONE: the fixture mode is gone; the double lives in `test/llm-double.mjs`; a real Qwen 3 on Ollama bought and verified a corpus on 6 Oct (SalesLog entry 9) |
 | T8 | Completeness walk | Every route at 375 px and 1280 px: 200 or the intended 404, no console errors, no horizontal overflow, an h1 present | `pnpm test:walk` | NOT STARTED |
 | T9 | Zero-mock test plan, executed | Every item PASS or UNTESTED with the dependency named; no FAIL left | docs/TEST-PLAN-ZERO-MOCK.md | NOT STARTED |
 | T10 | Quality gate | All suites green; slither reviewed; secret scan clean; no tracked secrets | commands listed in the doc | NOT STARTED |
-| T11 | One-command local demo | `pnpm demo` starts the chain, app, facilitator and indexer, and stops them all on Ctrl-C | run it | NOT STARTED |
+| T11 | One-command local demo | `pnpm demo` starts the chain, app, facilitator and indexer, and stops them all on Ctrl-C | run it | DONE: `scripts/demo.mjs`; checked on 6 Oct (chain, x402, indexer and app up) |
 | T12 | Judge package | README (demo, what's new, AI disclosure, why Monad, diagram, sponsors); SUBMISSION.md (portal fields per bounty, evidence, 3-minute script); docs/DEPLOY-LATER.md | read-through | NOT STARTED |
 | T13 | Go live on Monad testnet | Per DEPLOY-LATER.md | its smoke test | BLOCKED (user: "go" plus MON) |
 | T14 | Demo video ≤ 3 min | The shot list in DEPLOY-LATER.md | — | BLOCKED (user) |

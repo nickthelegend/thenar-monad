@@ -185,7 +185,7 @@ Then, in headed Chromium:
   purchase, and the indexer.
 - `pnpm test:localnet:sponsored`: the same day for an operator who never holds MON. The gas is sponsored the way
   Privy sponsors it on Monad.
-- `pnpm test:agent`: the buyer agent on Qwen and on Kimi. With no key, it runs on a labelled fixture.
+- `pnpm test:agent`: the buyer agent's whole loop for Qwen and for Kimi, with a test double as the model (the agent itself has no mock mode). It also checks that the agent refuses to start without a key. To drive it with a real model, use Qwen 3 on Ollama: `AGENT_LLM=ollama node --import ./test/register.mjs scripts/qwen-agent.mjs`.
 - `pnpm test:cre`: the Chainlink CRE corpus audit and its receiver.
 - `pnpm test:e2e:local`: every page and API.
 

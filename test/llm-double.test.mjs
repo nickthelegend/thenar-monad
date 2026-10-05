@@ -1,16 +1,16 @@
 /**
- * The buyer agent's model fixture holds requests to each provider's rules.
+ * The buyer agent's model double holds requests to each provider's rules.
  *
  *     npm run test:unit
  *
- * scripts/llm-fixture.mjs stands in for Qwen and Kimi when no key is set. It
- * is only worth running the agent against it if it refuses what the real
+ * test/llm-double.mjs stands in for Qwen and Kimi in tests. It is only
+ * worth running the agent against it if it refuses what the real
  * endpoint would refuse, so a request the agent gets wrong fails the run here
  * instead of failing later against Moonshot or Model Studio.
  */
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { startFixture } from "../scripts/llm-fixture.mjs";
+import { startDouble } from "./llm-double.mjs";
 
 const tools = [{ type: "function", function: { name: "list_tasks", parameters: { type: "object", properties: {} } } }];
 const ask = async (fx, body) => {
@@ -35,7 +35,7 @@ const assemble = (text) => {
 };
 
 test("the first move is to list the tasks, streamed as a tool call", async () => {
-  const fx = await startFixture("qwen");
+  const fx = await startDouble("qwen");
   try {
     const r = await ask(fx, { model: "qwen3.8-max", stream: true, tools, temperature: 0.2, messages: [{ role: "user", content: "buy" }] });
     assert.equal(r.status, 200);
@@ -49,7 +49,7 @@ test("the first move is to list the tasks, streamed as a tool call", async () =>
 });
 
 test("a model id the provider does not have is refused", async () => {
-  const fx = await startFixture("kimi");
+  const fx = await startDouble("kimi");
   try {
     const r = await ask(fx, { model: "kimi-k2.5", stream: true, tools, messages: [] });
     assert.equal(r.status, 400);
@@ -60,7 +60,7 @@ test("a model id the provider does not have is refused", async () => {
 });
 
 test("Kimi refuses a temperature and wants its reasoning back", async () => {
-  const fx = await startFixture("kimi");
+  const fx = await startDouble("kimi");
   try {
     const hot = await ask(fx, { model: "kimi-k2.6", stream: true, tools, temperature: 0.2, messages: [] });
     assert.equal(hot.status, 400);
@@ -85,7 +85,7 @@ test("Kimi refuses a temperature and wants its reasoning back", async () => {
 });
 
 test("every tool call in the history needs exactly one answer", async () => {
-  const fx = await startFixture("qwen");
+  const fx = await startDouble("qwen");
   try {
     const two = [
       { id: "a", type: "function", function: { name: "list_tasks", arguments: "{}" } },
