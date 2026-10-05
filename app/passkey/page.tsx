@@ -5,6 +5,7 @@ import { usePublicClient, useReadContract } from "wagmi";
 import { Button, DimRule } from "@/components/primitives";
 import { useSession } from "@/components/session";
 import { OperatorGate } from "@/components/operator-gate";
+import { PasskeyKeys } from "@/components/passkey-keys";
 import { CHAIN_SHORT, PASSKEY_ADDRESS, addressUrl } from "@/lib/chain";
 import { PASSKEY_ABI } from "@/lib/passkey-abi";
 import { b64url, fromB64url, signChallenge, storedPasskey } from "@/lib/passkey";
@@ -113,6 +114,7 @@ export default function PasskeyPage() {
                 </p>
               ) : null}
               {error ? <p className="mt-3 text-[13px] text-reject">{error}</p> : null}
+              {s.address ? <PasskeyKeys address={s.address} /> : null}
             </>
           ) : null}
         </>
