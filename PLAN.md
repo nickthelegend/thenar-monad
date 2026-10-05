@@ -54,10 +54,10 @@ Bounty targets:
 | T6 | Cleanverse | Docs checked, contracts mapped, the blocker written down | docs/CLEANVERSE.md | BLOCKED (Cleanverse onboarding) |
 | T7 | Remove the LLM fixture from the product path (G1) | `scripts/qwen-agent.mjs` has no fixture mode. A missing key gives an honest "not configured" exit. The test double lives under `test/` | grep; `pnpm test:agent` | DONE: the fixture mode is gone; the double lives in `test/llm-double.mjs`; a real Qwen 3 on Ollama bought and verified a corpus on 6 Oct (SalesLog entry 9) |
 | T8 | Completeness walk | Every route at 375 px and 1280 px: 200 or the intended 404, no console errors, no horizontal overflow, an h1 present | `pnpm test:walk` | DONE: `pnpm test:walk`, 74/74 screens clean on 6 Oct. It found that "not configured" surfaces answered 503, which the browser logs as a console error; they now answer 200 with `configured: false` (/api/lab, /api/indexer) |
-| T9 | Zero-mock test plan, executed | Every item PASS or UNTESTED with the dependency named; no FAIL left | docs/TEST-PLAN-ZERO-MOCK.md | NOT STARTED |
-| T10 | Quality gate | All suites green; slither reviewed; secret scan clean; no tracked secrets | commands listed in the doc | NOT STARTED |
+| T9 | Zero-mock test plan, executed | Every item PASS or UNTESTED with the dependency named; no FAIL left | docs/TEST-PLAN-ZERO-MOCK.md | DONE: 76 items, 63 PASS, 11 UNTESTED (dependency named), 2 PASS locally with the hosted half UNTESTED, 0 FAIL; 7 fixed at the root and re-run (docs/TEST-PLAN-ZERO-MOCK.md) |
+| T10 | Quality gate | All suites green; slither reviewed; secret scan clean; no tracked secrets | commands listed in the doc | DONE: tsc clean; eslint 0 errors (36 warnings); unit 124/124 (1 skipped); forge 133/133; e2e:local 68/68; walk 74/74; slither triaged (docs/STATIC-ANALYSIS.md); secret scan clean; MIT LICENSE added |
 | T11 | One-command local demo | `pnpm demo` starts the chain, app, facilitator and indexer, and stops them all on Ctrl-C | run it | DONE: `scripts/demo.mjs`; checked on 6 Oct (chain, x402, indexer and app up) |
-| T12 | Judge package | README (demo, what's new, AI disclosure, why Monad, diagram, sponsors); SUBMISSION.md (portal fields per bounty, evidence, 3-minute script); docs/DEPLOY-LATER.md | read-through | NOT STARTED |
+| T12 | Judge package | README (demo, what's new, AI disclosure, why Monad, diagram, sponsors); SUBMISSION.md (portal fields per bounty, evidence, 3-minute script); docs/DEPLOY-LATER.md | read-through | DONE: README (one command, the window, attribution, AI disclosure, why Monad, diagram, sponsors), SUBMISSION.md (portal fields, evidence, 3-minute script, pitch outline), docs/DEPLOY-LATER.md |
 | T13 | Go live on Monad testnet | Per DEPLOY-LATER.md | its smoke test | BLOCKED (user: "go" plus MON) |
 | T14 | Demo video ≤ 3 min | The shot list in DEPLOY-LATER.md | — | BLOCKED (user) |
 | T15 | Portal registration | Team and project registered | — | BLOCKED (user; it closed 6 Oct 23:59 UTC) |
@@ -76,6 +76,14 @@ scripts, contracts/src, contracts/script, cre and indexer/src. 42 hits; every on
 | G5 | Paths that need a key: Model Studio, Moonshot, `ETHERSCAN_API_KEY` (call history), Envio hosting, `cre login` | Those surfaces must say "not configured" | P2 | Checked in T9 | T9 |
 | G6 | No run on the Monad deployment yet | Judges look for live activity | P1 | User: testnet go and real runs | T13 |
 | G7 | The local DB held runs from a reset chain | Stale episodes on new tasks | P2 | Pruned 6 Oct (backup kept) | — |
+| G8 | `components/station/arm-link.tsx`: the relay URL was hardcoded to :8787, and the CSP allowed only that port | With 8787 taken, no arm could connect | P1 | `?relay=` (loopback only, remembered), any loopback port in the CSP, the relay prints the URL — FIXED | F16 |
+| G9 | `lib/index-config.ts`, `lib/monadscan.ts`: blamed a missing Etherscan key on a local chain | Misleading copy | P3 | Says Monadscan does not index a local chain — FIXED | P14 |
+| G10 | `/api/lab`, `/api/indexer` answered 503 when not configured | A console error on load, including on production /leaderboard | P2 | 200 with `configured:false` — FIXED | P11 |
+| G11 | `components/session.tsx`: balances after sign-in waited for a poll | A background tab showed 0 USDC | P3 | Invalidate every query once the faucet has sent — FIXED | F02 |
+| G12 | The local DB held sales and token events from the reset chain | /api/agent/sales disagreed with SalesLog | P3 | Pruned (backup kept) — FIXED | A20 |
+| G13 | `scripts/demo.mjs` left processes running when startup failed | Orphans on a shared machine | P2 | Stops whole process trees by PID on any failure — FIXED | T11 |
+| G14 | No LICENSE file | Rules require an OSI licence | P1 | MIT, matching the contracts' SPDX headers — FIXED (the user can choose another) | T12 |
+| G15 | Lint failed on build output and on React-compiler rules | No clean lint | P3 | Build dirs ignored; `useLeader` on `useSyncExternalStore`; per-frame ref writes annotated — FIXED | T10 |
 
 ## Completion
 
@@ -83,14 +91,17 @@ The 100% checklist has 30 items in six groups.
 
 | Group | Items | Done at start of 6 Oct | Done now |
 |---|---|---|---|
-| Features and flows: sign-in, passkey, run (keyboard, leader, Quest), post, corpus subscription, x402 purchase, agent, certificate, licence, foundry, referrals, dividends | 12 | 12 | _pending_ |
-| Data and auth: real DB, passkey gate, sponsored gas | 3 | 2 | _pending_ |
-| Integrations and bounties: Privy, Mera, Qwen, Kimi, Envio, CRE, Cleanverse | 7 | 4 | _pending_ |
-| Tests and quality: unit, contract, e2e, live suites, walk spec, zero-mock plan (lint, typecheck, slither and the secret scan fold in here) | 6 | 4 | _pending_ |
-| Deploy and submission: runbook, README with SUBMISSION and demo script | 2* | 0 | _pending_ |
+| Features and flows: sign-in, passkey, run (keyboard, leader, Quest), post, corpus subscription, x402 purchase, agent, certificate, licence, foundry, referrals, dividends | 12 | 12 | 12 |
+| Data and auth: real DB, passkey gate, sponsored gas | 3 | 2 | 3 |
+| Integrations and bounties: Privy, Mera, Qwen, Kimi, Envio, CRE, Cleanverse | 7 | 4 | 6 (Cleanverse blocked on Cleanverse) |
+| Tests and quality: unit, contract, e2e, live suites, walk spec, zero-mock plan (lint, typecheck, slither and the secret scan fold in here) | 6 | 4 | 6 |
+| Deploy and submission: runbook, README with SUBMISSION and demo script | 2* | 0 | 2 |
 
 \* Two of the six submission items can be finished in code: the runbook, and the README with SUBMISSION. The other four
 (testnet live, real runs, video, registration) are the user's, and are counted separately below.
 
 - **Initial (6 Oct, before this plan): 22 / 30 = 73%.**
-- **Final:** _filled in when T7–T12 are done._
+- **Final: 29 / 30 = 97%** of what can be done without the user. The one item missing is Cleanverse, blocked on
+  Cleanverse's onboarding.
+- **Overall, counting the user's go-live items (testnet live, real Monad runs, the video, the portal profile):**
+  29 / 34 = **85%**.

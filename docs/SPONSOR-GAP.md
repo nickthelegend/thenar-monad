@@ -67,6 +67,8 @@ Status: ✅ meets the stated requirement · 🟡 partly · ❌ not built · ⛔ 
 | `5d8a65f` | Cleanverse: the deployed contracts mapped, and why CVA can't move yet (`docs/CLEANVERSE.md`). |
 | `396a21d` | Envio: the local build shows the indexer's history and explains an outage. |
 | `739ba70` | Privy: the sponsored-gas path checked on anvil, with a 0-MON operator and an x402 purchase from a 7702-delegated wallet. |
+| `b107d85` | The model fixture removed from the agent (a test double under `test/` only); a real Qwen 3 on Ollama bought and verified a corpus; `pnpm demo`. |
+| `36fe03d`, `242a115` and the 6 Oct pass | The zero-mock pass (docs/TEST-PLAN-ZERO-MOCK.md): the relay on any port, honest not-configured states, lint clean, slither triaged, MIT licence, and the judge package (README, SUBMISSION, docs/DEPLOY-LATER.md). |
 
 Verified on the local chain, every transaction real and signed:
 - `test/live-localnet.mjs`: passkey, run, payout, shares, SO-101 key, x402 purchase with a matching SalesLog hash, indexer panel.

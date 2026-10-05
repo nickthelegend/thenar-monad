@@ -78,6 +78,9 @@ export function So101Arm({
   const last = useRef<{ at: [number, number, number]; out: So101Joints } | null>(null);
   const wasHolding = useRef(false);
 
+  // useFrame runs once per frame, outside render, and `target` and `grip` are refs the
+  // station hands in precisely to be written here: the leader moves them.
+  // eslint-disable-next-line react-hooks/immutability
   useFrame(() => {
     chain.current ??= new So101Chain();
     const c = chain.current;
@@ -93,6 +96,7 @@ export function So101Arm({
     if (lead) {
       c.set(lead);
       jawDeg = Math.min(SO101.limitsDeg[5][1], Math.max(SO101.limitsDeg[5][0], lead[5]));
+      // eslint-disable-next-line react-hooks/immutability -- a ref meant to be written per frame
       grip.current = jawDeg * JAW_MM_PER_DEG;
       const tcp = new THREE.Vector3().setFromMatrixPosition(c.tcpPose());
       out = {
@@ -101,6 +105,7 @@ export function So101Arm({
         q: toQ([...c.q.slice(0, 5), jawDeg]),
         tool: [tcp.x / 1000, tcp.y / 1000, tcp.z / 1000],
       };
+      // eslint-disable-next-line react-hooks/immutability -- a ref meant to be written per frame
       t[0] = out.tool[0]; t[1] = out.tool[1]; t[2] = out.tool[2];
       last.current = { at: [t[0], t[1], t[2]], out };
     } else {

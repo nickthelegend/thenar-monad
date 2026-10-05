@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 import {
   LEADER_BAUD, LEADER_STALE_MS, leaderCommand, parseLeaderLine, type LeaderLine,
 } from "@/lib/leader-protocol";
@@ -194,12 +194,14 @@ export function leaderJoints(): number[] | null {
 /** Whether a leader pose arrived recently enough to be driving. */
 export const leaderLive = () => leaderJoints() !== null;
 
+/** The leader's status, as React reads an outside store: `publish` replaces the object on every change. */
+const subscribe = (onChange: () => void) => {
+  const listener = () => onChange();
+  state.listeners.add(listener);
+  return () => void state.listeners.delete(listener);
+};
+const snapshot = () => state.status;
+
 export function useLeader(): LeaderStatus {
-  const [s, set] = useState(state.status);
-  useEffect(() => {
-    state.listeners.add(set);
-    set(state.status);
-    return () => void state.listeners.delete(set);
-  }, []);
-  return s;
+  return useSyncExternalStore(subscribe, snapshot, snapshot);
 }
