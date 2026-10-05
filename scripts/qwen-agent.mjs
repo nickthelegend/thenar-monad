@@ -1,20 +1,27 @@
 /**
- * A Qwen agent that shops for robot training data, and pays for it itself.
+ * An LLM agent (Qwen or Kimi) that shops for robot training data, and pays for it itself.
  *
  *   node --import ./test/register.mjs scripts/qwen-agent.mjs [baseUrl] ["what to buy"]
  *
- * Qwen reads the task list and each task's datasheet, asks what a corpus
+ * The model reads the task list and each task's datasheet, asks what a corpus
  * costs, decides what is worth buying within its budget, pays for it over
  * x402 (an EIP-3009 USDC authorisation its own key signs), checks what it
  * received against SalesLog on chain, and explains its choice. The model
  * decides; the code only carries its decisions out, and holds the budget
  * where the model cannot talk its way past it.
  *
- * The model, through any OpenAI-compatible endpoint with tool calling:
- *   DASHSCOPE_API_KEY set  Qwen on Alibaba Cloud Model Studio (QWEN_MODEL, default qwen3.8-max)
- *   otherwise              Qwen 3 on this machine through Ollama (QWEN_MODEL, default qwen3:4b)
- *   AGENT_LLM=kimi         Kimi on Moonshot (MOONSHOT_API_KEY, KIMI_MODEL, default kimi-k2.6)
+ * The model, through any OpenAI-compatible endpoint with tool calling, chosen with AGENT_LLM:
+ *   qwen    Qwen on Alibaba Cloud Model Studio (DASHSCOPE_API_KEY; QWEN_MODEL, default qwen3.8-max)
+ *   kimi    Kimi on Moonshot (MOONSHOT_API_KEY; KIMI_MODEL, default kimi-k2.6)
+ *   ollama  Qwen 3 on this machine through Ollama (QWEN_MODEL, default qwen3:4b)
+ * Unset, it is qwen when DASHSCOPE_API_KEY is set and ollama otherwise.
  * QWEN_BASE_URL overrides the Qwen endpoints.
+ *
+ * AGENT_LLM_FIXTURE=1 swaps the model for scripts/llm-fixture.mjs: scripted
+ * replies over the same API, labelled as such, with no key and no model.
+ * The tool loop, the x402 payment and the on-chain check are all still real;
+ * only the choices are scripted. The fixture also refuses requests the real
+ * provider would refuse, so the run checks the agent speaks its dialect.
  *
  * AGENT_PRIVATE_KEY is the agent's wallet. AGENT_BUDGET_USDC caps what it
  * may spend in one session (default 0.05).
@@ -35,21 +42,32 @@ const BASE = process.argv[2] ?? "http://localhost:3336";
 const GOAL = process.argv[3] ??
   "Find the robot manipulation corpus with the most accepted episodes and buy it, then check on chain that what you received is what was sold.";
 
-const kimi = env("AGENT_LLM") === "kimi";
-const cloud = kimi || Boolean(env("DASHSCOPE_API_KEY"));
-const LLM = kimi
-  ? {
-      url: "https://api.moonshot.ai/v1",
-      model: env("KIMI_MODEL") ?? "kimi-k2.6",
-      key: need(env("MOONSHOT_API_KEY"), "MOONSHOT_API_KEY"),
-      where: "Moonshot",
-    }
-  : {
-      url: (env("QWEN_BASE_URL") ?? (cloud ? "https://dashscope-intl.aliyuncs.com/compatible-mode/v1" : "http://127.0.0.1:11434/v1")).replace(/\/$/, ""),
-      model: env("QWEN_MODEL") ?? (cloud ? "qwen3.8-max" : "qwen3:4b"),
-      key: env("DASHSCOPE_API_KEY") ?? "ollama",
-      where: cloud ? "Alibaba Cloud Model Studio" : "Ollama, this machine",
-    };
+const PROVIDER = env("AGENT_LLM") ?? (env("DASHSCOPE_API_KEY") ? "qwen" : "ollama");
+const FIXTURE = env("AGENT_LLM_FIXTURE") === "1";
+const kimi = PROVIDER === "kimi";
+const secret = (name) => (FIXTURE ? "fixture" : need(env(name), `${name} (or AGENT_LLM_FIXTURE=1 to run on scripted replies)`));
+const ENDPOINTS = {
+  qwen: () => ({
+    url: (env("QWEN_BASE_URL") ?? "https://dashscope-intl.aliyuncs.com/compatible-mode/v1").replace(/\/$/, ""),
+    model: env("QWEN_MODEL") ?? "qwen3.8-max", key: secret("DASHSCOPE_API_KEY"), where: "Alibaba Cloud Model Studio",
+  }),
+  kimi: () => ({
+    url: "https://api.moonshot.ai/v1",
+    model: env("KIMI_MODEL") ?? "kimi-k2.6", key: secret("MOONSHOT_API_KEY"), where: "Moonshot",
+  }),
+  ollama: () => ({
+    url: (env("QWEN_BASE_URL") ?? "http://127.0.0.1:11434/v1").replace(/\/$/, ""),
+    model: env("QWEN_MODEL") ?? "qwen3:4b", key: "ollama", where: "Ollama, this machine",
+  }),
+};
+if (!ENDPOINTS[PROVIDER]) {
+  console.error(`  AGENT_LLM must be one of ${Object.keys(ENDPOINTS).join(", ")}, not ${PROVIDER}.`);
+  process.exit(1);
+}
+const LLM = ENDPOINTS[PROVIDER]();
+// The fixture stands in for the endpoint, not for anything else.
+const fixture = FIXTURE ? await (await import("./llm-fixture.mjs")).startFixture(PROVIDER) : null;
+if (fixture) Object.assign(LLM, { url: fixture.url, where: `FIXTURE: scripted replies standing in for ${fixture.label}; no model is called` });
 const BUDGET = BigInt(Math.round(Number(env("AGENT_BUDGET_USDC") ?? "0.05") * 10 ** AGENT_CORPUS.decimals));
 const MAX_STEPS = 12;
 
@@ -288,3 +306,6 @@ if (!bought.size && /\bbought\b|\bpurchased\b/i.test(report) && !/not|nothing|no
   console.log("warning   the model's report claims a purchase the ledger does not have");
   process.exitCode = 2;
 }
+
+// The fixture is a server in this process; close it or the process never exits.
+await fixture?.close();
