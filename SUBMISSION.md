@@ -53,12 +53,19 @@ checkable:
 
 ## Sponsor bounties entered
 
-| Bounty | What in Thenar qualifies | State |
+Details, evidence and the live steps left are in [docs/SPONSOR-GAP.md](docs/SPONSOR-GAP.md). Each line below is real
+code exercised end to end on the local chain. Where a key or an account is missing, the integration runs behind its
+env var, or on a labelled fixture.
+
+| Bounty | What in Thenar meets the stated requirement | State |
 | --- | --- | --- |
-| **Privy** ($5k): "beyond authentication" | Operators' embedded wallets sign every run and passkey registration on Monad; a lab's budget is a Privy server wallet whose policy lets it do nothing but fund Thenar tasks (`/lab`, `lib/server/privy-lab.ts`) | Built and live |
-| **Mera: One Passkey, Many Keys** ($2.5k) | One passkey, made with Mera, does three jobs. (1) **Identity:** its P-256 key is registered in PasskeyRegistry and Monad's precompile checks it before the operator can earn. (2) **Robot ownership:** a PRF salt that means "SO-101 commands" derives, through HKDF, an Ed25519 key in a Mera signing session; the relay in front of the operator's physical arm (`--owner`) moves it only for frames signed by that key, so the passkey is the key to their robot (`lib/robot-key.ts`, `scripts/arm-relay.mjs`). (3) The same passkey on any synced device reproduces the same arm key; nothing derived is ever stored. | Built; tested with a WebAuthn authenticator in Chromium and against Monad |
-| **Qwen 3.8 Max** ($5k credits, Track 4) | The buyer agent: Qwen reads the tasks and dataset summaries, decides what to buy, pays over x402 and checks the file against SalesLog, all as tool calls | Needs a Model Studio API key |
-| **Envio** ($1k) | A HyperIndex indexer over Axon, SalesLog and CorpusShares (`indexer/`), running against the local chain. The app's feed and leaderboard read contract storage directly, not the indexer | Indexing Monad needs an Envio API token |
+| **Privy** ($5k): "beyond authentication" | Several Privy features working together. **Embedded wallets** sign every run and passkey registration. A **server wallet under a policy** holds the lab budget and can only fund Thenar tasks (`/lab`). **Gas sponsorship** pays operators' writes (`lib/contract-write.ts`). The embedded wallet **pays for a corpus over x402** on /corpus. | Built. Sponsorship needs the Privy dashboard toggle. The sponsored path is checked on anvil through a stand-in with the same EIP-7702 shape: a 0-MON operator records, is paid and buys a corpus. |
+| **Mera: One Passkey, Many Keys** ($2.5k) | One Mera passkey, three jobs. **Identity:** a P-256 key registered in PasskeyRegistry, which Monad's precompile checks. **Robot ownership:** a PRF salt, "so101-commands", derives through HKDF the Ed25519 key the arm relay obeys (`--owner`). **No storage:** nothing derived is stored, and any synced device derives the same key. /passkey derives it live and verifies a signed command. | Built. The cross-device check needs two devices with a synced passkey. |
+| **Qwen 3.8 Max** ($5k credits, Track 4) | The buyer agent (`AGENT_LLM=qwen`). Qwen reads tasks and datasheets, prices a corpus, pays over x402 with its own key, and checks the bytes against SalesLog, all as tool calls. | Built; runs end to end on a labelled fixture. Needs `DASHSCOPE_API_KEY` for the real model. |
+| **Kimi** ($3k credits) | The same agent on `kimi-k2.6` (`AGENT_LLM=kimi`), with Kimi's reasoning carried across turns. | Built; runs on the fixture. Needs `MOONSHOT_API_KEY`. |
+| **Envio** ($1k) | A HyperIndex V3 indexer over five contracts, with aggregate entities (`indexer/`). Its consumer is `/api/indexer` plus the history on /leaderboard: totals, 14 days of runs and recent operators. Monad's RPC can't serve that history. | Built. Indexing Monad needs Envio Cloud or an API token. |
+| **Chainlink CRE** ($3k) | `cre/corpus-audit`: a DON audits the corpus Thenar sells against the verifier's Merkle commitment. Each node computes the roots, the nodes reach consensus, and the DON reads the commitment and writes a verdict per task to `CorpusAudit`, a `ReceiverTemplate`. | Built and compiled to WASM, tested locally. `cre workflow simulate --broadcast` needs `cre login`. |
+| **Cleanverse CVI/CVA** ($2k, Track 4) | Planned: an aUSDC task bounty that pays only operators the validator clears (`complianceVerify`). The deployed contracts are mapped in [docs/CLEANVERSE.md](docs/CLEANVERSE.md). | Blocked: the docs are invite-only, and no app can move aUSDC on testnet until Cleanverse registers it. |
 
 ## Checklist
 
