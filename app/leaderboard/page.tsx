@@ -3,6 +3,7 @@
 import Link from "next/link";
 
 import { DimRule } from "@/components/primitives";
+import { IndexedActivity } from "@/components/indexed-activity";
 import { useEffect, useState } from "react";
 import { useLeaderboard } from "@/lib/hooks";
 import { readSeen, writeSeen, delta, type Seen } from "@/lib/standings-memory";
@@ -116,6 +117,8 @@ export default function LeaderboardPage() {
           })}
         </ol>
       )}
+
+      <IndexedActivity />
     </div>
   );
 }
