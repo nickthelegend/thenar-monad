@@ -3,7 +3,7 @@ import { parseEther } from "viem";
 import { logged } from "@/lib/server/log";
 import { callerKey, rateLimit } from "@/lib/server/rate-limit";
 import { labConfig, labState, postBounty, probePolicy, PolicyRefusal } from "@/lib/server/privy-lab";
-import { SCENARIOS } from "@/lib/chain";
+import { LOCALNET, SCENARIOS } from "@/lib/chain";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -16,10 +16,22 @@ const unconfigured = () =>
     { status: 503 },
   );
 
-/** The lab's wallet, its balance on Monad, and its policy as Privy holds it. */
+/**
+ * The lab's wallet, its balance on Monad, and its policy as Privy holds it.
+ *
+ * Without a lab wallet the answer is a 200 that says so: not configured is a
+ * state the page shows, not a failed request.
+ */
 async function handleGET() {
   const lab = labConfig();
-  if (!lab) return unconfigured();
+  if (!lab) {
+    return NextResponse.json({
+      configured: false,
+      reason: LOCALNET
+        ? "Privy's server wallets sign on Monad, not on this local chain, so a local build has no lab wallet."
+        : "No Privy lab wallet is configured. Run scripts/privy-lab.mjs, which records it in .env.local.",
+    });
+  }
   try {
     return NextResponse.json(await labState(lab));
   } catch (e) {

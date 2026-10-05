@@ -77,7 +77,7 @@ const button =
 
 export default function LabPage() {
   const { tasks, refetch } = useTaskCatalogue();
-  const [lab, setLab] = useState<LabState | { error: string } | null>(null);
+  const [lab, setLab] = useState<LabState | { error: string } | { configured: false; reason: string } | null>(null);
 
   const [name, setName] = useState("Lab bounty: put the pen on the closed laptop");
   const [slots, setSlots] = useState(2);
@@ -185,8 +185,13 @@ export default function LabPage() {
       <DimRule className="mt-10" note="The lab's wallet" />
       {!lab ? (
         <p className="mt-4 text-[14px] text-scribe-3">Reading Privy and {appChain.name}…</p>
-      ) : "error" in lab ? (
-        <p className="mt-4 text-[14px] text-reject">{lab.error}</p>
+      ) : "configured" in lab && lab.configured === false ? (
+        <div className="mt-4 border border-rule px-5 py-4" role="status">
+          <p className="text-[14px] text-scribe-2">Not configured on this deployment.</p>
+          <p className="mt-1 text-[13px] leading-relaxed text-scribe-3">{lab.reason}</p>
+        </div>
+      ) : !("wallet" in lab) ? (
+        <p className="mt-4 text-[14px] text-reject">{"error" in lab ? lab.error : "The lab could not be read."}</p>
       ) : (
         <dl className="mt-4 grid grid-cols-[max-content_1fr] gap-x-8 gap-y-2 text-[14px]">
           <dt className={label}>Address</dt>

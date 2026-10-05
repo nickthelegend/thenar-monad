@@ -40,7 +40,8 @@ const QUERY = `query Activity($chain: Int!, $days: Int!) {
  */
 async function handleGET() {
   if (!INDEXER_URL) {
-    return NextResponse.json({ configured: false, error: "No indexer is configured for this deployment." }, { status: 503 });
+    // A state, not a failure: the page hides the panel, and the browser logs nothing.
+    return NextResponse.json({ configured: false, error: "No indexer is configured for this deployment." });
   }
   try {
     const d = await indexerQuery<{ Stats: Stats[]; DailyStat: Day[]; Operator: Operator[] }>(QUERY, { chain: appChain.id, days: DAYS });
