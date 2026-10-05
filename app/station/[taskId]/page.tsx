@@ -33,6 +33,7 @@ import { sceneForTask } from "@/lib/props";
 import { cn } from "@/lib/cn";
 import { fmtGasCost, fmtMon, fmtScore, fmtSeconds, shortHash } from "@/lib/format";
 import type { Sample, Verdict } from "@/lib/types";
+import { useGasSponsored } from "@/lib/contract-write";
 
 const StationViewport = dynamic(
   () => import("@/components/station/viewport").then((m) => m.StationViewport),
@@ -85,6 +86,7 @@ export default function StationPage() {
   const task = useCatalogueTask(valid ? taskId : undefined);
   const { data: myRuns } = useRunsOnTask(valid ? taskId : undefined);
   const s = useSession();
+  const gasSponsored = useGasSponsored();
   // Presence in this task's room. It never touches the measurement: the
   // trajectory is recorded and signed exactly as it is with the room empty.
   const { ghosts, report } = useSpace(taskId, s.address, valid);
@@ -495,7 +497,8 @@ export default function StationPage() {
   // that. The floor is LOW_GAS_BALANCE, the same one every banner uses, so the
   // station and the header cannot disagree about the same wallet.
   const RESERVE_FLOOR = LOW_GAS_BALANCE;
-  const thinOnGas = s.connected && !s.wrongNetwork && s.balance < RESERVE_FLOOR;
+  // When Privy pays the gas, an empty wallet can still submit.
+  const thinOnGas = s.connected && !s.wrongNetwork && !gasSponsored && s.balance < RESERVE_FLOOR;
 
   return (
     <div className="flex min-h-dvh flex-col bg-ink-1 lg:h-dvh lg:overflow-hidden">

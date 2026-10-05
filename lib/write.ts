@@ -2,7 +2,8 @@
 
 import { useCallback, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { usePublicClient, useWriteContract } from "wagmi";
+import { usePublicClient } from "wagmi";
+import { useContractWrite } from "./contract-write";
 import { AXON_ABI } from "./abi";
 import { AXON_ADDRESS } from "./chain";
 import { explainTxError } from "./submit";
@@ -13,7 +14,7 @@ export type TxPhase = "idle" | "signing" | "pending" | "confirmed" | "error";
 export function useThenarWrite() {
   const client = usePublicClient();
   const queryClient = useQueryClient();
-  const { writeContractAsync } = useWriteContract();
+  const { writeContractAsync } = useContractWrite();
   const [phase, setPhase] = useState<TxPhase>("idle");
   const [txHash, setTxHash] = useState<`0x${string}` | undefined>();
   const [error, setError] = useState<string | undefined>();
@@ -54,7 +55,7 @@ export function useThenarWrite() {
           functionName,
           args,
           ...(value !== undefined ? { value } : {}),
-        } as Parameters<typeof writeContractAsync>[0]);
+        });
 
         setTxHash(hash);
         setPhase("pending");

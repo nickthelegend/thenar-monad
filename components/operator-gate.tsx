@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { usePublicClient, useWriteContract } from "wagmi";
+import { usePublicClient } from "wagmi";
+import { useContractWrite } from "@/lib/contract-write";
 import { Button } from "@/components/primitives";
 import { useSession } from "@/components/session";
 import { CHAIN_SHORT, PASSKEY_ADDRESS, appChain, txUrl } from "@/lib/chain";
@@ -24,7 +25,7 @@ export function OperatorGate({ onAdmitted }: { onAdmitted?: () => void }) {
   const s = useSession();
   const address = s.address;
   const client = usePublicClient();
-  const { writeContractAsync } = useWriteContract();
+  const { writeContractAsync } = useContractWrite();
   const [status, setStatus] = useState<Status | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);

@@ -5,6 +5,7 @@ import { usePath } from "@/lib/use-path";
 import { useAccount, useSwitchChain } from "wagmi";
 import { appChain, RPC_ENDPOINTS, FAUCET_URL, CURRENCY, LOW_GAS_BALANCE } from "@/lib/chain";
 import { useSession } from "@/components/session";
+import { useGasSponsored } from "@/lib/contract-write";
 
 /**
  * The three ways this app can be unusable through no fault of the operator.
@@ -156,7 +157,8 @@ export function Conditions() {
   }, []);
 
   const wrongNetwork = isConnected && s.wrongNetwork;
-  const lowGas = s.connected && !s.wrongNetwork && s.balance < LOW_GAS_BALANCE;
+  const gasSponsored = useGasSponsored();
+  const lowGas = s.connected && !s.wrongNetwork && !gasSponsored && s.balance < LOW_GAS_BALANCE;
   // Blocks land every couple of seconds, so anything past two minutes is the
   // machine, not the network.
   const skewed = skewMs !== null && Math.abs(skewMs) > 120_000;

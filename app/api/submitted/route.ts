@@ -53,9 +53,12 @@ async function handlePOST(req: Request) {
   if (receipt.status !== "success") {
     return NextResponse.json({ error: "that transaction reverted" }, { status: 409 });
   }
-  if (receipt.to?.toLowerCase() !== AXON_ADDRESS.toLowerCase()) {
+  // Not `receipt.to`: a run whose gas Privy sponsored reaches the protocol
+  // through the operator's own delegated account, so the transaction is
+  // addressed to that account. What counts is that the protocol emitted it.
+  if (!receipt.logs.some((l) => l.address.toLowerCase() === AXON_ADDRESS.toLowerCase())) {
     return NextResponse.json(
-      { error: "that transaction was not sent to the protocol" },
+      { error: "that transaction did not reach the protocol" },
       { status: 409 },
     );
   }

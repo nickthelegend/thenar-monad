@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import { useAccount, usePublicClient, useWriteContract } from "wagmi";
+import { useAccount, usePublicClient } from "wagmi";
+import { useContractWrite } from "./contract-write";
 import { BaseError, ContractFunctionRevertedError, UserRejectedRequestError, toFunctionSelector } from "viem";
 import { AXON_ABI } from "./abi";
 import { AXON_ADDRESS } from "./chain";
@@ -200,7 +201,7 @@ export function explainTxError(e: unknown): string {
 export function useSubmitRun() {
   const { address } = useAccount();
   const client = usePublicClient();
-  const { writeContractAsync } = useWriteContract();
+  const { writeContractAsync } = useContractWrite();
   const [state, setState] = useState<SubmitState>({ phase: "idle" });
 
   const reset = useCallback(() => setState({ phase: "idle" }), []);
