@@ -6,6 +6,32 @@ import { trajectoriesForTask } from "@/lib/server/db";
 import { rootOf, proofFor } from "@/lib/merkle";
 import { appChain, CORPUS_MANIFEST } from "@/lib/chain";
 
+/**
+ * CorpusAudit, where the Chainlink CRE workflow in cre/corpus-audit writes
+ * what its DON found. Server-side and optional: until a receiver is deployed
+ * and named here, the manifest simply has no audit to report.
+ */
+const CORPUS_AUDIT = /^0x[0-9a-fA-F]{40}$/.test(process.env.CORPUS_AUDIT ?? "") ? (process.env.CORPUS_AUDIT as `0x${string}`) : null;
+const VERDICTS = ["uncommitted", "matches", "grown", "short", "altered"] as const;
+const AUDIT_ABI = [
+  {
+    type: "function", name: "latest", stateMutability: "view",
+    inputs: [{ name: "taskId", type: "uint256" }],
+    outputs: [{
+      type: "tuple",
+      components: [
+        { name: "servedRoot", type: "bytes32" },
+        { name: "committedRoot", type: "bytes32" },
+        { name: "served", type: "uint32" },
+        { name: "committed", type: "uint32" },
+        { name: "verdict", type: "uint8" },
+        { name: "observedAt", type: "uint64" },
+        { name: "blockNumber", type: "uint64" },
+      ],
+    }],
+  },
+] as const;
+
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
@@ -72,6 +98,23 @@ async function handleGET(req: Request, ctx: { params: Promise<{ id: string }> })
     }
   }
 
+  // What a Chainlink DON last found, independently of this server's own sums.
+  let audit: Record<string, unknown> | null = null;
+  if (CORPUS_AUDIT) {
+    try {
+      const a = await client.readContract({ address: CORPUS_AUDIT, abi: AUDIT_ABI, functionName: "latest", args: [BigInt(taskId)] });
+      if (a.observedAt > BigInt(0)) {
+        audit = {
+          contract: CORPUS_AUDIT, by: "Chainlink CRE (cre/corpus-audit)",
+          verdict: VERDICTS[a.verdict] ?? "unknown", servedRoot: a.servedRoot, committedRoot: a.committedRoot,
+          served: a.served, committed: a.committed, observedAt: Number(a.observedAt), block: Number(a.blockNumber),
+        };
+      }
+    } catch {
+      audit = null;
+    }
+  }
+
   return NextResponse.json({
     taskId,
     contract: CORPUS_MANIFEST || null,
@@ -84,6 +127,7 @@ async function handleGET(req: Request, ctx: { params: Promise<{ id: string }> })
     // yet. false is reserved for a committed root the corpus disagrees with,
     // which is a finding; an absence is not.
     matches: committed && computed ? committed.root.toLowerCase() === computed.toLowerCase() : null,
+    audit,
     ...(episode
       ? {
           episode,

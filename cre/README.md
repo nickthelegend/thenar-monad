@@ -57,6 +57,9 @@ The CRE CLI needs an account for `init`, `simulate` and `deploy`:
    cre workflow simulate corpus-audit --target staging-settings --non-interactive --trigger-index 0 --broadcast
    ```
 
+Set `CORPUS_AUDIT` to the receiver's address on the app's backend, and `/api/task/{id}/manifest` reports the DON's
+latest verdict as `audit` next to its own `computed` and the verifier's `committed`.
+
 To deploy the workflow itself, point the receiver at the production KeystoneForwarder
 (`setForwarderAddress(0xF8344CFd5c43616a4366C34E3EEE75af79a74482)`). Then fill `config.production.json` and run
 `cre workflow deploy corpus-audit --target production-settings` (this needs `cre account access` approval).
