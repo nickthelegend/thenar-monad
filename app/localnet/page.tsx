@@ -110,7 +110,7 @@ export default function LocalnetPage() {
           <label className="mt-2 flex items-start gap-3 text-[14px] text-scribe-2">
             <input
               type="checkbox"
-              className="mt-1"
+              className="mt-1 size-4 shrink-0 accent-probe"
               checked={sponsored}
               onChange={(e) => { setLocalSponsored(e.target.checked); setSponsored(e.target.checked); }}
             />

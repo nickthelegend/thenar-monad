@@ -164,9 +164,30 @@ The agent needs testnet USDC from [faucet.circle.com](https://faucet.circle.com)
 Tests:
 
 ```bash
-pnpm test:unit                    # 86 unit tests
-cd contracts && forge test        # 117 contract tests, including CorpusShares and SalesLog
+pnpm test:unit                    # 125 unit tests
+cd contracts && forge test        # 133 contract tests: CorpusShares, SalesLog, CorpusAudit, SponsoredAccount …
 ```
+
+### On a local chain
+
+Everything above also runs on anvil. That chain has the P-256 precompile, Monad's Multicall3, a local USDC and a
+local x402 facilitator, and every transaction on it is real and signed. Each line below is its own terminal:
+
+```bash
+node scripts/localnet.mjs                                          # anvil on :8645, the contracts, .env.localnet
+node scripts/localnet-app.mjs                                      # build and serve on :3336
+NEXT_PUBLIC_CHAIN=local node --import ./test/register.mjs scripts/x402-facilitator.mjs
+(cd indexer && sh scripts/start.sh --bg)                           # the Envio indexer, for /leaderboard's history
+```
+
+Then, in headed Chromium:
+- `pnpm test:localnet`: a whole operator day. Passkey, a driven run, payout and shares, the SO-101 key, an x402
+  purchase, and the indexer.
+- `pnpm test:localnet:sponsored`: the same day for an operator who never holds MON. The gas is sponsored the way
+  Privy sponsors it on Monad.
+- `pnpm test:agent`: the buyer agent on Qwen and on Kimi. With no key, it runs on a labelled fixture.
+- `pnpm test:cre`: the Chainlink CRE corpus audit and its receiver.
+- `pnpm test:e2e:local`: every page and API.
 
 ---
 
