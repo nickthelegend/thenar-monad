@@ -1,5 +1,71 @@
 [
   {
+    "hash": "d5c8471",
+    "date": "2026-10-05T15:24:20+05:30",
+    "subject": "Record what shipped against each sponsor gap",
+    "body": "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+  },
+  {
+    "hash": "eef06df",
+    "date": "2026-10-05T15:23:46+05:30",
+    "subject": "Report the DON's latest verdict from the manifest route",
+    "body": "With CORPUS_AUDIT naming the CorpusAudit receiver, /api/task/{id}/manifest\nadds what the corpus-audit workflow last found for the task (verdict, both\nroots, both counts, when) next to the server's own computed root and the\nverifier's committed one. Checked on the local chain against a receiver the\nworkflow's report was delivered to.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+  },
+  {
+    "hash": "0716d2e",
+    "date": "2026-10-05T15:22:13+05:30",
+    "subject": "Audit the corpus against its commitment from a Chainlink DON",
+    "body": "cre/corpus-audit is a CRE workflow. On a cron, every node fetches the\nepisode hashes Thenar would sell (/api/corpus/episodes, new), builds each\ntask's Merkle root itself, and the nodes agree on the roots. The DON reads\nthe verifier's commitments from CorpusManifest on monad-testnet in one\nMulticall3 call, gives each task a verdict (Matches, Grown, Short, Altered\nor Uncommitted), and writes the report to CorpusAudit, a ReceiverTemplate\nthat accepts it only from the KeystoneForwarder and keeps the newest verdict\nper task.\n\nChecked without a DON: Foundry tests for the receiver; test/live-cre-audit.mjs\non the local chain (the workflow's roots equal lib/merkle.ts's and the\nmanifest route's, verdicts follow real commitments, and a deployed receiver\nstores the exact report the workflow encodes); and the workflow compiles to\nWASM. Simulating it against Monad needs `cre login`, which is the user's.\n\nChainlink's IReceiver and ReceiverTemplate are copied from the CRE docs;\nOwnable is a minimal stand-in for OpenZeppelin's. The app's typecheck, lint\nand deploy uploads leave cre/ out.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+  },
+  {
+    "hash": "ce539e0",
+    "date": "2026-10-05T15:11:27+05:30",
+    "subject": "Check the robot key, the in-page purchase and the indexer in the local journey",
+    "body": "test/live-localnet.mjs now also derives the SO-101 key on /passkey and\nverifies its signed command with the arm relay's own check, derives it\nagain with nothing stored in the browser, buys the task's corpus over x402\nfrom /corpus and matches the file to its SalesLog entry, and reads the run\nand the sale back from the indexer on /leaderboard. Anvil keeps only 300\nstates in memory.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+  },
+  {
+    "hash": "bf5aa03",
+    "date": "2026-10-05T15:11:27+05:30",
+    "subject": "Let the buyer agent run on Kimi",
+    "body": "AGENT_LLM=kimi runs the same corpus-buying loop on Moonshot's kimi-k2.6\n(KIMI_MODEL to change it, MOONSHOT_API_KEY required). Its reasoning is sent\nback on each assistant turn as Kimi asks, and its temperature is left to the\nmodel. The turn kept in the history now holds only the tool call that was\nanswered: a turn with two calls kept both while answering one, which a\nstrict endpoint refuses.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+  },
+  {
+    "hash": "de2d4d0",
+    "date": "2026-10-05T15:11:27+05:30",
+    "subject": "Read the Envio indexer's history onto /leaderboard",
+    "body": "Monad's RPC serves logs 100 blocks at a time, so the app could not show\nhistory it does not keep itself. /api/indexer reads the HyperIndex\nindexer's aggregates (Stats, DailyStat, the most recent Operators) from\nENVIO_GRAPHQL_URL, server side, and /leaderboard draws them: totals, two\nweeks of runs day by day, and who ran last. A deployment without an indexer\nshows nothing rather than zeros it never read.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+  },
+  {
+    "hash": "b035d22",
+    "date": "2026-10-05T15:11:27+05:30",
+    "subject": "Buy one task's corpus from /corpus over x402, with your own wallet",
+    "body": "The per-pull x402 sale was only reachable by an agent with a key in a\nscript. /corpus?task=N now makes the same purchase from the page: the\noperator's wallet (the embedded one Privy made) signs the one-cent USDC\nauthorisation, the facilitator settles it and pays the gas, the file\ndownloads, and the page shows the settlement, the file's SHA-256 and its\nSalesLog entry. Privy's useX402Fetch speaks x402 v1 and the paywall is v2,\nso the payment is made with x402's own v2 client over the wagmi wallet.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+  },
+  {
+    "hash": "803d3db",
+    "date": "2026-10-05T15:11:16+05:30",
+    "subject": "Let Privy pay operators' gas, behind NEXT_PUBLIC_PRIVY_GAS_SPONSORSHIP",
+    "body": "An operator who signs in with email has an embedded wallet with no MON, and\nhad to find some before the first paid run. With sponsorship enabled for\nMonad Testnet in the Privy dashboard and the flag set, the passkey\nregistration, every submit and every other write from the shared write path\ngo through Privy's sendTransaction with sponsor: true. A wallet the operator\nbrought still pays for itself through wagmi. The hook is chosen at build\ntime, so a local-chain build never calls Privy.\n\nThe gas warnings stand down for a sponsored wallet, and /api/submitted no\nlonger requires the transaction to be addressed to the protocol: a sponsored\nrun reaches it through the operator's delegated account. The protocol's own\nTrajectoryAccepted log for the run is what it checks, as before.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+  },
+  {
+    "hash": "de7a7dd",
+    "date": "2026-10-05T15:11:16+05:30",
+    "subject": "Show the keys one passkey makes, and prove the SO-101 one on /passkey",
+    "body": "The passkey's PRF already made the Ed25519 key the arm relay requires, but\nnothing on screen showed it, so it could only be seen with a physical arm.\n/passkey now lists the identity key and the SO-101 key with the salt each\ncomes from, derives the SO-101 key on demand, signs a command the way the\nstation does, verifies it in the page with the public key alone, and ends\nthe session. The same passkey on another device shows the same key.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+  },
+  {
+    "hash": "3f8565b",
+    "date": "2026-10-05T14:53:05+05:30",
+    "subject": "Check Thenar against every Metropolis sponsor bounty",
+    "body": "docs/SPONSOR-GAP.md: the submission branch (main; monad is fully\ncontained, quest-teleop is the superseded prototype, kept on its own\nbranches), the track (T4, and why Xorv being T4 too matters), and per\nbounty what Thenar does, the gap against the bounty's own wording,\neffort, value and the plan, plus what only the user can do.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+  },
+  {
+    "hash": "66c5f03",
+    "date": "2026-10-02T19:27:06+05:30",
+    "subject": "Bring the changelog up to date with the history",
+    "body": "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+  },
+  {
     "hash": "ded6329",
     "date": "2026-10-02T19:27:05+05:30",
     "subject": "Keep the hero's words off the film",
@@ -292,71 +358,5 @@
     "date": "2026-09-23T15:44:13+05:30",
     "subject": "Deploy Thenar to Monad testnet",
     "body": "Twelve contracts from DeployMonad.s.sol in one broadcast, seventeen\ntransactions, every receipt status 1, AxonProtocolV2 at block 64987386.\nFive tasks seeded at 0.002 MON a run, six slots each, task 4 with a\nseven-day deadline. The verifier is 0xC7D1…893D on the protocol and the\nmanifest; the corpus issuer 0x9a6A…e6b2 owns CorpusShares and SalesLog.\nAll twelve are exact_match on Sourcify for chain 10143.\n\napply-deploy.mjs now reads the newest record whose every transaction has a\nsuccessful receipt, not run-latest.json: forge wrote a second record a\nminute after the broadcast, simulated against an endpoint that had not\ncaught up, with nonces five behind, addresses that belong to other\ncontracts and no receipts at all, and it overwrote run-latest with it.\nAddresses are written checksummed.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
-  },
-  {
-    "hash": "c873b5d",
-    "date": "2026-09-23T14:20:52+05:30",
-    "subject": "Write the Monad test plan, and answer an unconfigured snapshot with 503",
-    "body": "docs/TESTPLAN-MONAD.md lists every page, route, contract, integration and\nflow with the exact result that counts as a pass, against the live Monad\ndeployment through a real browser.\n\nThe first sweep found /api/snapshot answering 502 when no bucket is\nconfigured. 502 says an upstream failed, and here there is no upstream:\nthe drill already answered 503 for the same missing bucket. The snapshot\nnow answers 503 for no bucket and 502 only when a bucket refuses the\nupload, and the OpenAPI document says both.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
-  },
-  {
-    "hash": "85aadc4",
-    "date": "2026-09-23T14:14:18+05:30",
-    "subject": "Script the demo take for the Monad build",
-    "body": "Every beat is confirmed from a Monad receipt with status 1 rather than a\nmirror node or another chain's explorer: the lab's 0.004 MON bounty, the\npolicy's refusal, an agent's one-cent USDC pull with its SalesLog entry\nread back through servedCount, and a dividend declared in CorpusShares.\nThe share beat is the dividend, not a run's issued shares, because a take\ncannot produce a Selfie-Checked human. The intro names Monad Metropolis,\nTrack 4, and the pronunciations learn Monadscan and MON.\n\nNothing is recorded or voiced yet; tts.py has to run again before\ncut.mjs, since the beat ids and the narration changed.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
-  },
-  {
-    "hash": "287a652",
-    "date": "2026-09-23T14:11:37+05:30",
-    "subject": "Write the README and the Metropolis submission for the Monad build",
-    "body": "The README says what runs today and on which chain, what Monad does here\nthat another chain would not, and what is not proven. SUBMISSION.md makes\nthe case for Track 4 — identity, provenance, data ownership and agent\ntrust, each enforced by a contract — and says which commits existed\nbefore Metropolis and which were written for it.\n\nThe Avalanche-era plans, audits and test reports move to docs/history,\nwhere the Avalanche README already was. The Blitz audits keep their place\nwith a note that the project has come back to Monad on a new deployment.\n.env.example names the keys the Monad build uses, and no contract\naddresses, which live in lib/deployment.ts.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
-  },
-  {
-    "hash": "2b6ec8e",
-    "date": "2026-09-23T14:11:22+05:30",
-    "subject": "Sell a task's corpus to agents over x402 in USDC on Monad, and log every sale on chain",
-    "body": "An agent asks /api/agent/corpus for one task's file and is answered 402\nwith two offers. One is x402's exact scheme on eip155:10143: a cent of\nUSDC as an EIP-3009 authorisation the agent signs, which the Monad\nfacilitator submits and pays the gas for. The other is AgentKit's: if\nWorld's AgentBook maps the agent's wallet to a verified human, its first\nthree pulls are free, counted in the database so a restart does not hand\nthem out again. An agent with nobody behind it is not refused; it pays.\n\nSettlement happens only after the export succeeds, so a task with nothing\nrecorded answers 404 and charges nothing. Every pull that succeeds is\nhashed as served and written to SalesLog with that sha256. The log keeps\neach sale in storage as well as in an event, because on Monad an event\nmore than a hundred blocks old cannot be read back through a public RPC,\nand servedCount(sha256) lets a buyer check its own copy against the chain.\n\n/agents states the terms the 402 states and lists every pull with its\nsettlement and its log entry. scripts/agent-buy.mjs is the buyer: it pays\nfrom a wallet with USDC and no MON, hashes what it received and asks\nSalesLog, not this server, whether those bytes were sold.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
-  },
-  {
-    "hash": "f525704",
-    "date": "2026-09-23T14:11:11+05:30",
-    "subject": "Gate paid runs on a World ID Selfie Check, and make the humans who pass it the corpus' only owners",
-    "body": "A paid run needs a live human behind the address. The station asks for a\nSelfie Check before the run rather than after it, the proof and the\nwallet's own signature have to agree, and a nullifier binds one person to\none address. It is asked on any chain, because it is a signature and a\nphone scan, and a wallet that cannot add Monad must still reach it.\n\nA proof that passes puts the address on CorpusShares' control list, and\nevery settled run issues its driver's shares, scaled by the signed score\nand named by the run's hash. The contract refuses a share for anyone not\non the list, so a bot farm can record runs and cannot own the corpus.\nOn Monad both writes settle in under a second, so the station reports the\nrun's shares in the same panel as its payout instead of promising them.\n\n/corpus-token reads the shares from the contract: supply, holders,\ndividends, and whether it would accept a share for a given address, asked\nby simulation. scripts/shares.mjs is the issuer's side: the register, the\ncompliance check, a dividend in MON with a record date two minutes out,\nand one holder's entitlement.\n\nThe issuer key is not the verifier's. The verifier signs scores and lives\nonly in the signer service; minting shares is a different authority.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
-  },
-  {
-    "hash": "c65aac0",
-    "date": "2026-09-23T14:10:52+05:30",
-    "subject": "Sign operators in with Privy, and give labs a budget Privy can only spend on bounties",
-    "body": "An email address is enough to be paid: Privy makes an embedded wallet on\nMonad, and an operator who already has a wallet can still bring it. When an\nembedded wallet exists it is the active one, because some extensions sign\ntransactions but refuse to sign the plain message the Selfie Check asks for.\n\nA lab's budget sits in a Privy server wallet under a policy with one allowed\naction: a transaction to AxonProtocolV2 on chain 10143 carrying at most\n0.1 MON. /lab posts a bounty from it and then asks the same wallet to send\n0.01 MON somewhere else, so the refusal is something a lab can watch\nhappen. Privy signs; Monad's RPC broadcasts, with a gas limit of the\nestimate plus a tenth, because Monad charges the limit.\n\nscripts/privy-lab.mjs creates the policy and the wallet once, tops the\nwallet up from the deployer, posts a bounty and prints the refusal.\n\nThis also brings in the dependencies the next commits use: Privy, World\nIDKit and AgentKit, and x402 with its EVM scheme.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
-  },
-  {
-    "hash": "cabcf0c",
-    "date": "2026-09-23T14:10:31+05:30",
-    "subject": "Move Thenar back to Monad, and read its history from storage",
-    "body": "Every page settles on Monad testnet again, chain 10143, where Thenar was\nbuilt at Blitz. MON is the bounty, the payout and the gas. The Foundation's\nRPC is first, with Ankr and thirdweb behind it, each probed for batched\ncalls before being listed; drpc is left out because it refuses the gas a\nMulticall3 read asks for.\n\nMonad's public endpoints answer eth_getLogs only a hundred blocks wide,\nunder a minute of chain. The feed, the standings, the observed gas cost\nand the mean score all read the log from the deployment block, so on\nMonad every one of them would have been empty. They read the contract's\nown arrays through Multicall3 instead, a hundred runs per call, each read\nonce because the array only grows, and a run's transaction is the one log\nin the block the run recorded.\n\nPer-address history comes from Monadscan through Etherscan's V2 API. It\nneeds ETHERSCAN_API_KEY, and without one the pages say that instead of\nshowing an empty history.\n\nThe registry reads its addresses from lib/deployment.ts, lists only the\ncontracts that have one, and names what each leans on Monad for: the\nsharded slot counter for parallel execution, the P-256 precompile, and a\nsales log kept in storage because events alone could not be read back.\nThe Avalanche L1 page and the Warp attestation go: neither exists here.\n\nThe QA and end-to-end scripts talk to the same chain through\nscripts/monad.mjs, and scripts/monad-run.mjs records a scripted, paid run\nwith a gas limit of the estimate plus a tenth, because Monad charges the\nlimit.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
-  },
-  {
-    "hash": "a7a5029",
-    "date": "2026-09-23T14:09:46+05:30",
-    "subject": "Put every contract on Monad in one broadcast, and give each run and task its block",
-    "body": "DeployMonad.s.sol deploys the whole set to Monad testnet in one go:\nAxonProtocolV2, the passkey registry, certificates, the contribution\nrecord, corpus access and manifest, referrals, the foundry, the prize pool\nand confidential payouts, with five seeded tasks. The bounties are small\nand set by REWARD_WEI, because Monad charges the gas limit and a deploy\nestimated at 130% pays for the 30%.\n\nTwo contracts are new. CorpusShares is the corpus as shares: only an\naddress on its control list can hold, send or receive one, shares are\nissued per run with the run's hash, and a dividend in MON pays whoever\nheld at a record date that has to be in the future when it is declared.\nSalesLog records every corpus sale with the sha256 of the bytes served.\nBoth belong to a corpus issuer key, not the verifier.\n\nA Trajectory now records the block it settled in and a Task the block it\nwas posted in. Monad's public endpoints answer eth_getLogs a hundred\nblocks wide, so the app reads history from storage and finds a run's\ntransaction with a one-block query at the block the contract kept.\n\nlib/deployment.ts is where the addresses live, written by\nscripts/apply-deploy.mjs from forge's broadcast record, so no address is\never typed in. scripts/monad.mjs gives every script the same chain.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
-  },
-  {
-    "hash": "e788c4e",
-    "date": "2026-09-12T19:30:00+05:30",
-    "subject": "Build the product on Avalanche Fuji",
-    "body": "Squashed from the 253 commits that took Thenar from Monad to Avalanche\nFuji and built the product there (8a90d40..2e1ac4d in thenar-io): the\nstation, the lab, the hub, policies, licences, referrals, the prize pool,\nAxonProtocolV2 with escrow refunds and relayed passkey runs, the unit and\nend-to-end suites, and the design system.\n\nThe Monad Blitz build is the history before this commit. What comes after\nit is the move back to Monad."
-  },
-  {
-    "hash": "a581e6a",
-    "date": "2026-09-06T16:52:30+05:30",
-    "subject": "Point the repo at thenar.io and drop claims that no longer hold",
-    "body": "Every Railway URL in the docs, robots.txt and the scripts becomes the custom\ndomain. The one in vercel.json stays: it is the API proxy target, and the API\nowns a SQLite file on a persistent volume that a serverless host cannot keep.\n\nAlso removes two things the README promised and the build no longer has: the\n/passkey page, cut in 6111428 when wallet connect moved to RainbowKit, and\nscripts/passkey-onchain.mjs, which does not exist. The precompile work is real\nand stays documented against the fork tests that exercise it. Route count\ncorrected to ten, and the submission details are now a table at the top."
-  },
-  {
-    "hash": "f8be2a9",
-    "date": "2026-09-06T16:17:44+05:30",
-    "subject": "README: correct the AxonProtocol test count",
-    "body": "forge test reports 23, not 19; the suite grew with the sharding tests."
   }
 ]
