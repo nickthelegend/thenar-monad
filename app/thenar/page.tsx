@@ -74,11 +74,12 @@ export default async function ThenarHome() {
           </p>
         </Reveal>
         <Reveal delay={300} className="mt-8 flex flex-wrap justify-center gap-3">
-          <Link href="/hub" className="rounded-lg bg-lilac px-5 py-3 text-base font-semibold text-black transition duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-white active:scale-[0.98]">
-            Find a task
+          {/* One way in for a newcomer: the steps to a first paid run, each read live. */}
+          <Link href="/start" className="rounded-lg bg-lilac px-5 py-3 text-base font-semibold text-black transition duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-white active:scale-[0.98]">
+            Start earning
           </Link>
-          <Link href="/passkey" className="rounded-lg border border-white/15 px-5 py-3 text-base text-white transition-colors duration-500 hover:bg-white/5">
-            Set up your passkey
+          <Link href="/hub" className="rounded-lg border border-white/15 px-5 py-3 text-base text-white transition-colors duration-500 hover:bg-white/5">
+            Browse tasks
           </Link>
         </Reveal>
         {figures ? (

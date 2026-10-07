@@ -93,7 +93,21 @@ await cdp.send("WebAuthn.addVirtualAuthenticator", {
 const text = () => page.evaluate(() => document.body.innerText);
 const shot = async (name) => SHOTS && page.screenshot({ path: `${SHOTS}/${name}.png` });
 
+/** /start's steps as the page reads them: { wallet: "done", gas: "todo", … }. */
+const startSteps = async () => {
+  await page.goto(`${BASE}/start`);
+  await page.getByTestId("start-steps").waitFor();
+  await page.waitForTimeout(1500);
+  return Object.fromEntries(await page.locator("[data-step]").evaluateAll((els) => els.map((e) => [e.dataset.step, e.dataset.state])));
+};
+
 try {
+  // 0. A newcomer: /start has nothing done, and offers one thing to do.
+  const fresh = await startSteps();
+  log("start", fresh);
+  assert.deepEqual(Object.values(fresh).filter((v) => v === "done"), [], "a fresh browser has no step done");
+  assert.ok(await page.getByRole("button", { name: "Sign in with the local wallet" }).isVisible(), "and its one action is to sign in");
+
   // 1. The wallet.
   await page.goto(`${BASE}/localnet`);
   assert.ok(await page.getByTestId("localnet-banner").isVisible(), "a local build says it is not Monad");
@@ -108,6 +122,10 @@ try {
   }, 30_000, SPONSORED ? "the faucet's USDC (and no MON)" : "the faucet's MON");
   const address = (await page.locator("main a[href^='/explorer/address/0x']").nth(1).textContent()).trim();
   log("wallet", { address, balances });
+  const signedIn = await startSteps();
+  assert.equal(signedIn.wallet, "done", "/start sees the wallet");
+  assert.equal(signedIn.gas, "done", SPONSORED ? "/start sees the sponsor" : "/start sees the MON");
+  assert.notEqual(signedIn.passkey, "done", "and no passkey yet");
 
   // 2. The passkey, registered on chain, and admission.
   await page.goto(`${BASE}/passkey`);
@@ -135,6 +153,8 @@ try {
   await shot("localnet-passkey");
 
   // 3. The registry verifies a fresh assertion.
+  await until(async () => (await startSteps()).passkey === "done", 20_000, "/start to read the passkey from the registry");
+  await page.goto(`${BASE}/passkey`);
   await page.getByRole("button", { name: /Prove it on/ }).click();
   await until(async () => /Verified on|Rejected by the registry/.test(await text()), 30_000, "the proof");
   assert.match(await text(), /Verified on/, "PasskeyRegistry verified a fresh assertion through the P-256 precompile");
@@ -246,6 +266,20 @@ try {
     await timers.scrollIntoViewIfNeeded();
     await page.waitForTimeout(600);
     await shot("localnet-paid-mobile");
+    await page.setViewportSize(size);
+  }
+  // The newcomer's checklist, now complete: every step read from the chain, the ledger or this browser.
+  const allDone = await until(async () => {
+    const st = await startSteps();
+    return Object.values(st).every((v) => v === "done") ? st : null;
+  }, 30_000, "/start to show all five steps done");
+  log("start", allDone);
+  await shot("localnet-start-done");
+  if (SHOTS) {
+    const size = page.viewportSize();
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.waitForTimeout(600);
+    await shot("localnet-start-done-mobile");
     await page.setViewportSize(size);
   }
 

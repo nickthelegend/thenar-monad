@@ -68,6 +68,7 @@ const SCREENS = {
     ready: () => until(async () => (await page.locator("[data-testid=decision-trail][data-check=valid]").count()) >= 1, 20_000, "a checked decision trail"),
   },
   passkey: { nn: "07", path: "/passkey" },
+  start: { nn: "11", path: "/start", ready: () => until(async () => (await page.locator("[data-step]").count()) === 5, 15_000, "the steps") },
   status: { nn: "08", path: "/status" },
 };
 

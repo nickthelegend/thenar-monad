@@ -24,6 +24,7 @@ const GROUPS: { label: string; items: { href: string; label: string; hint: strin
   {
     label: "Earn",
     items: [
+      { href: "/start", label: "Start earning", hint: "Five steps to your first paid run" },
       { href: "/hub", label: "Find a task", hint: "Do a task with a robot arm and get paid" },
       { href: "/post", label: "Post a task", hint: "Fund a task for others to record" },
       { href: "/portfolio", label: "My earnings", hint: "Your runs and what they paid" },
