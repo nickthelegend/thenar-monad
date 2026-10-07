@@ -22,7 +22,7 @@ const DESKTOP = { width: 1440, height: 900 };
 const MOBILE = { width: 390, height: 844 };
 
 const sql = (q) => execFileSync("sqlite3", [".data/localnet.db", q], { encoding: "utf8" }).trim();
-const runHash = sql("select traj_hash from trajectory where settled = 1 order by created_at desc limit 1;");
+const [runHash, runTask] = sql("select traj_hash, task_id from trajectory where settled = 1 order by created_at desc limit 1;").split("|");
 
 const browser = await chromium.launch({ headless: true, executablePath: process.env.CHROMIUM });
 const page = await (await browser.newContext({ viewport: DESKTOP })).newPage();
@@ -49,12 +49,20 @@ const pipelineLive = (sel = "[data-testid=monad-pipeline]") =>
 const SCREENS = {
   landing: { nn: "01", path: "/thenar", anchor: "[data-testid=monad-pipeline]", ready: () => pipelineLive() },
   station: {
-    nn: "03", path: "/station/0",
+    nn: "03", path: "/station/0", anchor: "[data-testid=monad-heartbeat]",
     ready: () => until(async () => (await page.locator("[data-testid=monad-heartbeat]").getAttribute("data-connection")) === "live"
       && /\d+ ms/.test(await page.locator("[data-testid=monad-heartbeat]").textContent()), 20_000, "the heartbeat"),
   },
   run: { nn: "04", path: `/run/${runHash}` },
-  corpus: { nn: "05", path: "/corpus" },
+  corpus: {
+    nn: "05", path: "/corpus", anchor: "[data-testid=episode-grid]", top: true,
+    ready: () => until(async () => (await page.locator("[data-testid=episode-card] svg[role=img]").count()) >= 2, 20_000, "the episode previews"),
+  },
+  "corpus-task": {
+    nn: "05b", path: `/corpus?task=${runTask}`,
+    ready: () => until(async () => /matches|commit|differs|no manifest/.test((await page.getByTestId("corpus-root-status").textContent()) ?? "")
+      && (await page.locator("[data-testid=episode-card] svg[role=img]").count()) >= 1, 20_000, "the task summary"),
+  },
   agents: { nn: "06", path: "/agents" },
   passkey: { nn: "07", path: "/passkey" },
   status: { nn: "08", path: "/status" },
@@ -68,7 +76,12 @@ try {
       await page.goto(BASE + s.path, { waitUntil: "domcontentloaded" });
       await page.waitForTimeout(1500);
       if (s.ready) await s.ready();
-      if (s.anchor) await page.locator(s.anchor).first().evaluate((el) => el.scrollIntoView({ block: "center" }));
+      if (s.anchor) {
+        await page.locator(s.anchor).first().evaluate((el, top) => {
+          el.scrollIntoView({ block: top ? "start" : "center" });
+          if (top) window.scrollBy(0, -120); // clear of the floating nav
+        }, Boolean(s.top));
+      }
       // The landing reveals sections as they scroll in (a blur and fade of about a second); let it finish.
       await page.waitForTimeout(s.anchor ? 2400 : 600);
       const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);

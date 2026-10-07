@@ -239,6 +239,20 @@ export async function settledSamplesForTask(taskId: number, limit = 50) {
   );
 }
 
+/**
+ * The samples of the runs named, for the corpus previews. A hash names its
+ * samples whichever deployment recorded them, so this is not filtered by
+ * contract; a hash that is not stored is simply absent from the answer.
+ */
+export async function samplesFor(hashes: string[]) {
+  await db();
+  if (!hashes.length) return [];
+  return query<{ traj_hash: string; samples: string }>(
+    `SELECT traj_hash, samples FROM trajectory WHERE traj_hash IN (${hashes.map(() => "?").join(", ")})`,
+    hashes,
+  );
+}
+
 /** The runs a buyer would want as negative examples: scored, recorded, and
  *  below the floor that pays. Never mixed into the paid corpus. */
 export async function failedTrajectories(taskId: number, floor: number, limit = 200) {

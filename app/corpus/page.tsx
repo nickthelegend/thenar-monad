@@ -3,11 +3,14 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { DimRule } from "@/components/primitives";
-import { fmtDate, fmtInt, fmtMon, fmtScore, fmtSeconds, shortHash } from "@/lib/format";
+import { fmtInt, fmtMon, fmtScore, fmtSeconds } from "@/lib/format";
 import { CURRENCY } from "@/lib/chain";
 import { CorpusAccessPanel } from "@/components/corpus-access";
 import { CorpusPull } from "@/components/corpus-pull";
 import { useTaskCatalogue, type TaskWithScene } from "@/components/tasks-provider";
+import { EpisodeCard, type Episode } from "@/components/episode-card";
+import { TaskCorpusSummary } from "@/components/task-corpus-summary";
+import type { Preview } from "@/lib/corpus-preview";
 import { cn } from "@/lib/cn";
 
 /**
@@ -22,12 +25,6 @@ import { cn } from "@/lib/cn";
  * this project just took the trouble to remove.
  */
 
-type Episode = {
-  trajHash: string; taskId: number; contributor: string; score: number;
-  deviationMm: number; durationSeconds: number; frames: number;
-  createdAt: number; outcome: "paid" | "failed" | "unsubmitted"; txHash: string | null;
-};
-
 const OUTCOMES = [
   { key: "all", label: "Everything" },
   { key: "paid", label: "Paid" },
@@ -35,11 +32,10 @@ const OUTCOMES = [
   { key: "unsubmitted", label: "Never sent" },
 ] as const;
 
-const TONE: Record<Episode["outcome"], string> = {
-  paid: "text-go",
-  failed: "text-reject",
-  unsubmitted: "text-scribe-3",
-};
+/** Cards shown at first, and added by each "Show more". */
+const PAGE = 24;
+/** The most hashes one previews request carries (the route's limit). */
+const BATCH = 60;
 
 export default function CorpusPage() {
   const [outcome, setOutcome] = useState<(typeof OUTCOMES)[number]["key"]>("all");
@@ -118,6 +114,31 @@ export default function CorpusPage() {
     return () => { live = false; };
   }, [empty, outcome, taskId, key]);
 
+  // How many cards are on screen, per filter: a new filter starts at one page.
+  const [shownFor, setShownFor] = useState<{ key: string; n: number }>({ key, n: PAGE });
+  const shown = shownFor.key === key ? shownFor.n : PAGE;
+  const visible = useMemo(() => data?.episodes.slice(0, shown) ?? [], [data, shown]);
+
+  /**
+   * Previews for the cards on screen, asked for in batches rather than one
+   * request a card. Keyed by hash, so a filter change re-uses what it has; a
+   * run with no stored samples is recorded as null and its card says so.
+   */
+  const [previews, setPreviews] = useState<Record<string, Preview | null>>({});
+  useEffect(() => {
+    const need = visible.map((e) => e.trajHash.toLowerCase()).filter((h) => !(h in previews));
+    if (!need.length) return;
+    let live = true;
+    const batches = Array.from({ length: Math.ceil(need.length / BATCH) }, (_, i) => need.slice(i * BATCH, (i + 1) * BATCH));
+    Promise.all(batches.map((b) =>
+      fetch(`/api/corpus/previews?hashes=${b.join(",")}`)
+        .then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
+        .then((d: { previews: Record<string, Preview>; missing: string[] }) => ({ ...d.previews, ...Object.fromEntries(d.missing.map((h) => [h, null])) }))
+        .catch(() => ({}) as Record<string, Preview | null>),
+    )).then((parts) => { if (live) setPreviews((p) => Object.assign({}, p, ...parts)); });
+    return () => { live = false; };
+  }, [visible, previews]);
+
   const totals = useMemo(() => {
     const e = data?.episodes ?? [];
     return {
@@ -136,6 +157,8 @@ export default function CorpusPage() {
         never signed. Each links to the run it came from, where the hash can be
         re-derived and checked against the chain.
       </p>
+
+      {typeof taskId === "number" ? <TaskCorpusSummary taskId={taskId} /> : null}
 
       {/* The gate answers 402 and, until now, pointed nowhere. */}
       <CorpusAccessPanel taskId={taskId} />
@@ -195,8 +218,8 @@ export default function CorpusPage() {
           The corpus index could not be read. The task pages still work.
         </p>
       ) : !data ? (
-        <ul className="mt-4 flex flex-col gap-2" aria-busy="true">
-          {Array.from({ length: 6 }, (_, i) => <li key={i} className="hatch h-9" />)}
+        <ul className="mt-4 grid gap-3 sm:grid-cols-2 md:grid-cols-3" aria-busy="true">
+          {Array.from({ length: 6 }, (_, i) => <li key={i} className="hatch aspect-[4/3]" />)}
         </ul>
       ) : data.episodes.length === 0 ? (
         <EmptyCorpus
@@ -208,31 +231,22 @@ export default function CorpusPage() {
           onShowEverything={() => setOutcome("all")}
         />
       ) : (
-        <ol className="mt-2">
-          {data.episodes.map((e) => (
-            <li key={e.trajHash} className="border-b border-rule">
-              <Link
-                href={`/run/${e.trajHash}`}
-                className="grid grid-cols-[auto_1fr_auto] items-baseline gap-x-4 gap-y-1 py-3 transition-colors hover:bg-ink-2 sm:grid-cols-[56px_1fr_auto_auto_auto_auto]"
-              >
-                <span className="font-mono text-[12px] text-scribe-3">#{e.taskId}</span>
-                <span className="font-mono text-[13px] text-scribe-2">{shortHash(e.trajHash)}</span>
-                <span className={cn("text-[12px]", TONE[e.outcome])}>
-                  {e.outcome === "unsubmitted" ? "not sent" : e.outcome}
-                </span>
-                <span className="text-right font-mono text-[13px] tabular-nums text-scribe">
-                  {fmtScore(e.score)}
-                </span>
-                <span className="text-right font-mono text-[12px] tabular-nums text-scribe-3">
-                  {fmtInt(e.frames)} f
-                </span>
-                <span className="text-right font-mono text-[12px] text-scribe-3">
-                  {fmtDate(e.createdAt)}
-                </span>
-              </Link>
-            </li>
-          ))}
-        </ol>
+        <>
+          <ol className="mt-4 grid gap-3 sm:grid-cols-2 md:grid-cols-3" data-testid="episode-grid">
+            {visible.map((e) => (
+              <EpisodeCard key={e.trajHash} e={e} preview={previews[e.trajHash.toLowerCase()]} task={tasks?.find((t) => t.id === e.taskId)} />
+            ))}
+          </ol>
+          {data.episodes.length > shown ? (
+            <button
+              type="button"
+              onClick={() => setShownFor({ key, n: shown + PAGE })}
+              className="mt-4 w-full border border-rule-strong px-3 py-2 text-sm text-scribe transition-colors hover:border-scribe active:translate-y-px"
+            >
+              Show {Math.min(PAGE, data.episodes.length - shown)} more of {fmtInt(data.episodes.length - shown)}
+            </button>
+          ) : null}
+        </>
       )}
     </div>
   );

@@ -251,6 +251,7 @@ try {
     if (url.endsWith("/history")) url += "?funder=" + REAL["{address}"];
     if (url.endsWith("/dataset/summary")) url += "?taskId=" + REAL["{id}"];
     if (url.endsWith("/api/dataset")) url += "?taskId=" + REAL["{id}"];
+    if (url.endsWith("/corpus/previews")) url += "?hashes=" + REAL["{hash}"];
 
     const documented = Object.keys(spec.paths[path].get?.responses ?? {}).map(Number);
     const got = await status(url);
@@ -259,6 +260,22 @@ try {
   check("every documented route answers as documented", drifted.length === 0, drifted.join("; "));
 } catch (e) {
   check("openapi reachable", false, String(e));
+}
+
+// The corpus previews: a page of episodes in one request, thinned from the real samples.
+try {
+  const runs = (feed?.runs ?? []).slice(0, 5).map((r) => r.traj_hash);
+  if (runs.length) {
+    const p = await json(`/api/corpus/previews?hashes=${runs.join(",")}`);
+    const got = Object.keys(p.previews ?? {});
+    check("corpus previews answer for a page of runs in one request", got.length === new Set(runs).size, `${got.length}/${runs.length}`);
+    const one = p.previews[got[0]];
+    check("a preview keeps the run's path and all six joints",
+      one.path.length >= 2 && one.joints.length === 6 && one.joints[0].length === one.path.length && one.frames >= one.path.length);
+  }
+  check("previews refuse something that is not a run hash", (await status("/api/corpus/previews?hashes=0x12")) === 400);
+} catch (e) {
+  check("corpus previews", false, String(e));
 }
 
 const health = await fetch(`${BASE}/api/health`, { signal: AbortSignal.timeout(30_000) })

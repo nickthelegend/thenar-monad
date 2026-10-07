@@ -136,6 +136,7 @@ function spec() {
         },
       },
       "/api/dataset/summary": { get: { summary: "What a corpus contains, without downloading it.", parameters: [{ name: "taskId", in: "query", required: true, schema: { type: "integer", minimum: 0 } }], responses: { "200": ok("Summary."), "400": ok("Missing taskId.") } } },
+      "/api/corpus/previews": { get: { summary: "Small previews of up to 60 episodes: each run's payload path from above, its six joints and its lift, thinned from the stored samples with both ends kept.", parameters: [{ name: "hashes", in: "query", required: true, schema: { type: "string" }, description: "Comma-separated run hashes." }], responses: { "200": ok("Previews by hash, and the hashes not stored."), "400": ok("No hashes, too many, or one that is not a run hash.") } } },
       "/api/calls/{address}": { get: { summary: "One address's protocol calls, from Monadscan's index.", parameters: [{ name: "address", in: "path", required: true, schema: { type: "string", pattern: "^0x[0-9a-fA-F]{40}$" } }], responses: { "200": ok("Settlements."), "400": ok("Not an address."), "502": ok("Monadscan answered with an error."), "503": ok("This deployment has no key for Monadscan's index.") } } },
       "/api/props": { get: { summary: "Models funders have uploaded.", responses: { "200": ok("Props.") } } },
       "/api/space": { get: { summary: "Open rooms and who is in them.", responses: { "200": ok("Rooms.") } } },
