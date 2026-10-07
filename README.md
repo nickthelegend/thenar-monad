@@ -60,6 +60,25 @@ there:
 
 Everything is a real signed transaction on that local chain. Ctrl-C stops everything `pnpm demo` started.
 
+## Screens
+
+Captured from the local stack by `scripts/capture-screens.mjs`, at 1440×900 and 390×844, with real signed state:
+- the landing page;
+- the station mid-drive;
+- a paid run re-hashed in the browser;
+- a corpus bought over x402;
+- the leaderboard;
+- the passkey's derived SO-101 key;
+- the agents' sales.
+
+![Thenar's key screens, desktop](docs/screens/sheets/thenar-desktop.png)
+
+<details><summary>Mobile, 390×844</summary>
+
+![Thenar's key screens, mobile](docs/screens/sheets/thenar-mobile.png)
+
+</details>
+
 ---
 
 ## What Monad does here that another chain would not

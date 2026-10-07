@@ -45,7 +45,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      # The version the gas snapshot was taken with: gas accounting differs between releases.
       - uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: v1.7.1
       # forge-std is not vendored (contracts/lib is ignored); pin the version the suite is written against.
       - run: forge install foundry-rs/forge-std@v1.16.2 --no-git
         working-directory: contracts
@@ -73,7 +76,10 @@ jobs:
         with:
           node-version: 22
           cache: pnpm
+      # The version the gas snapshot was taken with: gas accounting differs between releases.
       - uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: v1.7.1
       - run: pnpm install --frozen-lockfile
       - run: forge install foundry-rs/forge-std@v1.16.2 --no-git
         working-directory: contracts
