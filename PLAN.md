@@ -69,13 +69,13 @@ scripts, contracts/src, contracts/script, cre and indexer/src. 42 hits; every on
 
 | # | Evidence | Impact | Sev | Fix | Blocks |
 |---|---|---|---|---|---|
-| G1 | `scripts/qwen-agent.mjs:46-70` and `scripts/llm-fixture.mjs`: `AGENT_LLM_FIXTURE=1` swaps the model for scripted replies | A mock reachable from the product's agent | P1 | Move the double to `test/`; drop the mode; the agent takes a base URL and a key like any client | T7 |
+| G1 | `scripts/qwen-agent.mjs:46-70` and `scripts/llm-fixture.mjs`: `AGENT_LLM_FIXTURE=1` swaps the model for scripted replies | A mock reachable from the product's agent | P1 | Move the double to `test/`; drop the mode; the agent takes a base URL and a key like any client — FIXED (`b107d85`) | T7 |
 | G2 | Copy hits ("Nothing here is a fixture", "What stops fake runs?", `MockKeystoneForwarder`, "hardcoded" in comments) | None: these are copy, comments and Chainlink's own contract name | — | none | — |
 | G3 | Copy naming Avalanche Fuji or Blitz (`lib/chain.ts`, `lib/registry.ts`, `/leaderboard`) | None: it is the archive of earlier deployments, by design | — | none | — |
 | G4 | The real Privy sponsorship and Privy login can't run locally | The local build uses its own wallet and sponsor | P2 | Covered by the local stand-in with the same on-chain shape; real Privy is UNTESTED until testnet go | T13 |
 | G5 | Paths that need a key: Model Studio, Moonshot, `ETHERSCAN_API_KEY` (call history), Envio hosting, `cre login` | Those surfaces must say "not configured" | P2 | Checked in T9 | T9 |
 | G6 | No run on the Monad deployment yet | Judges look for live activity | P1 | User: testnet go and real runs | T13 |
-| G7 | The local DB held runs from a reset chain | Stale episodes on new tasks | P2 | Pruned 6 Oct (backup kept) | — |
+| G7 | The local DB held runs from a reset chain | Stale episodes on new tasks | P2 | Pruned 6 Oct (backup kept) — FIXED | — |
 | G8 | `components/station/arm-link.tsx`: the relay URL was hardcoded to :8787, and the CSP allowed only that port | With 8787 taken, no arm could connect | P1 | `?relay=` (loopback only, remembered), any loopback port in the CSP, the relay prints the URL — FIXED | F16 |
 | G9 | `lib/index-config.ts`, `lib/monadscan.ts`: blamed a missing Etherscan key on a local chain | Misleading copy | P3 | Says Monadscan does not index a local chain — FIXED | P14 |
 | G10 | `/api/lab`, `/api/indexer` answered 503 when not configured | A console error on load, including on production /leaderboard | P2 | 200 with `configured:false` — FIXED | P11 |
@@ -84,6 +84,8 @@ scripts, contracts/src, contracts/script, cre and indexer/src. 42 hits; every on
 | G13 | `scripts/demo.mjs` left processes running when startup failed | Orphans on a shared machine | P2 | Stops whole process trees by PID on any failure — FIXED | T11 |
 | G14 | No LICENSE file | Rules require an OSI licence | P1 | MIT, matching the contracts' SPDX headers — FIXED (the user can choose another) | T12 |
 | G15 | Lint failed on build output and on React-compiler rules | No clean lint | P3 | Build dirs ignored; `useLeader` on `useSyncExternalStore`; per-frame ref writes annotated — FIXED | T10 |
+| G16 | `.github/workflows/verify.yml`: CI had failed on every run since the move to pnpm. It ran `npm ci` with no package-lock, forge tests without forge-std (`contracts/lib` is ignored), and the live job before installing | No CI signal at all | P2 | pnpm; forge-std pinned and installed; a `localnet` job that deploys to anvil, builds the app and runs the E2E against it; the production check on the schedule; the qa-* suite on demand until the testnet go — FIXED | — |
+| G17 | `contracts/.gas-snapshot` dated from 12 Sep (the Avalanche build) | The snapshot check could never pass | P3 | Re-snapshotted on purpose; `forge snapshot --check` passes — FIXED | — |
 
 ## Completion
 
