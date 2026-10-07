@@ -147,6 +147,17 @@ const PAGES = [
 ];
 for (const p of PAGES) check(`page ${p}`, (await status(p)) === 200);
 
+// The live Monad pipeline: rendered on the landing, and allowed to reach Monad's socket.
+try {
+  const r = await fetch(`${BASE}/thenar`, { signal: AbortSignal.timeout(30_000) });
+  const html = await r.text();
+  check("the landing carries the live Monad pipeline", html.includes('data-testid="monad-pipeline"'));
+  check("the CSP lets a page reach Monad's WebSocket",
+    (r.headers.get("content-security-policy") ?? "").includes("wss://testnet-rpc.monad.xyz"));
+} catch (e) {
+  check("the landing carries the live Monad pipeline", false, String(e));
+}
+
 // A licence page exists only for a minted policy: /licence/0 is a page while
 // policy 0 exists and a 404 before it does, asked of the contract.
 {

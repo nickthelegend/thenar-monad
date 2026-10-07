@@ -9,8 +9,11 @@ import { LOCAL_DEPLOYMENT } from "./deployment-local";
  * Four properties of this chain run through the product, and each one has a
  * place in the code that is shaped by it:
  *
- *  - Sub-second blocks. A run settles in the time it takes the station to say
- *    it was sent, which is why the station reports settlement latency at all.
+ *  - 300 ms blocks, final two slots (about 600 ms) after they are proposed. A
+ *    run executes in the time it takes the station to say it was sent, which
+ *    is why the station reports two timers, executed and final
+ *    (lib/receipt-timers.ts), and shows the live pipeline
+ *    (components/monad-pipeline.tsx).
  *  - Parallel execution. AxonProtocolV2 shards its slot counter so that two
  *    operators on one task do not write the same storage slot.
  *  - The P256 precompile at 0x0100. A browser passkey authorises a run and the

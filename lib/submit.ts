@@ -5,7 +5,8 @@ import { useAccount, usePublicClient } from "wagmi";
 import { useContractWrite } from "./contract-write";
 import { BaseError, ContractFunctionRevertedError, UserRejectedRequestError, toFunctionSelector } from "viem";
 import { AXON_ABI } from "./abi";
-import { AXON_ADDRESS } from "./chain";
+import { AXON_ADDRESS, LOCALNET } from "./chain";
+import { trackReceipt, type Timers } from "./receipt-timers";
 import type { Sample } from "./types";
 import { CURRENCY, FAUCET_URL } from "@/lib/chain";
 
@@ -24,7 +25,8 @@ export type SubmitState = {
   cid?: string;
   score?: number;
   paidMon?: number;
-  blockMs?: number;
+  /** Executed and final, measured from the send (lib/receipt-timers.ts). */
+  timers?: Timers;
   gasMon?: number;
   error?: string;
   /** The verifier refused because no passkey has admitted this address yet. */
@@ -259,7 +261,6 @@ export function useSubmitRun() {
 
         // 2. One transaction records the trajectory and pays for it.
         setState({ phase: "signing", trajHash: v.trajHash, cid: v.cid, score: v.score });
-        const started = performance.now();
 
         const txHash = await writeContractAsync({
           address: AXON_ADDRESS,
@@ -268,10 +269,21 @@ export function useSubmitRun() {
           args: [BigInt(args.taskId), v.trajHash, v.cid, v.score, v.signature],
         });
 
+        // The clocks start when the wallet hands the transaction over, so the
+        // signing prompt is in neither of them.
+        const sentAt = performance.now();
         setState((s) => ({ ...s, phase: "pending", txHash }));
 
-        const receipt = await client!.waitForTransactionReceipt({ hash: txHash });
-        const blockMs = performance.now() - started;
+        const tracked = await trackReceipt(client!, txHash, {
+          sentAt,
+          where: LOCALNET ? "local" : "monad",
+          // Only onto this transaction's state: finality can land after the operator has moved on.
+          onUpdate: (timers) => setState((s) => (s.txHash === txHash ? { ...s, timers } : s)),
+        });
+        // On Monad a payout is credited once it is final, about 600 ms after it
+        // executes. A local chain's finalized tag trails by a minute of blocks,
+        // so there the card shows finality when it lands instead of holding the run.
+        const { receipt } = LOCALNET ? tracked : await tracked.final;
 
         if (receipt.status !== "success") {
           setState((s) => ({ ...s, phase: "error", error: "The transaction reverted on chain." }));
@@ -281,17 +293,17 @@ export function useSubmitRun() {
         const gasMon = Number(receipt.gasUsed * receipt.effectiveGasPrice) / 1e18;
         const paidMon = (Number(v.rewardWei) * v.score) / 10_000 / 1e18;
 
-        setState({
+        setState((s) => ({
           phase: "confirmed",
+          timers: s.timers,
           txHash,
           trajHash: v.trajHash,
           cid: v.cid,
           score: v.score,
           paidMon,
-          blockMs,
           gasMon,
           sharesPending: true,
-        });
+        }));
 
         // 3. Record the tx against the stored trajectory, which is also what
         //    issues the run's share of the corpus in CorpusShares. The payout above is

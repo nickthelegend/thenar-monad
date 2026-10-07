@@ -73,6 +73,9 @@ const nextConfig: NextConfig = {
         // host the browser refuses, and the failover that was meant to survive
         // an outage fails on every page load instead.
         "https://testnet-rpc.monad.xyz " +
+        // Monad's live block pipeline (monadNewHeads, monadLogs): read-only,
+        // on every build, local ones included (components/monad-pipeline.tsx).
+        "wss://testnet-rpc.monad.xyz " +
         "https://rpc.ankr.com " +
         "https://10143.rpc.thirdweb.com " +
         // The corpus paywall: x402 on Monad settles through this facilitator.

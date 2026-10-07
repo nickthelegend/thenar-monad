@@ -228,7 +228,26 @@ try {
   }, 60_000, "the corpus shares line");
   log("shares", shares);
   assert.match(shares, /issued on/, "the run's corpus shares were issued");
+  // Two timers, executed and final, labelled as local-chain timings, not Monad's.
+  const timers = page.getByTestId("receipt-timers");
+  assert.equal(await timers.getAttribute("data-where"), "local", "the receipt says its timings are the local chain's");
+  const executed = await timers.locator("[data-key=executed]").textContent();
+  // Anvil's finalized tag trails its head by about 63 one-second blocks, so final lands about a minute later.
+  await until(async () => /\d/.test(await timers.locator("[data-key=final]").textContent()), 150_000, "the receipt's block to finalize");
+  const final = await timers.locator("[data-key=final]").textContent();
+  log("timers", { executed, final, note: (await timers.textContent()).match(/Local chain timings[^.]*\./)?.[0] });
+  assert.match(executed, /\d+ ms|[\d.]+ s/, "an executed time was measured");
+  assert.match(final, /\d+ ms|[\d.]+ s/, "a final time was measured");
+  if (!SPONSORED) assert.match(await timers.textContent(), /eth_sendRawTransactionSync/, "the local wallet got its receipt from the send itself");
   await shot("localnet-paid");
+  if (SHOTS) {
+    const size = page.viewportSize();
+    await page.setViewportSize({ width: 390, height: 844 });
+    await timers.scrollIntoViewIfNeeded();
+    await page.waitForTimeout(600);
+    await shot("localnet-paid-mobile");
+    await page.setViewportSize(size);
+  }
 
   // 5. What the chain says.
   const accepted = await chain.getLogs({

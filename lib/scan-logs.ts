@@ -71,8 +71,10 @@ const walking = new Map<string, Promise<unknown[]>>();
  * The first call walks the history in chunks, one request at a time. Later
  * calls ask only for the blocks after the last one read and append them, so a
  * feed that refreshes every few seconds costs one small request a refresh
- * instead of a scan of everything since deployment. Monad finalises a block in
- * a single slot, so a log once read does not need reading again.
+ * instead of a scan of everything since deployment. A log once read never needs
+ * reading again only if its block was final when it was read: on Monad that is
+ * two slots (about 600 ms) after the block was proposed, so a caller passes a
+ * `toBlock` at or below the `finalized` tag, not `latest`.
  *
  * Concurrent callers for the same key share one walk. A walk that fails caches
  * nothing, and the next call starts again from the last block that was read.

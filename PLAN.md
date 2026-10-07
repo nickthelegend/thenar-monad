@@ -61,6 +61,11 @@ Bounty targets:
 | T13 | Go live on Monad testnet | Per DEPLOY-LATER.md | its smoke test | BLOCKED (user: "go" plus MON) |
 | T14 | Demo video ≤ 3 min | The shot list in DEPLOY-LATER.md | — | BLOCKED (user) |
 | T15 | Portal registration | Team and project registered | — | BLOCKED (user; it closed 6 Oct 23:59 UTC) |
+| T16 | W1 Monad pipeline: live commit-state strip, two-timer receipts, txpool status, 300 ms / 600 ms copy | Testnet blocks every ~300 ms in four states within 3 s; times measured in the browser; local timings labelled; reducer unit tests; no "single-slot" copy (docs/ROADMAP-WIN.md) | `pnpm test:unit`, `pnpm test:e2e:local` | DONE: live on testnet at 297 ms a block, 577 ms to Finalized and 1.49 s to Verified, measured in the browser (`docs/screens/wave/01-landing-after-*.png`); a local paid run read executed 8 ms (from `eth_sendRawTransactionSync`) and final 72 s, because anvil's finalized tag trails by 59 blocks, and the card says so (`09-receipt-after-desktop.png`); unit 138/138; e2e:local 70/70 |
+| T17 | W2 Dataset explorer with previews | Per-episode path and joint previews from real samples in one batched call; per-task summary; 390 px clean | `pnpm test:unit`, `pnpm test:e2e:local` | NOT STARTED |
+| T18 | W3 Buyer-agent transparency | Signed decision records per sale; forged ones rejected; a real agent run shows its trail on /agents; facilitator and port copy fixed | `pnpm test:unit`, `pnpm test:agent` | NOT STARTED |
+| T19 | W4 Operator onboarding | `/start` reads real state for each step; a fresh local wallet goes from step 1 to 5 in e2e | `pnpm test:e2e:local` | NOT STARTED |
+| T20 | W5 Monad network panel and gas correctness | Live testnet reads (staking, tags, reserve, P-256, canonical contracts, facilitator); explicit gas limits under test; reserve guard tested; MonadVision links | `pnpm test:unit`, `forge test` | NOT STARTED |
 
 ## Gaps (from the code, 6 Oct)
 

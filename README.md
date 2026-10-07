@@ -87,7 +87,7 @@ Each of these is load-bearing, and each has a place in the code shaped by it.
 
 | Monad property | Where it shows |
 | --- | --- |
-| **Sub-second, single-slot finality** | A run is paid in the block that records it, and the station reports the settlement latency it measured. A share issue and a sales-log write each land a moment later, so the station shows the payout and the share in one panel instead of promising the second. |
+| **300 ms blocks, final two slots later (about 600 ms)** | A run is paid in the block that records it. The station reports two timers it measured, executed and final, and the landing page shows Monad testnet's live block pipeline (Proposed → Voted → Finalized → Verified) with the milliseconds measured in the browser. A share issue and a sales-log write each land a moment later, so the station shows the payout and the share in one panel instead of promising the second. |
 | **Parallel execution** | `AxonProtocolV2` shards its slot counter: each operator's submit writes only its own shard, so two runs on one task touch no common storage and execute side by side. |
 | **P-256 precompile at `0x0100`** | `PasskeyRegistry` verifies a browser passkey's secp256r1 signature on chain, and a run can be authorised with it. See `/passkey`. |
 | **Gas charged on the limit** | A browser write leaves the limit to the wallet's estimate, and the lab's server-signed bounty sends its estimate plus a tenth, never a doubled one; the station and `/post` quote the cost from receipts, and the low-balance floor is one constant. |

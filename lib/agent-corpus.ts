@@ -8,7 +8,8 @@
  *
  * Monad is what makes a one-cent sale sensible: the agent signs an EIP-3009
  * authorisation, the facilitator submits it and pays the gas, and the transfer
- * is final in the block it lands in, under a second after the request.
+ * executes in the next 300 ms block and is final two slots later: under a
+ * second after the request.
  *
  * Shared by the route that enforces these terms and the pages that state them,
  * so the price on the page is the price the server asks for.

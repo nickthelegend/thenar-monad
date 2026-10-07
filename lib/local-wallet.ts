@@ -8,6 +8,7 @@ import {
 import { localSponsored, SPONSORED_ACCOUNT, SPONSORED_ACCOUNT_ABI, delegationCode, sponsoredDigest } from "@/lib/local-sponsor";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 import { LOCAL_RPC, thenarLocalnet } from "@/lib/chain";
+import { noteSynced } from "@/lib/receipt-timers";
 
 /**
  * The wallet a person uses on the local chain.
@@ -135,10 +136,24 @@ function provider(): EIP1193Provider {
       case "eth_sendTransaction": {
         const tx = p[0] as TxParams;
         if (localSponsored() && SPONSORED_ACCOUNT && tx.to) return sponsoredSend(tx.to, big(tx.value) ?? 0n, tx.data ?? "0x");
-        return wallet.sendTransaction({
+        // Prepared and signed here, then sent with eth_sendRawTransactionSync
+        // (EIP-7966, which Monad serves): the node answers with the receipt
+        // itself, so there is no polling, and the send is the only thing timed.
+        const prepared = await wallet.prepareTransactionRequest({
           to: tx.to, data: tx.data, value: big(tx.value), gas: big(tx.gas), nonce: tx.nonce ? Number(tx.nonce) : undefined,
           ...(tx.maxFeePerGas ? { maxFeePerGas: big(tx.maxFeePerGas), maxPriorityFeePerGas: big(tx.maxPriorityFeePerGas) } : {}),
         } as never);
+        const serializedTransaction = await wallet.signTransaction(prepared as never);
+        const sentAt = performance.now();
+        try {
+          const receipt = await wallet.sendRawTransactionSync({ serializedTransaction });
+          noteSynced(receipt.transactionHash, sentAt, performance.now());
+          return receipt.transactionHash;
+        } catch (e) {
+          // A node without the method: send it the ordinary way. Any other error is the transaction's own.
+          if (!/method.*(not (found|supported)|does not exist)|unsupported method/i.test(String((e as Error).message))) throw e;
+          return wallet.sendRawTransaction({ serializedTransaction });
+        }
       }
       default:
         // Everything else is a read, and the node answers it.

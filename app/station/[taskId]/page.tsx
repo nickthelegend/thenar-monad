@@ -34,6 +34,8 @@ import { cn } from "@/lib/cn";
 import { fmtGasCost, fmtMon, fmtScore, fmtSeconds, shortHash } from "@/lib/format";
 import type { Sample, Verdict } from "@/lib/types";
 import { useGasSponsored } from "@/lib/contract-write";
+import { MonadHeartbeat } from "@/components/monad-pipeline";
+import { ReceiptTimers } from "@/components/receipt-timers";
 
 const StationViewport = dynamic(
   () => import("@/components/station/viewport").then((m) => m.StationViewport),
@@ -472,7 +474,7 @@ export default function StationPage() {
   const announcement =
     tx.phase === "verifying" ? "Verifying the run."
     : tx.phase === "signing" ? "Waiting for you to confirm in your wallet."
-    : tx.phase === "pending" ? "Transaction sent. Waiting for the block."
+    : tx.phase === "pending" ? "Transaction sent. Waiting for it to execute and become final."
     : tx.phase === "confirmed" ? `Run recorded and paid. ${fmtMon(tx.paidMon ?? 0)} ${CURRENCY}.`
     : tx.phase === "error" ? `Submission failed. ${tx.error ?? ""}`
     : verdict ? `Measurement taken. ${verdict.success ? "In tolerance" : "Out of tolerance"}, score ${fmtScore(verdict.score)}.`
@@ -810,6 +812,9 @@ export default function StationPage() {
             )}
           </div>
 
+          {/* The network a run settles on, live: its blocks moving through consensus. */}
+          <MonadHeartbeat />
+
           {tally && tally.measured > 0 ? (
             <div className="grid grid-cols-3 gap-2 rounded-xl border border-white/10 p-3 text-center">
               <div><p className="text-lg tabular-nums">{tally.measured}</p><p className="text-[11px] text-scribe-3">runs</p></div>
@@ -877,7 +882,7 @@ function MeasurementSnap({
   const label =
     tx.phase === "verifying" ? "Verifying the run…"
     : tx.phase === "signing" ? "Confirm in your wallet…"
-    : tx.phase === "pending" ? "Waiting for the block…"
+    : tx.phase === "pending" ? (tx.timers?.executedMs !== undefined ? "Executed, waiting for finality…" : "Waiting for the block…")
     : practice ? "Practice run — nothing to submit"
     : s.wrongNetwork ? `Switch to ${appChain.name}`
     : !s.connected ? "Connect a wallet to get paid"
@@ -997,6 +1002,10 @@ function MeasurementSnap({
               submissions burned, priced at the gas the chain is quoting now. */}
           {accepted && !done && !practice ? <SubmitCostLine withPasskey={false} payoutMon={verdict.payoutMon} /> : null}
 
+          {tx.phase === "pending" && tx.timers ? (
+            <div className="border-t border-rule pt-3 font-mono text-[12px]"><ReceiptTimers timers={tx.timers} /></div>
+          ) : null}
+
           {done && tx.txHash ? (
             <div className="flex flex-col gap-1.5 border-t border-rule pt-3 font-mono text-[12px] text-scribe-3">
               <span>
@@ -1005,10 +1014,8 @@ function MeasurementSnap({
                   {shortHash(tx.txHash)}
                 </a>
               </span>
-              <span className="flex flex-wrap gap-x-4">
-                <span>settled in <span className="text-scribe-2 tabular-nums">{((tx.blockMs ?? 0) / 1000).toFixed(2)}s</span></span>
-                <span>gas <span className="text-scribe-2 tabular-nums">{(tx.gasMon ?? 0).toFixed(6)}</span> {CURRENCY}</span>
-              </span>
+              <ReceiptTimers timers={tx.timers} />
+              <span>gas <span className="text-scribe-2 tabular-nums">{(tx.gasMon ?? 0).toFixed(6)}</span> {CURRENCY}</span>
             </div>
           ) : null}
 

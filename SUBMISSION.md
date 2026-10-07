@@ -38,8 +38,8 @@ is all four, each enforced by a contract rather than a promise:
 ## Why Monad
 
 See the table in the [README](README.md#what-monad-does-here-that-another-chain-would-not).
-In short: sub-second finality makes the payout, the share and the sales record
-visible in the same interaction; parallel execution is why the slot counter is
+In short: 300 ms blocks that are final about 600 ms after they are proposed make the
+payout, the share and the sales record visible in the same interaction; parallel execution is why the slot counter is
 sharded; the P-256 precompile is what lets a passkey sign a run; and Monad's
 100-block log cap is why every history this app shows is read from storage.
 
@@ -161,7 +161,7 @@ The findings and the planned gate are in [docs/CLEANVERSE.md](docs/CLEANVERSE.md
 **Pitch video (2 minutes):**
 1. 0:00–0:20: the problem. Robots need demonstrations; the people who record them are not paid and do not own them.
 2. 0:20–1:20: the product, using shots 2, 4 and 5 above.
-3. 1:20–1:45: why Monad. Single-slot finality pays in the same interaction; the P-256 precompile makes passkeys
+3. 1:20–1:45: why Monad. 300 ms blocks, final about 600 ms later, pay in the same interaction; the P-256 precompile makes passkeys
    native; parallel execution handles the sharded slots.
 4. 1:45–2:00: what's next. Real labs posting tasks, and trained policies sold back.
 
