@@ -48,6 +48,7 @@ const GROUPS: { label: string; items: { href: string; label: string; hint: strin
       { href: "/lab", label: "Labs", hint: "A research lab's budget, spent only on tasks" },
       { href: "/foundry", label: "Model foundry", hint: "Models trained on the data, and who gets paid" },
       { href: "/spec/so101", label: "The arms", hint: "The SO-101 and the THENAR-6, drivable" },
+      { href: "/network", label: "Monad, live", hint: "Blocks, staking, precompiles, read as you watch" },
       { href: "/contracts", label: "Contracts", hint: "Every contract on Monad, read live" },
       { href: "/status", label: "Status", hint: "Is everything working" },
       { href: "/changelog", label: "Changelog", hint: "What changed, from the git history" },

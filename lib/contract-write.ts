@@ -2,10 +2,11 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { encodeFunctionData, type Abi } from "viem";
-import { useAccount, useWriteContract } from "wagmi";
+import { useAccount, usePublicClient, useWriteContract } from "wagmi";
 import { useSendTransaction, useWallets } from "@privy-io/react-auth";
 import { LOCALNET, appChain } from "./chain";
 import { localSponsored } from "./local-sponsor";
+import { prepareGas } from "./monad-gas";
 
 /**
  * Whether Privy pays the gas for operators' writes.
@@ -25,12 +26,32 @@ export type ContractWrite = {
   value?: bigint;
 };
 
+/**
+ * The limit a write is sent with: the node's estimate plus a tenth, after a
+ * simulation that must not revert, and the reserve rule on a MON spend
+ * (lib/monad-gas.ts). Monad charges the whole limit, so it is never left to a
+ * wallet's own padding. The reserve rule is Monad's; a local chain does not
+ * enforce it.
+ */
+function usePrepareGas() {
+  const client = usePublicClient();
+  const { address } = useAccount();
+  return useCallback(
+    async (req: ContractWrite) => (client && address ? prepareGas(client, address, req, { reserve: !LOCALNET }) : undefined),
+    [client, address],
+  );
+}
+
 /** The wallet pays its own gas: wagmi, as every write always did. */
 function useWalletWrite() {
   const { writeContractAsync: write } = useWriteContract();
+  const prepare = usePrepareGas();
   const writeContractAsync = useCallback(
-    (req: ContractWrite) => write(req as Parameters<typeof write>[0]),
-    [write],
+    async (req: ContractWrite) => {
+      const gas = await prepare(req);
+      return write({ ...req, ...(gas ? { gas } : {}) } as Parameters<typeof write>[0]);
+    },
+    [write, prepare],
   );
   return { writeContractAsync };
 }
@@ -50,18 +71,24 @@ function useSponsoredWrite() {
   const embedded = wallets.find(
     (w) => w.walletClientType === "privy" && w.address.toLowerCase() === address?.toLowerCase(),
   );
+  const prepare = usePrepareGas();
 
   const writeContractAsync = useCallback(
     async (req: ContractWrite): Promise<`0x${string}`> => {
-      if (!embedded) return write(req as Parameters<typeof write>[0]);
+      const gas = await prepare(req);
+      if (!embedded) return write({ ...req, ...(gas ? { gas } : {}) } as Parameters<typeof write>[0]);
       const data = encodeFunctionData({ abi: req.abi as Abi, functionName: req.functionName, args: req.args });
       const { hash } = await sendTransaction(
-        { to: req.address, data, chainId: appChain.id, ...(req.value !== undefined ? { value: req.value } : {}) },
+        {
+          to: req.address, data, chainId: appChain.id,
+          ...(req.value !== undefined ? { value: req.value } : {}),
+          ...(gas ? { gasLimit: gas } : {}),
+        },
         { sponsor: true, address: embedded.address },
       );
       return hash;
     },
-    [embedded, write, sendTransaction],
+    [embedded, write, sendTransaction, prepare],
   );
   return { writeContractAsync };
 }

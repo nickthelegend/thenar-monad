@@ -68,6 +68,12 @@ const SCREENS = {
     ready: () => until(async () => (await page.locator("[data-testid=decision-trail][data-check=valid]").count()) >= 1, 20_000, "a checked decision trail"),
   },
   passkey: { nn: "07", path: "/passkey" },
+  network: {
+    nn: "10", path: "/network",
+    ready: () => until(async () => /valid \(the precompile returned 1\)/.test(await page.getByTestId("network-p256").textContent())
+      && /validator \d+/.test(await page.getByTestId("network-staking").textContent())
+      && /bytes/.test(await page.getByTestId("network-canonical").textContent()), 30_000, "the live Monad reads"),
+  },
   start: { nn: "11", path: "/start", ready: () => until(async () => (await page.locator("[data-step]").count()) === 5, 15_000, "the steps") },
   status: { nn: "08", path: "/status" },
 };

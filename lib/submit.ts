@@ -28,6 +28,9 @@ export type SubmitState = {
   /** Executed and final, measured from the send (lib/receipt-timers.ts). */
   timers?: Timers;
   gasMon?: number;
+  /** The transaction's gas limit and the gas it used: Monad charges the first. */
+  gasLimit?: bigint;
+  gasUsed?: bigint;
   error?: string;
   /** The verifier refused because no passkey has admitted this address yet. */
   passkeyRequired?: boolean;
@@ -290,7 +293,12 @@ export function useSubmitRun() {
           return;
         }
 
-        const gasMon = Number(receipt.gasUsed * receipt.effectiveGasPrice) / 1e18;
+        // What the operator was charged: on Monad the whole gas limit, on a local
+        // chain (Ethereum's rules) the gas used.
+        const sent = await client!.getTransaction({ hash: txHash }).catch(() => null);
+        const gasLimit = sent?.gas;
+        const charged = LOCALNET || gasLimit === undefined ? receipt.gasUsed : gasLimit;
+        const gasMon = Number(charged * receipt.effectiveGasPrice) / 1e18;
         const paidMon = (Number(v.rewardWei) * v.score) / 10_000 / 1e18;
 
         setState((s) => ({
@@ -302,6 +310,8 @@ export function useSubmitRun() {
           score: v.score,
           paidMon,
           gasMon,
+          gasLimit,
+          gasUsed: receipt.gasUsed,
           sharesPending: true,
         }));
 

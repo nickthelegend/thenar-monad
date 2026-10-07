@@ -165,6 +165,15 @@ export const txUrl = (hash: string) => `${appChain.blockExplorers.default.url}/t
 export const addressUrl = (a: string) => `${appChain.blockExplorers.default.url}/address/${a}`;
 
 /**
+ * MonadVision (BlockVision), the testnet explorer that verifies contracts
+ * through Sourcify, beside Monadscan. Monad testnet only: a local chain has no
+ * explorer but its own (/explorer).
+ */
+export const MONADVISION = "https://testnet.monadvision.com";
+export const monadVisionTx = (hash: string) => `${MONADVISION}/tx/${hash}`;
+export const monadVisionAddress = (a: string) => `${MONADVISION}/address/${a}`;
+
+/**
  * Chains this deployment has settled on before.
  *
  * Thenar was built on Monad, moved to Avalanche Fuji, and came back. Runs

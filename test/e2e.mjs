@@ -143,9 +143,18 @@ console.log(`\n  thenar e2e — ${BASE}\n`);
 const PAGES = [
   "/", "/hub", "/space", "/inventory", "/post", "/leaderboard", "/portfolio",
   "/foundry", "/spec", "/archive", "/passkey", "/status", "/changelog", "/corpus", "/policies",
-  "/task/0", "/station/4", "/start", "/thenar",
+  "/task/0", "/station/4", "/start", "/thenar", "/network",
 ];
 for (const p of PAGES) check(`page ${p}`, (await status(p)) === 200);
+
+// The reads about Monad a browser cannot make: the facilitator's offer and Sourcify's verification.
+try {
+  const n = await json("/api/network");
+  check("/api/network reports Monad's x402 facilitator", typeof n.facilitator?.url === "string" && (Array.isArray(n.facilitator.kinds) || typeof n.facilitator.error === "string"));
+  check("/api/network reports Sourcify for every Monad contract", Array.isArray(n.sourcify?.contracts) ? n.sourcify.contracts.length >= 10 : typeof n.sourcify?.error === "string");
+} catch (e) {
+  check("/api/network", false, String(e));
+}
 
 // The live Monad pipeline: rendered on the landing, and allowed to reach Monad's socket.
 try {

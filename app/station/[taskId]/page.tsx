@@ -28,7 +28,7 @@ import { saveDraft, loadDraft, clearDraft } from "@/lib/run-draft";
 import { webglAvailable } from "@/lib/webgl";
 import { readTally, noteMeasured, notePaid, type Tally } from "@/lib/session-tally";
 import { soundOn, setSound } from "@/lib/click";
-import { txUrl, CURRENCY, CHAIN_SHORT, FAUCET_URL, LOW_GAS_BALANCE, appChain } from "@/lib/chain";
+import { txUrl, CURRENCY, CHAIN_SHORT, FAUCET_URL, LOW_GAS_BALANCE, LOCALNET, appChain } from "@/lib/chain";
 import { sceneForTask } from "@/lib/props";
 import { cn } from "@/lib/cn";
 import { fmtGasCost, fmtMon, fmtScore, fmtSeconds, shortHash } from "@/lib/format";
@@ -1015,7 +1015,16 @@ function MeasurementSnap({
                 </a>
               </span>
               <ReceiptTimers timers={tx.timers} />
-              <span>gas <span className="text-scribe-2 tabular-nums">{(tx.gasMon ?? 0).toFixed(6)}</span> {CURRENCY}</span>
+              <span>
+                gas <span className="text-scribe-2 tabular-nums">{(tx.gasMon ?? 0).toFixed(6)}</span> {CURRENCY}
+                {tx.gasLimit !== undefined && tx.gasUsed !== undefined ? (
+                  <>
+                    {" "}· limit <span className="tabular-nums">{tx.gasLimit.toLocaleString("en-US")}</span>, used{" "}
+                    <span className="tabular-nums">{tx.gasUsed.toLocaleString("en-US")}</span>
+                    {LOCALNET ? " (a local chain charges what is used; Monad charges the limit, set at the estimate plus a tenth)" : " (Monad charges the limit, set at the estimate plus a tenth)"}
+                  </>
+                ) : null}
+              </span>
             </div>
           ) : null}
 
