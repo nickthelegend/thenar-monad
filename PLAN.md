@@ -86,6 +86,7 @@ scripts, contracts/src, contracts/script, cre and indexer/src. 42 hits; every on
 | G15 | Lint failed on build output and on React-compiler rules | No clean lint | P3 | Build dirs ignored; `useLeader` on `useSyncExternalStore`; per-frame ref writes annotated — FIXED | T10 |
 | G16 | `.github/workflows/verify.yml`: CI had failed on every run since the move to pnpm. It ran `npm ci` with no package-lock, forge tests without forge-std (`contracts/lib` is ignored), and the live job before installing | No CI signal at all | P2 | pnpm; forge-std pinned and installed; a `localnet` job that deploys to anvil, builds the app and runs the E2E against it; the production check on the schedule; the qa-* suite on demand until the testnet go — FIXED | — |
 | G17 | `contracts/.gas-snapshot` dated from 12 Sep (the Avalanche build) | The snapshot check could never pass | P3 | Re-snapshotted on purpose; `forge snapshot --check` passes — FIXED | — |
+| G18 | `scripts/localnet.mjs`: forge's deploy ran under spawnSync while the same process read anvil's stdout | On Linux every fresh local chain deadlocked mid-deploy (found by the new CI job) | P2 | Deploy and build run asynchronously — FIXED (`bbabfb4`); CI's localnet job deploys, builds and passes the E2E (56/56 on a fresh chain) | — |
 
 ## Completion
 
