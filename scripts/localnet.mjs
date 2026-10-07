@@ -24,7 +24,7 @@
  * deployer's nonces are) and .env.localnet, then keeps the chain running. The
  * chain's state is kept in .localnet/state.json across restarts.
  */
-import { spawn, spawnSync } from "node:child_process";
+import { spawn } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { concat, createPublicClient, createWalletClient, getAddress, getContractAddress, http, toHex, zeroHash } from "viem";
 import { mnemonicToAccount } from "viem/accounts";
@@ -102,20 +102,27 @@ const axonWritten = written.match(/axon: "(0x[0-9a-fA-F]{40})"/)?.[1];
 const deployed = axonWritten && (await hasCode(axonWritten));
 
 if (!deployed) {
-  const forge = (script, extra) => {
-    const r = spawnSync("forge", ["script", script, "--rpc-url", RPC, "--broadcast", "--slow", "-q"], {
-      cwd: "contracts", stdio: ["ignore", "pipe", "inherit"], encoding: "utf8",
+  // Asynchronous, never spawnSync: this process is also reading anvil's output.
+  // Blocked in spawnSync, it stopped draining anvil's stdout; once the pipe
+  // filled, anvil blocked on its next log line and stopped answering, and
+  // forge's deploy timed out (on Linux, with its smaller pipe buffer, on every
+  // fresh chain).
+  const forge = (script, extra) => new Promise((ok, no) => {
+    const p = spawn("forge", ["script", script, "--rpc-url", RPC, "--broadcast", "--slow", "-q"], {
+      cwd: "contracts", stdio: ["ignore", "pipe", "inherit"],
       env: { ...process.env, DEPLOYER_PRIVATE_KEY: ROLES.deployer.key, ...extra },
     });
-    if (r.status !== 0) { console.log(r.stdout); throw new Error(`${script} failed`); }
-    return r.stdout;
-  };
+    let out = "";
+    p.stdout.on("data", (d) => (out += d));
+    p.on("error", no);
+    p.on("exit", (code) => (code === 0 ? ok(out) : (console.log(out), no(new Error(`${script} failed`)))));
+  });
   console.log("deploy    DeployMonad.s.sol");
-  forge("script/DeployMonad.s.sol:DeployMonad", {
+  await forge("script/DeployMonad.s.sol:DeployMonad", {
     VERIFIER_ADDRESS: ROLES.verifier.address, CORPUS_ISSUER_ADDRESS: ROLES.issuer.address,
   });
   console.log("deploy    DeployLocalnet.s.sol (USDC)");
-  forge("script/DeployLocalnet.s.sol:DeployLocalnet", { LOCAL_AGENT_ADDRESS: ROLES.agent.address, LOCAL_FAUCET_ADDRESS: ROLES.faucet.address });
+  await forge("script/DeployLocalnet.s.sol:DeployLocalnet", { LOCAL_AGENT_ADDRESS: ROLES.agent.address, LOCAL_FAUCET_ADDRESS: ROLES.faucet.address });
 
   const record = (script) => JSON.parse(readFileSync(`contracts/broadcast/${script}/31337/run-latest.json`, "utf8"));
   const KEYS = {
@@ -168,7 +175,10 @@ ${body}
 // sponsorship delegates an embedded wallet to on Monad.
 const CREATE2_DEPLOYER = "0x4e59b44847b379578588920cA78FbF26c0B4956C";
 const accountArtifact = "contracts/out/SponsoredAccount.sol/SponsoredAccount.json";
-if (!existsSync(accountArtifact)) spawnSync("forge", ["build", "-q"], { cwd: "contracts", stdio: "inherit" });
+if (!existsSync(accountArtifact)) {
+  // Asynchronous for the same reason as the deploy: anvil's output must keep draining.
+  await new Promise((ok) => spawn("forge", ["build", "-q"], { cwd: "contracts", stdio: "inherit" }).on("exit", ok));
+}
 const accountCode = JSON.parse(readFileSync(accountArtifact, "utf8")).bytecode.object;
 const sponsoredAccount = getContractAddress({ opcode: "CREATE2", from: CREATE2_DEPLOYER, salt: zeroHash, bytecode: accountCode });
 if (!(await hasCode(sponsoredAccount))) {
