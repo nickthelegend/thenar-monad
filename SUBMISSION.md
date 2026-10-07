@@ -9,7 +9,8 @@
 | **Repo** | https://github.com/nickthelegend/thenar-monad (MIT) |
 | **Run it locally** | `pnpm install && pnpm demo`, then http://localhost:3336/localnet ([README](README.md#try-it-in-one-command)) |
 | **Judge logins** | No test account is needed. Sign in on app.thenar.io with any email: Privy makes a wallet on Monad testnet. Locally, press *Sign in with the local wallet* on /localnet, and the faucet funds it. |
-| **Contracts** | [lib/deployment.ts](lib/deployment.ts); AxonProtocolV2 at `0x17731731c6652770CE630e29b62791DC2CED5f38` on chain 10143 |
+| **Contracts** | [lib/deployment.ts](lib/deployment.ts); AxonProtocolV2 at `0x17731731c6652770CE630e29b62791DC2CED5f38` on chain 10143. All twelve verified on Sourcify (exact match) and readable on [MonadVision](https://testnet.monadvision.com/address/0x17731731c6652770CE630e29b62791DC2CED5f38) |
+| **See Monad live** | `/network` on any build reads Monad testnet as you watch: blocks moving through consensus, staking, a P-256 key checked by `0x0100`, the canonical contracts |
 
 **Drive a task three ways:** from the keyboard, from a real SO-101 leader arm
 plugged in over USB, or from a Meta Quest 3S with the arm standing on your own
@@ -42,6 +43,22 @@ In short: 300 ms blocks that are final about 600 ms after they are proposed make
 payout, the share and the sales record visible in the same interaction; parallel execution is why the slot counter is
 sharded; the P-256 precompile is what lets a passkey sign a run; and Monad's
 100-block log cap is why every history this app shows is read from storage.
+
+## Monad-native
+
+Each item on Monad's list, where it runs, and where to see it. A "live read" is the page reading Monad testnet
+itself, on every build. A local build labels its own timings as the local chain's. Never presented as Monad's.
+
+| # | Integration | Where it runs | Evidence |
+|---|---|---|---|
+| 1 | Live commit states: `monadNewHeads` (Proposed → Voted → Finalized → Verified, ms measured in the browser) and `monadLogs` on Thenar's contracts | Live read | /thenar, the station, /network; [`components/monad-pipeline.tsx`](components/monad-pipeline.tsx); on 7 Oct: 297 ms a block, 577 ms to final, 1.49 s to verified |
+| 2 | Two-timer receipts, executed and final; `eth_sendRawTransactionSync` from the local wallet; a run credited at finality on Monad | Built; local timings labelled; Monad timings await the testnet go | The station after a submit; [`lib/receipt-timers.ts`](lib/receipt-timers.ts); `docs/screens/wave/09-receipt-after-*.png` |
+| 3 | `txpool_statusByHash` while a receipt is outstanding; `txpool_statusByAddress` | ByAddress live; ByHash awaits the testnet go (anvil has none) | /network |
+| 4 | Passkeys on chain: Mera plus PasskeyRegistry through `0x0100`; a key made in the page checked live by `0x0100` | Built; live read | /passkey, /start, /network |
+| 5 | Staking reads on `0x1000` | Live read; delegating escrow does not apply (it must be payable in the block a run lands) | /network |
+| 6 | Gas: simulated, explicit limits (estimate plus a tenth), the charged amount on the receipt, the 10 MON reserve checked (`0x1001` read live), sharded storage, every contract under 24 KB | Built | [`lib/monad-gas.ts`](lib/monad-gas.ts), [`lib/reserve.ts`](lib/reserve.ts) |
+| 7 | x402 through Monad's facilitator, each purchase explained and signed by the agent | Built; `/supported` read live | /agents, /network |
+| 8 | Canonical contracts (Multicall3, USDC, CREATE2 deployer in use; ten checked live), Sourcify verification, MonadVision links | Live read; all twelve contracts exact-match on Sourcify | /network, /contracts |
 
 ## What existed before, and what was built for Metropolis
 
@@ -148,21 +165,25 @@ The findings and the planned gate are in [docs/CLEANVERSE.md](docs/CLEANVERSE.md
 
 ## Demo script (3 minutes)
 
+It leads with what only Monad can show, then the product. Shots on a local build say which numbers are Monad's
+(the pipeline, /network) and which are the local chain's (the receipt timers).
+
 | Time | Shot | Say |
 |---|---|---|
-| 0:00–0:15 | app.thenar.io home, then /hub | "Robot data, recorded by people who own it, bought by agents that verify it. On Monad." |
-| 0:15–0:40 | Sign in with email (Privy). /passkey: Face ID makes the passkey; *Prove it on Monad* turns green; *Derive my SO-101 key*, then the same key on a phone | "One passkey: who I am, checked by Monad's P-256 precompile, and the key my robot arm obeys. Nothing stored." |
-| 0:40–1:25 | /station/0: drive with the keyboard; switch to the leader arm in hand; then the Quest 3S with the arm on the real table | "Three ways to drive, one recording format." |
-| 1:25–1:50 | Submit: IN TOLERANCE, then "Recorded and paid in one transaction". The station says the sponsor pays the gas. The explorer shows TrajectoryAccepted and the shares | "Scored, signed, paid and owned in the same second. No MON needed." |
-| 1:50–2:25 | A terminal: `scripts/qwen-agent.mjs` lists, prices, pays 0.01 USDC over x402, verifies the sha256 on SalesLog | "An agent buys the data, and checks on chain that it got exactly what was sold." |
-| 2:25–2:50 | /leaderboard history (Envio); `/api/task/0/manifest` with the Chainlink DON's verdict | "History from Envio; a Chainlink DON audits the corpus against its on-chain commitment." |
-| 2:50–3:00 | /contracts | "Identity, provenance, ownership and agent trust, each enforced by a contract. Thenar." |
+| 0:00–0:20 | /thenar: the block strip filling live, chips going grey → blue → green with their milliseconds | "Robot data, recorded by people who own it, bought by agents that verify it. This is Monad testnet right now: a block every 300 ms, final in under 600." |
+| 0:20–0:40 | "Start earning" → /start; sign in; the steps turn green as the wallet, gas and passkey are read | "One way in. Every step is read from the chain, not remembered." |
+| 0:40–1:00 | /passkey: Face ID makes the passkey; *Prove it* turns green; *Derive my SO-101 key* | "One passkey: who I am, checked by Monad's P-256 precompile, and the key my robot arm obeys." |
+| 1:00–1:35 | /station/0: drive with the keyboard, then the leader arm, then the Quest 3S on the real table | "Three ways to drive, one recording format." |
+| 1:35–1:55 | Submit: IN TOLERANCE, then the receipt: executed, final, the gas limit and what it charged | "Scored, signed and paid in one transaction. Two timers, because a receipt isn't final until two slots later. Monad charges the limit, so we set it." |
+| 1:55–2:20 | /corpus: the grid of episode previews; pick a task: its root against the chain | "The data a buyer pays for, drawn from the samples the hashes commit to." |
+| 2:20–2:40 | /agents: a purchase opens into the agent's signed trail: model, tools, its check against SalesLog | "The agent paid a cent over x402, and signed its own account of why, with the key that paid." |
+| 2:40–3:00 | /network: a P-256 key made in the page, checked by `0x0100`; the staking epoch; contracts verified on MonadVision | "Identity, provenance, ownership and agent trust, each enforced by a contract on Monad. Thenar." |
 
 **Pitch video (2 minutes):**
 1. 0:00–0:20: the problem. Robots need demonstrations; the people who record them are not paid and do not own them.
 2. 0:20–1:20: the product, using shots 2, 4 and 5 above.
-3. 1:20–1:45: why Monad. 300 ms blocks, final about 600 ms later, pay in the same interaction; the P-256 precompile makes passkeys
-   native; parallel execution handles the sharded slots.
+3. 1:20–1:45: why Monad. The live block strip (300 ms blocks, final about 600 ms later) pays in the same interaction;
+   the P-256 precompile makes passkeys native; parallel execution handles the sharded slots.
 4. 1:45–2:00: what's next. Real labs posting tasks, and trained policies sold back.
 
 ## Checklist
@@ -170,7 +191,8 @@ The findings and the planned gate are in [docs/CLEANVERSE.md](docs/CLEANVERSE.md
 - [x] Public repo with an OSI licence (MIT)
 - [x] README: setup (one command), external code attributed, pre-existing work named, AI tools disclosed
 - [x] Commit history across the window
-- [x] Contracts deployed to Monad testnet and source-verified (`lib/deployment.ts`)
+- [x] Contracts deployed to Monad testnet (`lib/deployment.ts`) and source-verified: all twelve exact-match on
+      Sourcify since 7 Oct, readable on MonadVision
 - [x] Every flow run end to end on a local chain with real transactions ([docs/TEST-PLAN-ZERO-MOCK.md](docs/TEST-PLAN-ZERO-MOCK.md))
 - [ ] Go live with the post-5-Oct work: [docs/DEPLOY-LATER.md](docs/DEPLOY-LATER.md) (waits for the user's "go")
 - [ ] A paid run on the Monad deployment, its shares issued, and a paid agent pull logged in SalesLog (after "go")

@@ -19,7 +19,7 @@ each. Bounties weigh meeting the stated requirement at 40%.
 | 6 | **Passkeys on chain are invisible.** The registry verifies P-256 through `0x0100`, but the UI never shows the precompile working. It's one sentence of copy. | `07-passkey-before-*.png` | Mera bounty depth, and the most Monad-specific primitive Thenar uses. |
 | 7 | **Nothing touches the live Monad network.** The Monad deployment has no runs yet (testnet hold), the local build is all anvil, and no surface reads Monad itself: no staking, no epochs, no canonical contracts, no facilitator check. | `08-status-before-*.png` | Judges look for Monad activity. Live reads are allowed and cost nothing. |
 | 8 | **Gas is estimated, not set.** `lib/chain.ts` says the submit's limit is estimated. On Monad the fee is the limit × price, a wallet that falls back after a failed estimate can charge up to 30M gas, and the 10 MON reserve rule applies to delegated (7702) accounts. None of this shows in the cost line. | `lib/chain.ts:20`, `SubmitCostLine` | Technical excellence on Monad specifically. Judges who know the gas model check it. |
-| 9 | **Contracts are unverified, and links go to one explorer.** Sourcify returns `match: null` for AxonProtocolV2, PasskeyRegistry, SalesLog and CorpusShares on 10143. Links go only to Monadscan. | `curl sourcify-api-monad.blockvision.org/v2/contract/10143/0x1773…5f38` | "Verified, linked and indexed" is a Monad-integration checkbox. |
+| 9 | **Contracts are unverified, and links go to one explorer** (fixed in W5: all twelve exact-match on Sourcify). Sourcify returns `match: null` for AxonProtocolV2, PasskeyRegistry, SalesLog and CorpusShares on 10143. Links go only to Monadscan. | `curl sourcify-api-monad.blockvision.org/v2/contract/10143/0x1773…5f38` | "Verified, linked and indexed" is a Monad-integration checkbox. |
 | 10 | **Two front doors and 34 routes.** `/` is the ThenarLabs company page (six products, hardware). The product lives at `/thenar`. Archive, changelog, foundry, handheld, hub, inventory, lab, policies, portfolio, space and spec all compete for five minutes. | `02-home-before-*.png`, `app/**/page.tsx` | Focus. Judges spend their minute on a duck robot. |
 
 **What already works and should lead:**
@@ -152,6 +152,30 @@ Status words:
 | 5 | Native staking reads (`0x1000`) | **live read**: /network reads `getEpoch`, `getProposerValId` and `getValidator`. Delegating is **not applicable**: a task's escrow must be payable to an operator in the block a run is recorded, and staked MON takes an epoch to come back. | `lib/monad-network.ts`, `app/network/page.tsx` |
 | 6 | Gas correctness (limit pricing, reserve `0x1001`, 128 KB, storage layout) | **built**. Every write is estimated by the node under Monad's rules, refused if the simulation reverts, and sent with the estimate plus a tenth as its limit. The receipt shows limit, used and what was charged. A MON spend is checked against the 10 MON reserve, and a delegated (7702) account is refused a send Monad would revert. `dippedIntoReserve()` is read live. The sharded slot counter keeps operators off one storage slot. The 128 KB limit is **not applicable**: the largest contract is under 24 KB. | `lib/monad-gas.ts`, `lib/reserve.ts`, `lib/contract-write.ts`, `contracts/src/AxonProtocolV2.sol` |
 | 7 | Monad-native payments (x402 through Monad's facilitator, or MPP) | **built**: x402 v2 on Monad's facilitator for 10143, whose `/supported` /network reads live. A local facilitator serves the local chain. Each agent purchase now carries a signed decision record. MPP is **not applicable**: it would be a second rail for the same one-cent pull. | `lib/agent-corpus.ts`, `app/api/network/route.ts`, `lib/agent-decision.ts` |
-| 8 | Canonical contracts and verification | **built**: Multicall3 for every read, Circle USDC for x402, the deterministic CREATE2 deployer for SponsoredAccount. /network checks code at 10 canonical contracts and says what Thenar does with each (WMON, Permit2, CreateX and the EntryPoints are listed as not needed, with the reason). Links go to MonadVision as well as Monadscan. Sourcify verification: see below. | `lib/monad-network.ts`, `lib/chain.ts` |
+| 8 | Canonical contracts and verification | **built**: Multicall3 for every read, Circle USDC for x402, the deterministic CREATE2 deployer for SponsoredAccount. /network checks code at 10 canonical contracts and says what Thenar does with each (WMON, Permit2, CreateX and the EntryPoints are listed as not needed, with the reason). Links go to MonadVision as well as Monadscan. **All twelve of Thenar's Monad testnet contracts were verified on Sourcify on 7 Oct, every one an exact match** (the metadata hashes matched the build first); /network reads their status live. | `lib/monad-network.ts`, `lib/chain.ts` |
 
-This table is updated as each feature lands; the final state is below.
+## What shipped (7–8 Oct)
+
+| | Feature | Commit | Screens (`docs/screens/wave/`) |
+|---|---|---|---|
+| W1 | The live Monad pipeline on the landing and the station; two-timer receipts; `txpool_statusByHash`; 300 ms / 600 ms copy | `9ae7cb0` | `01-landing-*`, `03-station-*`, `09-receipt-after-*` |
+| W2 | Dataset explorer: episode previews from the samples, one batched call, per-task root against the chain | `d91c403` | `05-corpus-*`, `05b-corpus-task-after-*` |
+| W3 | Buyer-agent transparency: signed decision records, checked on the server and again in the page | `2e166e7`, `b148d14` | `06-agents-*` |
+| W4 | Operator onboarding: `/start`, five steps read live, from the landing's one primary button | `4d76721` | `11-start-after-*`, `11b-start-done-after-*` |
+| W5 | `/network` (Monad read live), Monad-correct gas and the reserve guard, MonadVision links; then Sourcify for all twelve contracts | `10c53a1` | `10-network-after-*` |
+
+Weakness 10 (two front doors and 34 routes) is the one not addressed in this wave.
+
+## The next five
+
+1. **Go live on testnet** (the user's "go" and MON). This is what replaces the local timings with Monad's on the
+   receipt, puts `txpool_statusByHash` and `monadLogs` events on Thenar's own transactions, and turns on Privy's
+   sponsorship. Deploy CorpusAudit and verify it the same way.
+2. **A real model's trail on /agents.** Qwen 3 on Ollama (once its 2.5 GB model is back on this machine) or Model
+   Studio and Moonshot with their keys. Today's trails come from the scripted double and say so.
+3. **One front door.** `/` on the app domain goes straight to the product; archive, changelog, handheld, inventory,
+   space and lab leave the primary menus.
+4. **A latency histogram from real receipts:** the last 20 actions' executed and final times on Monad, beside the
+   live strip.
+5. **Agents in the indexer.** Envio indexes SalesLog and the decision records, and /leaderboard ranks agents by what
+   they bought and verified.

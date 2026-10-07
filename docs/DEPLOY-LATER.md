@@ -78,6 +78,13 @@ forge script script/DeployCorpusAudit.s.sol --rpc-url monad --broadcast --privat
 
 Put the address into `cre/corpus-audit/config.staging.json` as `corpusAudit`, and keep it for `CORPUS_AUDIT`.
 
+Then verify it on Sourcify, the way the other twelve were verified on 7 Oct (no key needed; MonadVision shows the code):
+
+```bash
+forge verify-contract <CorpusAudit address> src/CorpusAudit.sol:CorpusAudit --chain 10143 \
+  --verifier sourcify --verifier-url https://sourcify-api-monad.blockvision.org/ --watch
+```
+
 ## 5. Envio on Monad (15 min) 👤 Envio account
 
 Follow [indexer/README.md → Host it on Envio Cloud](../indexer/README.md#host-it-on-envio-cloud-the-envio-bounty-route):

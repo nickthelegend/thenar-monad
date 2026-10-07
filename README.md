@@ -22,7 +22,7 @@ Avalanche build, then the move back.
 | | |
 | --- | --- |
 | **Chain** | Monad testnet, chain `10143`. Bounties, payouts, dividends and gas are MON. |
-| **Contracts** | [`lib/deployment.ts`](lib/deployment.ts), written from forge's broadcast record by [`scripts/apply-deploy.mjs`](scripts/apply-deploy.mjs). Every address below comes from there. |
+| **Contracts** | [`lib/deployment.ts`](lib/deployment.ts), written from forge's broadcast record by [`scripts/apply-deploy.mjs`](scripts/apply-deploy.mjs). Every address below comes from there. All twelve are source-verified on Sourcify with an **exact match**, so [MonadVision](https://testnet.monadvision.com/address/0x17731731c6652770CE630e29b62791DC2CED5f38) shows their code. |
 | **Corpus shares** | [`CorpusShares`](contracts/src/CorpusShares.sol): a token only passkey-admitted operators can hold; shares per paid run, by score; dividends in MON at a record date fixed in advance |
 | **Agent payments** | x402 `exact` in USDC on Monad, settled by the [Monad facilitator](https://x402-facilitator.molandak.org/supported), which pays the gas |
 | **Sales log** | [`SalesLog`](contracts/src/SalesLog.sol): every pull, with the sha256 of the file served, in storage and in events |
@@ -90,9 +90,40 @@ Each of these is load-bearing, and each has a place in the code shaped by it.
 | **300 ms blocks, final two slots later (about 600 ms)** | A run is paid in the block that records it. The station reports two timers it measured, executed and final, and the landing page shows Monad testnet's live block pipeline (Proposed → Voted → Finalized → Verified) with the milliseconds measured in the browser. A share issue and a sales-log write each land a moment later, so the station shows the payout and the share in one panel instead of promising the second. |
 | **Parallel execution** | `AxonProtocolV2` shards its slot counter: each operator's submit writes only its own shard, so two runs on one task touch no common storage and execute side by side. |
 | **P-256 precompile at `0x0100`** | `PasskeyRegistry` verifies a browser passkey's secp256r1 signature on chain, and a run can be authorised with it. See `/passkey`. |
-| **Gas charged on the limit** | A browser write leaves the limit to the wallet's estimate, and the lab's server-signed bounty sends its estimate plus a tenth, never a doubled one; the station and `/post` quote the cost from receipts, and the low-balance floor is one constant. |
+| **Gas charged on the limit** | Every browser write is estimated by the node under Monad's rules and refused if the simulation reverts, so a wallet never falls back to a large default limit. It is then sent with the estimate plus a tenth as an explicit limit ([`lib/monad-gas.ts`](lib/monad-gas.ts)). The station's receipt shows the limit, the gas used and what was charged. A MON spend is checked against the 10 MON reserve first ([`lib/reserve.ts`](lib/reserve.ts)). |
 | **100-block `eth_getLogs` cap on public RPCs** | History is read from contract storage through Multicall3, not from logs. A run and a task each record the block they were made in, so a transaction hash is a one-block log query every endpoint answers. `SalesLog` keeps every sale in storage for the same reason. |
-| **Cheap enough for a one-cent sale** | An agent pays one cent of USDC per corpus; the facilitator pays the gas and the sale is final before the response is sent. |
+| **Cheap enough for a one-cent sale** | An agent pays one cent of USDC per corpus. The facilitator pays the gas, and the sale has executed before the response is sent and is final about 600 ms later. |
+
+## Monad-native
+
+Each item on Monad's list, where it runs and how to see it. "Live read" means the page reads Monad testnet itself on
+every build, the local one included. A local build labels its own timings as the local chain's. Full review and
+reasoning: [docs/ROADMAP-WIN.md](docs/ROADMAP-WIN.md).
+
+| # | Integration | Where it runs | Code | See it |
+|---|---|---|---|---|
+| 1 | **Live commit states**: `monadNewHeads` blocks moving Proposed → Voted → Finalized → Verified, with ms measured in the browser (297 ms a block, 577 ms to final on 7 Oct); `monadLogs` on Thenar's contracts | Live read | [`lib/monad-commit.ts`](lib/monad-commit.ts), [`lib/monad-stream.ts`](lib/monad-stream.ts), [`components/monad-pipeline.tsx`](components/monad-pipeline.tsx) | /thenar, the station, /network |
+| 2 | **Two-timer receipts**: executed and final, from the send; the local wallet uses `eth_sendRawTransactionSync`, and a run is credited at finality on Monad | Built; local timings labelled as anvil's (its finalized tag trails by ~60 blocks); Monad timings await the testnet go | [`lib/receipt-timers.ts`](lib/receipt-timers.ts), [`components/receipt-timers.tsx`](components/receipt-timers.tsx) | The station after a submit |
+| 3 | **Transaction status**: `txpool_statusByHash` while a receipt is outstanding; `txpool_statusByAddress` for the deployer | `ByAddress`: live read. `ByHash`: built, awaiting testnet go (anvil has no `txpool_*`) | [`lib/receipt-timers.ts`](lib/receipt-timers.ts), [`app/network/page.tsx`](app/network/page.tsx) | /network |
+| 4 | **Passkeys on chain**: Mera passkeys, verified by `PasskeyRegistry` through the P-256 precompile `0x0100`; /network makes a P-256 key in the page and has Monad's `0x0100` check it, and refuse a tampered copy | Built on Monad and locally; the P-256 check on /network is a live read | [`contracts/src/PasskeyRegistry.sol`](contracts/src/PasskeyRegistry.sol), [`lib/monad-network.ts`](lib/monad-network.ts) | /passkey, /start, /network |
+| 5 | **Staking**: `getEpoch`, `getProposerValId`, `getValidator` on `0x1000` | Live read. Delegating escrow: not applicable (escrow must be payable in the block a run lands) | [`lib/monad-network.ts`](lib/monad-network.ts) | /network |
+| 6 | **Gas correctness**: limit pricing (simulated, explicit limit, charged amount shown), the 10 MON reserve (`0x1001` read live; delegated sends refused), a sharded slot counter for parallel execution, every contract under 24 KB | Built | [`lib/monad-gas.ts`](lib/monad-gas.ts), [`lib/reserve.ts`](lib/reserve.ts), [`contracts/src/AxonProtocolV2.sol`](contracts/src/AxonProtocolV2.sol) | The station's receipt, /network |
+| 7 | **x402 through Monad's facilitator**, with each agent purchase signed and explained by the agent itself | Built for 10143; the facilitator's `/supported` is read live. A local facilitator serves the local chain | [`lib/agent-corpus.ts`](lib/agent-corpus.ts), [`lib/agent-decision.ts`](lib/agent-decision.ts) | /agents, /network |
+| 8 | **Canonical contracts and verification**: Multicall3, Circle USDC and the CREATE2 deployer in use; ten canonical contracts code-checked live; all twelve of Thenar's verified on Sourcify (exact match) and linked on MonadVision | Live read | [`lib/monad-network.ts`](lib/monad-network.ts), [`lib/chain.ts`](lib/chain.ts) | /network, /contracts |
+
+### What the development wave added (7 Oct)
+
+| Before | After |
+|---|---|
+| ![Landing before](docs/screens/wave/01-landing-before-desktop.png) | ![Landing with the live Monad pipeline](docs/screens/wave/01-landing-after-desktop.png) |
+| ![Corpus before](docs/screens/wave/05-corpus-before-desktop.png) | ![The dataset explorer](docs/screens/wave/05-corpus-after-desktop.png) |
+| ![Agents before](docs/screens/wave/06-agents-before-desktop.png) | ![Signed agent decision trails](docs/screens/wave/06-agents-after-desktop.png) |
+
+Also new: [/start](docs/screens/wave/11b-start-done-after-desktop.png) (five steps to a first paid run, read live),
+[/network](docs/screens/wave/10-network-after-desktop.png) (Monad read live) and the
+[two-timer receipt](docs/screens/wave/09-receipt-after-desktop.png). Every screen is in
+[docs/screens/wave/](docs/screens/wave/) at 1440 px and 390 px, captured by `scripts/capture-wave.mjs` and
+`test/live-localnet.mjs`.
 
 ---
 
@@ -279,7 +310,12 @@ Every commit in this repository falls inside the build window. Thenar began at *
   - a Meta Quest 3S with the arm on your real table in mixed reality;
   - tasks scanned from a real table with a camera;
   - teach and repeat.
-- **Data**: an Envio HyperIndex indexer and the history it serves on /leaderboard.
+- **Data**:
+  - an Envio HyperIndex indexer and the history it serves on /leaderboard;
+  - a dataset explorer on /corpus, with every episode drawn from its own samples.
+- **Monad, shown rather than claimed**: the live block pipeline, two-timer receipts, /network, Monad-correct gas and
+  the reserve rule, and Sourcify verification ([Monad-native](#monad-native)).
+- **Onboarding**: /start, five steps to a first paid run, each read live.
 - **Running it**: `pnpm demo`, and a test suite that runs on the local chain with real transactions (below).
 
 ## Sponsor integrations
