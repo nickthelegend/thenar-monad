@@ -85,10 +85,13 @@ jobs:
         working-directory: contracts
       # Anvil with the Osaka hardfork (the P-256 precompile Monad has), the
       # contracts, a local USDC and Monad's Multicall3. It writes .env.localnet.
+      # Compiled first, on its own: a cold compile of every contract is most of the deploy's time.
+      - run: forge build
+        working-directory: contracts
       - name: Start the local chain
         run: |
           nohup node scripts/localnet.mjs > localnet.log 2>&1 &
-          for i in $(seq 1 120); do grep -q "^ready" localnet.log && break; sleep 2; done
+          for i in $(seq 1 450); do grep -q -E "^ready|Error" localnet.log && break; sleep 2; done
           cat localnet.log | grep -v "^anvil" | tail -20
           grep -q "^ready" localnet.log
       - name: Start the x402 facilitator
