@@ -30,8 +30,10 @@ async function handleGET() {
       salesLogUrl: salesLog ? addressUrl(salesLog) : null,
     },
     count: sales.length,
-    sales: sales.map(({ sha256, log_contract, log_seq, log_tx, audit_error, ...s }) => ({
+    sales: sales.map(({ sha256, log_contract, log_seq, log_tx, audit_error, decision_record, decision_signature, ...s }) => ({
       ...s,
+      // The buyer's own signed account of why it bought (lib/agent-decision.ts), when it gave one.
+      decision: decision_record && decision_signature ? { record: JSON.parse(decision_record), signature: decision_signature } : null,
       proof: s.method === "x402" ? explorerTx(s.id) : null,
       audit: log_contract && log_seq !== null
         ? {

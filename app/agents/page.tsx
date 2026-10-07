@@ -1,9 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
+import type { Hex } from "viem";
 import { DimRule } from "@/components/primitives";
 import { AGENT_CORPUS, agentCorpusPrice, explorerAddress } from "@/lib/agent-corpus";
 import { readableError } from "@/lib/fetch-error";
+import { LOCALNET } from "@/lib/chain";
+import type { DecisionRecord } from "@/lib/agent-decision";
+import { DecisionTrail } from "@/components/decision-trail";
 
 /**
  * Where an agent buys the corpus, and every pull an agent has taken.
@@ -24,6 +28,7 @@ type Sale = {
   id: string; task_id: number; method: "x402" | "agentkit"; buyer: string | null;
   network: string; amount: string | null; asset: string | null; created_at: number;
   proof: string | null; audit: Audit;
+  decision: { record: DecisionRecord; signature: Hex } | null;
 };
 type Sales = { terms: { payTo: string | null; salesLog: string | null; salesLogUrl: string | null }; count: number; sales: Sale[] };
 type Status =
@@ -35,7 +40,13 @@ const when = (ms: number) =>
   new Date(ms).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" });
 const usdc = (atomic: string) => `${Number(atomic) / 10 ** AGENT_CORPUS.decimals} ${AGENT_CORPUS.symbol}`;
 
+/** This page's own origin, for the commands below; the prerendered page knows only the configured one. */
+const noop = () => () => {};
+const useOrigin = () =>
+  useSyncExternalStore(noop, () => location.origin, () => process.env.NEXT_PUBLIC_SITE_ORIGIN || "https://app.thenar.io");
+
 export default function AgentsPage() {
+  const here = useOrigin();
   const [sales, setSales] = useState<Sales | { error: string } | null>(null);
   const [address, setAddress] = useState<string>(AGENT_CORPUS.demoAgent);
   const [status, setStatus] = useState<Status | null>(null);
@@ -76,7 +87,7 @@ export default function AgentsPage() {
       <p className="mt-4 max-w-[64ch] text-[15px] leading-relaxed text-scribe-2">
         An agent can take one task&apos;s corpus without a subscription. It asks for the file, is
         answered <span className="font-mono text-[13px]">402</span>, and pays {agentCorpusPrice()} on
-        Monad in the request that fetches it, final about 600 ms after it lands. No account, no API key
+        {LOCALNET ? "the local chain" : "Monad"} in the request that fetches it, final about 600 ms after it lands on Monad. No account, no API key
         and no subscription: the payment is the permission.
       </p>
 
@@ -91,9 +102,19 @@ export default function AgentsPage() {
         <dt className="text-[12px] text-scribe-3">Settles</dt>
         <dd className="text-scribe-2">
           On <span className="font-mono text-[13px]">{AGENT_CORPUS.network}</span>, through{" "}
-          <a href={AGENT_CORPUS.facilitator + "/supported"} target="_blank" rel="noreferrer" className="text-signal hover:text-signal-hi">
-            the Monad facilitator
-          </a>
+          {LOCALNET ? (
+            <>
+              the x402 facilitator running on this machine (<span className="font-mono text-[13px]">{AGENT_CORPUS.facilitator}</span>);
+              on Monad it is{" "}
+              <a href="https://x402-facilitator.molandak.org/supported" target="_blank" rel="noreferrer" className="text-signal hover:text-signal-hi">
+                Monad&apos;s own facilitator
+              </a>
+            </>
+          ) : (
+            <a href={AGENT_CORPUS.facilitator + "/supported"} target="_blank" rel="noreferrer" className="text-signal hover:text-signal-hi">
+              Monad&apos;s x402 facilitator
+            </a>
+          )}
           , which submits the agent&apos;s signed USDC authorisation and pays the gas. Only after the file is ready: a task with
           nothing recorded answers 404 and charges nothing.
         </dd>
@@ -182,7 +203,8 @@ export default function AgentsPage() {
                 <th className="py-2 pr-4 font-normal">Terms</th>
                 <th className="py-2 pr-4 font-normal">Buyer</th>
                 <th className="py-2 pr-4 font-normal">Settlement</th>
-                <th className="py-2 font-normal">Logged</th>
+                <th className="py-2 pr-4 font-normal">Logged</th>
+                <th className="py-2 font-normal">Why</th>
               </tr>
             </thead>
             <tbody>
@@ -207,7 +229,7 @@ export default function AgentsPage() {
                       <span className="text-scribe-3">nothing moved</span>
                     )}
                   </td>
-                  <td className="py-2">
+                  <td className="py-2 pr-4">
                     {s.audit && "contract" in s.audit ? (
                       <a href={s.audit.url} target="_blank" rel="noreferrer" title={s.audit.sha256 ?? undefined} className="font-mono text-signal hover:text-signal-hi">
                         #{s.audit.sequence} &rarr;
@@ -218,6 +240,13 @@ export default function AgentsPage() {
                       <span className="text-scribe-3">before the log</span>
                     )}
                   </td>
+                  <td className="py-2">
+                    {s.decision ? (
+                      <a href={`#why-${s.id}`} className="text-signal hover:text-signal-hi">signed trail &darr;</a>
+                    ) : (
+                      <span className="text-scribe-3">—</span>
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -225,14 +254,38 @@ export default function AgentsPage() {
         </div>
       )}
 
+      <DimRule className="mt-10" note="Why agents bought" />
+      {sales && "sales" in sales && sales.sales.some((s) => s.decision) ? (
+        <div className="mt-4 flex flex-col gap-3" data-testid="decision-trails">
+          <p className="max-w-[64ch] text-[14px] leading-relaxed text-scribe-2">
+            Each purchase below comes with the agent&apos;s own account of it, signed with the key that paid: the model
+            that decided, every tool it called and what came back, and its check of the file against SalesLog. The server
+            keeps one only from the sale&apos;s buyer, and this page checks the signature again.
+          </p>
+          {sales.sales.filter((s) => s.decision).map((s, i) => (
+            <DecisionTrail key={s.id} id={s.id} record={s.decision!.record} signature={s.decision!.signature} open={i === 0} />
+          ))}
+        </div>
+      ) : (
+        <p className="mt-4 max-w-[64ch] text-[14px] leading-relaxed text-scribe-2">
+          {sales ? "No agent has published the reasons for a purchase yet. The language-model agent below does after every one." : "Reading the ledger…"}
+        </p>
+      )}
+
       <DimRule className="mt-10" note="Run the buyer" />
       <p className="mt-4 max-w-[64ch] text-[14px] leading-relaxed text-scribe-2">
-        The agent in the repository signs a USDC authorisation for x402 to settle on Monad. Then it hashes
-        what it received and asks SalesLog on Monad whether those exact bytes were logged as sold.
+        The agent in the repository reads the tasks and their datasheets, decides what to buy within a budget its code
+        enforces, pays over x402, hashes what it received and asks SalesLog whether those exact bytes were logged as sold.
+        Then it signs its account of all of that and publishes it here. Qwen on Model Studio, Kimi on Moonshot, or Qwen 3
+        on this machine through Ollama:
       </p>
       <pre className="mt-3 overflow-x-auto border border-scribe-3 px-3 py-2 font-mono text-[12px] text-scribe">
-        node --import ./test/register.mjs scripts/agent-buy.mjs http://localhost:3222 1
+        AGENT_LLM=ollama node --import ./test/register.mjs scripts/qwen-agent.mjs {here}
       </pre>
+      <p className="mt-3 max-w-[64ch] text-[13px] leading-relaxed text-scribe-3">
+        Without a model, the plain buyer pays and verifies the same way:{" "}
+        <span className="font-mono text-[12px] text-scribe-2">node --import ./test/register.mjs scripts/agent-buy.mjs {here} 1</span>
+      </p>
     </div>
   );
 }

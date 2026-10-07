@@ -58,13 +58,46 @@ export type ListedSale = CorpusSale & {
   log_seq: number | null;
   log_tx: string | null;
   audit_error: string | null;
+  /** The buyer's signed decision record (lib/agent-decision.ts), as stored. */
+  decision_record: string | null;
+  decision_signature: string | null;
 };
+
+/** The sale a transaction settled, if this ledger has it. */
+export async function saleById(id: string): Promise<CorpusSale | undefined> {
+  const rows = await query<CorpusSale>(
+    `SELECT id, task_id, method, buyer, network, amount, asset, created_at FROM corpus_sale WHERE LOWER(id) = ?`,
+    [id.toLowerCase()],
+  );
+  return rows[0];
+}
+
+/** Keep a decision record; false when the sale already has one, which is never replaced. */
+export async function saveDecision(saleId: string, buyer: string, record: string, signature: string): Promise<boolean> {
+  const before = await query<{ n: number }>(`SELECT COUNT(*) AS n FROM agent_decision WHERE sale_id = ?`, [saleId]);
+  if (Number(before[0]?.n ?? 0) > 0) return false;
+  await run(
+    `INSERT INTO agent_decision (sale_id, buyer, record, signature, created_at) VALUES (?, ?, ?, ?, ?) ON CONFLICT (sale_id) DO NOTHING`,
+    [saleId, buyer.toLowerCase(), record, signature, Date.now()],
+  );
+  return true;
+}
+
+export async function decisionFor(saleId: string) {
+  const rows = await query<{ record: string; signature: string; buyer: string; created_at: number }>(
+    `SELECT record, signature, buyer, created_at FROM agent_decision WHERE sale_id = ?`,
+    [saleId],
+  );
+  return rows[0];
+}
 
 export async function recentSales(limit = 50): Promise<ListedSale[]> {
   return query<ListedSale>(
     `SELECT s.id, s.task_id, s.method, s.buyer, s.network, s.amount, s.asset, s.created_at,
-            a.sha256, a.log_contract, a.log_seq, a.transaction_id AS log_tx, a.error AS audit_error
+            a.sha256, a.log_contract, a.log_seq, a.transaction_id AS log_tx, a.error AS audit_error,
+            d.record AS decision_record, d.signature AS decision_signature
        FROM corpus_sale s LEFT JOIN corpus_sale_audit a ON a.sale_id = s.id
+       LEFT JOIN agent_decision d ON d.sale_id = s.id
       ORDER BY s.created_at DESC LIMIT ?`,
     [limit],
   );
@@ -74,8 +107,10 @@ export async function recentSales(limit = 50): Promise<ListedSale[]> {
 export async function salesTo(buyer: string, limit = 50): Promise<ListedSale[]> {
   return query<ListedSale>(
     `SELECT s.id, s.task_id, s.method, s.buyer, s.network, s.amount, s.asset, s.created_at,
-            a.sha256, a.log_contract, a.log_seq, a.transaction_id AS log_tx, a.error AS audit_error
+            a.sha256, a.log_contract, a.log_seq, a.transaction_id AS log_tx, a.error AS audit_error,
+            d.record AS decision_record, d.signature AS decision_signature
        FROM corpus_sale s LEFT JOIN corpus_sale_audit a ON a.sale_id = s.id
+       LEFT JOIN agent_decision d ON d.sale_id = s.id
       WHERE lower(s.buyer) = ?
       ORDER BY s.created_at DESC LIMIT ?`,
     [buyer.toLowerCase(), limit],

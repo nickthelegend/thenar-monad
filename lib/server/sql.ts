@@ -354,6 +354,18 @@ export function migrate(): Promise<void> {
           expires_at BIGINT NOT NULL,
           used_at    BIGINT
         );
+
+
+        -- Why an agent bought: a record it signed with the key that paid, of
+        -- the model it ran, the tools it called and what it checked. One per
+        -- sale, and only ever from that sale's buyer (lib/agent-decision.ts).
+        CREATE TABLE IF NOT EXISTS agent_decision (
+          sale_id    TEXT PRIMARY KEY,
+          buyer      TEXT NOT NULL,
+          record     TEXT NOT NULL,
+          signature  TEXT NOT NULL,
+          created_at BIGINT NOT NULL
+        );
       `);
 
       // CREATE TABLE IF NOT EXISTS does nothing to a table that already
@@ -539,6 +551,13 @@ export function migrate(): Promise<void> {
         address    TEXT NOT NULL,
         expires_at INTEGER NOT NULL,
         used_at    INTEGER
+      );
+      CREATE TABLE IF NOT EXISTS agent_decision (
+        sale_id    TEXT PRIMARY KEY,
+        buyer      TEXT NOT NULL,
+        record     TEXT NOT NULL,
+        signature  TEXT NOT NULL,
+        created_at INTEGER NOT NULL
       );
     `);
   })();

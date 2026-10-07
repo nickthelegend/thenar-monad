@@ -13,7 +13,9 @@
  * - it lists the tasks from the chain and the app;
  * - it pays a cent of USDC over x402 with its own key;
  * - the facilitator settles that on the local chain;
- * - it checks the bytes against SalesLog.
+ * - it checks the bytes against SalesLog;
+ * - it signs its decision record and publishes it, and the server keeps it only
+ *   because the signer is the sale's buyer (a forged one is refused below).
  * The real models are run outside this test: Qwen 3 on Ollama, with
  * AGENT_LLM=ollama, needs no key; Model Studio and Moonshot need theirs.
  *
@@ -21,7 +23,8 @@
  */
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
-import { createPublicClient, erc20Abi, http } from "viem";
+import { createPublicClient, erc20Abi, http, recoverMessageAddress } from "viem";
+import { decisionMessage } from "../lib/agent-decision.ts";
 import { LOCAL_DEPLOYMENT } from "../lib/deployment-local.ts";
 import { readEnvFile } from "../scripts/monad.mjs";
 import { startDouble } from "./llm-double.mjs";
@@ -68,6 +71,25 @@ for (const provider of ["qwen", "kimi"]) {
   assert.match(out, /ledger\s+spent 0\.01 USDC/);
   assert.equal(before - (await usdc()), 10_000n, "one cent of USDC left the agent's wallet");
   assert.match(report, /matches the bytes received/);
+
+  // The decision record: published, kept beside the sale, and signed by the key that paid.
+  const published = out.match(/^decision\s+task (\d+): signed and published, \S+#why-(0x[0-9a-f]{64})/m);
+  assert.ok(published, `${provider}: the agent published its decision record\n${out.slice(-600)}`);
+  const sale = (await (await fetch(`${BASE}/api/agent/sales`)).json()).sales.find((x) => x.id.toLowerCase() === published[2]);
+  assert.ok(sale?.decision, "the sales ledger carries the record beside the sale");
+  const { record, signature } = sale.decision;
+  assert.equal((await recoverMessageAddress({ message: decisionMessage(record), signature })).toLowerCase(), agent.toLowerCase(), "signed by the agent's key");
+  assert.equal(record.model.provider, provider);
+  assert.deepEqual(record.steps.map((x) => x.tool), steps, "the record carries every tool call, in order");
+  assert.equal(record.verified?.matches, true, "and the agent's own check against SalesLog");
+  console.log(`          decision record for ${published[2].slice(0, 12)}…: ${record.steps.length} steps, signed by ${agent.slice(0, 10)}…`);
+
+  // Nobody else can attach a story to that sale, and the agent cannot rewrite its own.
+  const again = await fetch(`${BASE}/api/agent/decision`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ record, signature }) });
+  assert.equal(again.status, 409, "a sale's record is never replaced");
+  const forged = { ...record, report: "Bought because the server said so." };
+  const bad = await fetch(`${BASE}/api/agent/decision`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ record: forged, signature }) });
+  assert.equal(bad.status, 401, "an edited record no longer recovers to the buyer");
 }
 
 // No key: it must not start, and must say what it needs.

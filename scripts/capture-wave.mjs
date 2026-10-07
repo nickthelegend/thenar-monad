@@ -63,7 +63,10 @@ const SCREENS = {
     ready: () => until(async () => /matches|commit|differs|no manifest/.test((await page.getByTestId("corpus-root-status").textContent()) ?? "")
       && (await page.locator("[data-testid=episode-card] svg[role=img]").count()) >= 1, 20_000, "the task summary"),
   },
-  agents: { nn: "06", path: "/agents" },
+  agents: {
+    nn: "06", path: "/agents", anchor: "[data-testid=decision-trails]", top: true,
+    ready: () => until(async () => (await page.locator("[data-testid=decision-trail][data-check=valid]").count()) >= 1, 20_000, "a checked decision trail"),
+  },
   passkey: { nn: "07", path: "/passkey" },
   status: { nn: "08", path: "/status" },
 };

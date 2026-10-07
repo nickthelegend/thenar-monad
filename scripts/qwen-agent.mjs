@@ -21,6 +21,11 @@
  *
  * AGENT_PRIVATE_KEY is the agent's wallet. AGENT_BUDGET_USDC caps what it
  * may spend in one session (default 0.05).
+ *
+ * After each purchase it publishes its decision record to the server: the
+ * model, every tool it called and what came back, its report and its check
+ * against SalesLog, signed with the key that paid (lib/agent-decision.ts).
+ * /agents shows it beside the sale.
  */
 import { createHash } from "node:crypto";
 import { createPublicClient, formatUnits, parseAbi } from "viem";
@@ -29,6 +34,7 @@ import { decodePaymentResponseHeader, wrapFetchWithPayment, x402Client } from "@
 import { ExactEvmScheme } from "@x402/evm/exact/client";
 import { toClientEvmSigner } from "@x402/evm";
 import { AGENT_CORPUS } from "../lib/agent-corpus.ts";
+import { decisionMessage, MAX_STEPS as MAX_RECORD_STEPS } from "../lib/agent-decision.ts";
 import { SALES_LOG_ABI } from "../lib/registry-abi.ts";
 import { AXON_ABI } from "../lib/abi.ts";
 import { armOf } from "../lib/scan.ts";
@@ -76,6 +82,8 @@ const payer = x402Client.fromConfig({
 const fetchPaid = wrapFetchWithPayment(fetch, payer);
 
 let spent = 0n;
+/** Every tool call this session, in order, as the decision record will carry it. */
+const trail = [];
 /** The task ids list_tasks returned; any other id is refused before it costs a request. */
 let taskIds = null;
 const unknownTask = (id) =>
@@ -172,6 +180,7 @@ const TOOLS = {
         chain.readContract({ address: m[1], abi: SALES_LOG_ABI, functionName: "servedCount", args: [`0x${b.sha256}`] }),
         chain.readContract({ address: m[1], abi: SALES_LOG_ABI, functionName: "getSale", args: [BigInt(m[2])] }),
       ]);
+      b.verified = { sha256: `0x${b.sha256}`, salesLog: m[1], entry: Number(m[2]), matches: sale.sha256 === `0x${b.sha256}` };
       return {
         verified: sale.sha256 === `0x${b.sha256}`, sales_log: m[1], entry: Number(m[2]),
         logged_sha256: sale.sha256, received_sha256: `0x${b.sha256}`, sales_serving_these_bytes: Number(served),
@@ -286,6 +295,7 @@ for (let step = 1; step <= MAX_STEPS; step++) {
     const out = tool ? await tool.run(args).catch((e) => ({ error: e instanceof Error ? e.message.split("\n")[0] : String(e) })) : { error: `no tool ${c.function.name}` };
     console.log(`step ${String(step).padEnd(4)} ${c.function.name}(${JSON.stringify(args)})`);
     console.log(`          → ${JSON.stringify(out).slice(0, 400)}`);
+    trail.push({ tool: c.function.name, args, result: JSON.stringify(out).slice(0, 600), at: Date.now() });
     messages.push({ role: "tool", tool_call_id: c.id, content: JSON.stringify(out) });
   }
 }
@@ -296,6 +306,33 @@ for (const [id, b] of bought) {
   console.log(`          task ${id}: ${b.summary.episodes} episodes, sha256 ${b.sha256.slice(0, 16)}…, paid ${b.summary.paid}`);
   if (b.summary.payment_tx) console.log(`          ${txUrl(b.summary.payment_tx)}`);
 }
+// Each purchase's decision record, signed with the key that paid, published beside the sale.
+for (const [id, b] of bought) {
+  if (!b.summary.payment_tx) continue;
+  const record = {
+    v: 1,
+    sale: { tx: b.summary.payment_tx, taskId: id },
+    buyer: wallet.address,
+    // Where the model ran, with its endpoint, so a reader can tell a hosted model from one on a laptop.
+    model: { provider: PROVIDER, name: LLM.model, where: `${LLM.where}, ${LLM.url}`.slice(0, 200) },
+    goal: GOAL.slice(0, 2000),
+    steps: trail.slice(-MAX_RECORD_STEPS),
+    report: report.slice(0, 4000),
+    verified: b.verified ?? null,
+    spent: String(spent),
+    budget: String(BUDGET),
+    at: Date.now(),
+  };
+  const signature = await wallet.signMessage({ message: decisionMessage(record) });
+  const r = await fetch(`${BASE}/api/agent/decision`, {
+    method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ record, signature }),
+  }).catch((e) => ({ ok: false, status: 0, json: async () => ({ error: String(e) }) }));
+  const body = await r.json().catch(() => ({}));
+  console.log(r.ok
+    ? `decision  task ${id}: signed and published, ${BASE}/agents#why-${body.sale}`
+    : `decision  task ${id}: not published (${r.status}): ${body.error ?? "no answer"}`);
+}
+
 if (!bought.size && /\bbought\b|\bpurchased\b/i.test(report) && !/not|nothing|no /i.test(report.slice(0, 80))) {
   console.log("warning   the model's report claims a purchase the ledger does not have");
   process.exitCode = 2;
