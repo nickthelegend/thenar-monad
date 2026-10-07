@@ -60,7 +60,7 @@ export function DecisionTrail({ id, record, signature, open }: { id: string; rec
             ) : null}
           </dd>
           <dt className="text-scribe-3">Asked to</dt>
-          <dd className="text-scribe-2">{record.goal}</dd>
+          <dd className="text-scribe-2 [overflow-wrap:anywhere]">{record.goal}</dd>
           <dt className="text-scribe-3">Spent</dt>
           <dd className="font-mono text-scribe-2">{units(record.spent)} of a {units(record.budget)} budget the code enforced</dd>
         </dl>
@@ -79,7 +79,7 @@ export function DecisionTrail({ id, record, signature, open }: { id: string; rec
         </ol>
 
         {record.report ? (
-          <blockquote className="border-l-0 bg-ink-2 px-3 py-2 text-[13px] leading-relaxed whitespace-pre-wrap text-scribe-2">
+          <blockquote className="border-l-0 bg-ink-2 px-3 py-2 text-[13px] leading-relaxed whitespace-pre-wrap text-scribe-2 [overflow-wrap:anywhere]">
             <span className="mb-1 block text-[12px] text-scribe-3">The model&rsquo;s report</span>
             {record.report}
           </blockquote>
