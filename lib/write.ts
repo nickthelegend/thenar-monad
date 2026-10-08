@@ -5,7 +5,9 @@ import { useQueryClient } from "@tanstack/react-query";
 import { usePublicClient } from "wagmi";
 import { useContractWrite } from "./contract-write";
 import { AXON_ABI } from "./abi";
-import { AXON_ADDRESS } from "./chain";
+import { AXON_ADDRESS, LOCALNET } from "./chain";
+import { trackReceipt } from "./receipt-timers";
+import { reportTimers } from "./receipt-report";
 import { explainTxError } from "./submit";
 
 export type TxPhase = "idle" | "signing" | "pending" | "confirmed" | "error";
@@ -47,7 +49,6 @@ export function useThenarWrite() {
       try {
         setError(undefined);
         setPhase("signing");
-        const started = performance.now();
 
         const hash = await writeContractAsync({
           address: on?.address ?? AXON_ADDRESS,
@@ -60,8 +61,13 @@ export function useThenarWrite() {
         setTxHash(hash);
         setPhase("pending");
 
-        const receipt = await client!.waitForTransactionReceipt({ hash });
-        setElapsedMs(performance.now() - started);
+        // Executed and final, from the send (lib/receipt-timers.ts), reported
+        // to the histogram of recent receipts as each arrives.
+        const tracked = await trackReceipt(client!, hash, { sentAt: performance.now(), where: LOCALNET ? "local" : "monad" });
+        const receipt = tracked.receipt;
+        setElapsedMs(tracked.timers.executedMs);
+        reportTimers(hash, functionName, tracked.timers);
+        void tracked.final.then(({ timers }) => reportTimers(hash, functionName, timers));
 
         if (receipt.status !== "success") {
           setPhase("error");

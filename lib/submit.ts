@@ -7,6 +7,7 @@ import { BaseError, ContractFunctionRevertedError, UserRejectedRequestError, toF
 import { AXON_ABI } from "./abi";
 import { AXON_ADDRESS, LOCALNET } from "./chain";
 import { trackReceipt, type Timers } from "./receipt-timers";
+import { reportTimers } from "./receipt-report";
 import type { Sample } from "./types";
 import { CURRENCY, FAUCET_URL } from "@/lib/chain";
 
@@ -286,6 +287,9 @@ export function useSubmitRun() {
         // On Monad a payout is credited once it is final, about 600 ms after it
         // executes. A local chain's finalized tag trails by a minute of blocks,
         // so there the card shows finality when it lands instead of holding the run.
+        // Both timers go to the histogram of recent receipts: executed now, final when it lands.
+        reportTimers(txHash, "submitTrajectory", tracked.timers);
+        void tracked.final.then(({ timers }) => reportTimers(txHash, "submitTrajectory", timers));
         const { receipt } = LOCALNET ? tracked : await tracked.final;
 
         if (receipt.status !== "success") {

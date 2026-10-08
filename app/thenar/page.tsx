@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { MonadPipeline } from "@/components/monad-pipeline";
+import { ReceiptHistogram } from "@/components/receipt-histogram";
 import { Reveal } from "@/components/labs/reveal";
 import { SiteNav } from "@/components/site-nav";
 import { appChain } from "@/lib/chain";
@@ -92,6 +93,10 @@ export default async function ThenarHome() {
         {/* Monad's pace, shown rather than claimed: the real testnet's blocks, live. */}
         <Reveal delay={500} className="mt-4 w-full max-w-[860px]">
           <MonadPipeline />
+        </Reveal>
+        {/* And Thenar's own transactions against it: executed and final, as measured. */}
+        <Reveal delay={600} className="mt-4 w-full max-w-[860px]">
+          <ReceiptHistogram />
         </Reveal>
       </section>
 

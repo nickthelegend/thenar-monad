@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Hex } from "viem";
 import { MonadPipeline } from "@/components/monad-pipeline";
+import { ReceiptHistogram } from "@/components/receipt-histogram";
 import { DimRule } from "@/components/primitives";
 import { CANONICAL, MONAD_RPC, P256_VERIFY, STAKING, callData, commissionPct, decode, monadBatch, p256Input, p256Valid } from "@/lib/monad-network";
 import { DIPPED_INTO_RESERVE, RESERVE_PRECOMPILE } from "@/lib/reserve";
@@ -161,6 +162,7 @@ export default function NetworkPage() {
       </p>
 
       <MonadPipeline className="mt-8" />
+      <ReceiptHistogram className="mt-4" />
 
       <DimRule className="mt-10" note="Consensus" />
       <div className="mt-4 grid gap-4 md:grid-cols-2">

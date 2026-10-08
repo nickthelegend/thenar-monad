@@ -166,6 +166,20 @@ if (/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(BASE)) {
   check("the company's home is at /labs", labs.status === 200 && labsHtml.includes("We build") && !labsHtml.includes('data-testid="monad-pipeline"'));
 }
 
+// Receipt timings: only for a transaction this chain has, from a build on this chain.
+try {
+  const list = await fetch(`${BASE}/api/receipts?limit=5`);
+  const body = await list.json();
+  check("recent receipts are listed", list.status === 200 && Array.isArray(body.receipts), `${body.receipts?.length ?? 0} rows, ${body.chain}`);
+  const post = (b) => fetch(`${BASE}/api/receipts`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(b) });
+  const unknown = await post({ tx: "0x" + "ab".repeat(32), action: "submitTrajectory", chain: body.chain, via: "eth_getTransactionReceipt", executedMs: 300, finalMs: 600 });
+  check("a timing for a transaction this chain does not have is refused", unknown.status === 404, String(unknown.status));
+  const other = await post({ tx: "0x" + "ab".repeat(32), action: "submitTrajectory", chain: body.chain === "local" ? "monad" : "local", via: "eth_getTransactionReceipt", executedMs: 300, finalMs: 600 });
+  check("another chain's timings are refused", other.status === 400, String(other.status));
+} catch (e) {
+  check("receipts", false, String(e));
+}
+
 // The live Monad pipeline: rendered on the landing, and allowed to reach Monad's socket.
 try {
   const r = await fetch(`${BASE}/thenar`, { signal: AbortSignal.timeout(30_000) });

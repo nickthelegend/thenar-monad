@@ -89,6 +89,10 @@ const SCREENS = {
   leaderboard: { nn: "13", path: "/leaderboard", ready: () => page.waitForTimeout(2500) },
   labs: { nn: "12c", path: "/labs", ready: () => page.waitForTimeout(1500) },
   footer: { nn: "12d", path: "/corpus", anchor: "[data-testid=app-footer]" },
+  receipts: {
+    nn: "14", path: "/thenar", anchor: "[data-testid=receipt-histogram]",
+    ready: async () => { await pipelineLive(); await until(async () => (await page.locator("[data-testid=receipt-histogram] circle").count()) >= 2, 15_000, "the receipts"); },
+  },
   status: { nn: "08", path: "/status" },
 };
 

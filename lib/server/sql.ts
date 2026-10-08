@@ -366,6 +366,21 @@ export function migrate(): Promise<void> {
           signature  TEXT NOT NULL,
           created_at BIGINT NOT NULL
         );
+
+
+        -- How long a Thenar transaction took to execute and to become final,
+        -- as the browser that sent it measured (lib/receipt-timers.ts). Kept
+        -- only for a transaction this chain has, that succeeded and touched a
+        -- Thenar contract. "chain" says whose timings they are: local or monad.
+        CREATE TABLE IF NOT EXISTS receipt_timing (
+          tx          TEXT PRIMARY KEY,
+          chain       TEXT NOT NULL,
+          action      TEXT NOT NULL,
+          via         TEXT NOT NULL,
+          executed_ms INTEGER NOT NULL,
+          final_ms    INTEGER,
+          created_at  BIGINT NOT NULL
+        );
       `);
 
       // CREATE TABLE IF NOT EXISTS does nothing to a table that already
@@ -558,6 +573,15 @@ export function migrate(): Promise<void> {
         record     TEXT NOT NULL,
         signature  TEXT NOT NULL,
         created_at INTEGER NOT NULL
+      );
+      CREATE TABLE IF NOT EXISTS receipt_timing (
+        tx          TEXT PRIMARY KEY,
+        chain       TEXT NOT NULL,
+        action      TEXT NOT NULL,
+        via         TEXT NOT NULL,
+        executed_ms INTEGER NOT NULL,
+        final_ms    INTEGER,
+        created_at  INTEGER NOT NULL
       );
     `);
   })();
