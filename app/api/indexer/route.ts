@@ -35,7 +35,8 @@ const QUERY = `query Activity($chain: Int!, $days: Int!) {
  * What the indexer knows about this chain: totals, the last two weeks day by
  * day, and the operators who ran most recently.
  *
- * 503 when no indexer is configured or it cannot be read, so the page says so
+ * When no indexer is configured, or it cannot be read, the answer says so
+ * (with a 200, so the browser logs nothing) and the page shows that state
  * rather than drawing zeros it never read.
  */
 async function handleGET() {
@@ -51,7 +52,9 @@ async function handleGET() {
     );
   } catch (e) {
     const reason = e instanceof IndexerError ? e.message : "the indexer could not be reached";
-    return NextResponse.json({ configured: true, local: LOCALNET, error: `The indexer is unavailable: ${reason}.` }, { status: 503 });
+    // Down is a state the panel shows, not a failed request: a 503 here was a
+    // console error on /leaderboard whenever a local indexer was not running.
+    return NextResponse.json({ configured: true, available: false, local: LOCALNET, error: `The indexer is unavailable: ${reason}.` });
   }
 }
 
