@@ -179,3 +179,24 @@ Weakness 10 (two front doors and 34 routes) is the one not addressed in this wav
    live strip.
 5. **Agents in the indexer.** Envio indexes SalesLog and the decision records, and /leaderboard ranks agents by what
    they bought and verified.
+
+## Wave 2 (8 Oct)
+
+Asked for: "start the next 5, keep going". Items that need the testnet go, MON or a key are swapped for the next-best
+ones that don't.
+
+| Next-5 item | Wave 2 | Why |
+|---|---|---|
+| 1. Go live on testnet | **Swapped** for *Monad vs Ethereum, read live* (T24) | Needs the user's go and MON. The comparison shows the same advantage, from live reads of both chains. |
+| 2. A real model's trail on /agents | **Swapped** for *Race the best run* (T25) | Needs Model Studio or Moonshot keys, or the 2.5 GB Ollama model, which memory does not allow now. Replay already exists on /run; racing a ghost of the best run is the video moment it was missing. |
+| 3. One front door | Built (T21) | |
+| 4. A latency histogram from real receipts | Built (T22), with local receipts labelled until the go | |
+| 5. Agents in the indexer | Built (T23) | |
+
+The coordinator suggested "run replay" and "a per-operator earnings page": both exist already (`/run/[hash]` replays
+with a scrubber; `/operator/[address]` and `/portfolio` show an operator's runs and earnings), so the two swaps above
+are new surfaces instead.
+
+Also re-run from last wave: the route walk (`pnpm test:walk`, now 82/82) and `test/live-localnet.mjs` step 8, which
+needs the indexer and Docker (now PASS). The walk found `/api/indexer` answering 503 when a local indexer was down,
+a console error on /leaderboard; it now answers 200 and says the indexer is unavailable.

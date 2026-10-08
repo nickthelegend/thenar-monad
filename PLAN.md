@@ -67,6 +67,16 @@ Bounty targets:
 | T19 | W4 Operator onboarding | `/start` reads real state for each step; a fresh local wallet goes from step 1 to 5 in e2e | `pnpm test:e2e:local` | DONE: `/start` walks a newcomer through five steps, each read live: the wallet and gas (or a sponsor) from the session, the passkey from PasskeyRegistry through `/api/operator`, the station from this browser, and the first paid run from the ledger. Only the next step offers its action. The landing's one primary button and the Earn menu lead there. `test/live-localnet.mjs` takes a fresh wallet from 0/5 to 5/5 (`docs/screens/wave/11*-after-*.png`) |
 | T20 | W5 Monad network panel and gas correctness | Live testnet reads (staking, tags, reserve, P-256, canonical contracts, facilitator); explicit gas limits under test; reserve guard tested; MonadVision links | `pnpm test:unit`, `pnpm test:e2e:local` | DONE: /network reads Monad testnet live from the page: `latest`, `safe` and `finalized` in one batch (N, N−1, N−2); staking `0x1000` (epoch 1382, the proposing validator, its stake and commission); a P-256 key made in the page and checked by `0x0100`, with a tampered copy refused; `dippedIntoReserve()` on `0x1001`; code at 10 canonical contracts and all 12 of Thenar's; `txpool_statusByAddress`. The server reads Monad's x402 facilitator and Sourcify. Every browser write is simulated first, refused if it reverts, and sent with the estimate plus a tenth as an explicit limit; a MON spend is checked against the reserve rule (unit-tested, including the delegated case). The receipt shows limit, used and charged. MonadVision links. Unit 158/158; e2e:local 78/78 |
 
+### Wave 2 (8 Oct): the next five from docs/ROADMAP-WIN.md
+
+| ID | Task | Acceptance | Verify | Status |
+|---|---|---|---|---|
+| T21 | One front door | On a single-origin host (`pnpm demo`), "/" is the product and the company is at /labs; side routes leave the primary menus for an app footer, still one click away; production hosts unchanged | `pnpm test:e2e:local`, `pnpm test:walk` | NOT STARTED |
+| T22 | Receipt latency histogram | The last 20 Thenar transactions, executed and final as the sending browser measured, on a log axis beside Monad's live finality; a timing is kept only for a successful transaction on this chain that touched Thenar's contracts; local timings labelled | `pnpm test:unit`, `pnpm test:e2e:local` | NOT STARTED |
+| T23 | Agents in the indexer | Envio aggregates SalesLog's buyers (purchases, distinct tasks, spend); /leaderboard ranks them, joined with their signed decision records; the ledger stands in, labelled, when no indexer runs | indexer `pnpm test`, `pnpm test:e2e:local`, `test/live-localnet.mjs` step 8 | NOT STARTED |
+| T24 | Monad vs Ethereum, read live | Ethereum mainnet's gas price, ETH/USD (Chainlink) and finalized lag read live; the receipt says what the same run would cost and how long it would take to be final there | `pnpm test:unit`, `pnpm test:e2e:local` | NOT STARTED |
+| T25 | Race the best run | The station can show the task's best paid run as a ghost arm moving in time with the operator's own run | `pnpm test:unit`, `test/live-localnet.mjs` | NOT STARTED |
+
 ## Gaps (from the code, 6 Oct)
 
 Grep: `git grep -n -i -E "mock|stub|fake|dummy|placeholder|TODO|FIXME|hardcod|fixture"` over app, components, lib,
