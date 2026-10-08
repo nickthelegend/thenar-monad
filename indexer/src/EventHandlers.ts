@@ -294,11 +294,14 @@ indexer.onEvent({ contract: "SalesLog", event: "CorpusSold" }, async ({ event, c
   const taskKey = taskId.toString();
   const when = at(event);
 
-  const [task, saleAsset, stats, day] = await Promise.all([
+  const agentTaskKey = `${buyer}-${taskKey}`;
+  const [task, saleAsset, stats, day, agent, agentTask] = await Promise.all([
     context.Task.get(taskKey),
     context.SaleAsset.get(asset),
     statsFor(context, event.chainId),
     dayFor(context, event.block.timestamp),
+    context.Agent.get(buyer),
+    context.AgentTask.get(agentTaskKey),
   ]);
 
   context.Sale.set({
@@ -326,6 +329,18 @@ indexer.onEvent({ contract: "SalesLog", event: "CorpusSold" }, async ({ event, c
     sales: (saleAsset?.sales ?? 0) + 1,
     volume: (saleAsset?.volume ?? 0n) + amount,
   });
+  // The buyer, as an agent: what it has bought, across how many tasks, for how much.
+  context.Agent.set({
+    id: buyer,
+    purchases: (agent?.purchases ?? 0) + 1,
+    tasks: (agent?.tasks ?? 0) + (agentTask ? 0 : 1),
+    spent: (agent?.spent ?? 0n) + amount,
+    firstAt: agent?.firstAt ?? when.timestamp,
+    lastAt: when.timestamp,
+    lastTaskId: taskId,
+    lastSha256: sha256,
+  });
+  context.AgentTask.set({ id: agentTaskKey, agent: buyer, taskId, purchases: (agentTask?.purchases ?? 0) + 1 });
   context.DailyStat.set({ ...day, sales: day.sales + 1, salesVolume: day.salesVolume + amount });
   context.Stats.set(
     touched(
@@ -334,6 +349,7 @@ indexer.onEvent({ contract: "SalesLog", event: "CorpusSold" }, async ({ event, c
         sales: stats.sales + 1,
         paidSales: stats.paidSales + (terms === "X402" ? 1 : 0),
         freeSales: stats.freeSales + (terms === "AgentKit" ? 1 : 0),
+        agents: stats.agents + (agent ? 0 : 1),
         salesVolume: stats.salesVolume + amount,
       },
       event,

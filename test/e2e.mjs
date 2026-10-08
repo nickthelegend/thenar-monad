@@ -166,6 +166,18 @@ if (/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(BASE)) {
   check("the company's home is at /labs", labs.status === 200 && labsHtml.includes("We build") && !labsHtml.includes('data-testid="monad-pipeline"'));
 }
 
+// The agents ranking: from the indexer when it runs, else from the ledger, and it says which.
+try {
+  const r = await fetch(`${BASE}/api/agents/leaderboard`);
+  const a = await r.json();
+  check("agents are ranked, with their source named", r.status === 200 && ["indexer", "ledger"].includes(a.source) && Array.isArray(a.agents),
+    `${a.agents?.length ?? 0} agents from the ${a.source}`);
+  const ranked = (a.agents ?? []).every((x, i, all) => i === 0 || all[i - 1].purchases >= x.purchases);
+  check("the ranking is by purchases", ranked);
+} catch (e) {
+  check("agents ranking", false, String(e));
+}
+
 // Receipt timings: only for a transaction this chain has, from a build on this chain.
 try {
   const list = await fetch(`${BASE}/api/receipts?limit=5`);

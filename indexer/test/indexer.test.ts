@@ -488,6 +488,39 @@ describe("subscriptions", () => {
   });
 });
 
+describe("agents", () => {
+  it("ranks buyers by what they bought: purchases, distinct tasks and spend", async (t) => {
+    const indexer = createTestIndexer();
+    const OTHER = "0x976EA74026E726554dB657fA54763abd0C3a0aa9" as const;
+    const by = (who: `0x${string}`, e: ReturnType<typeof sold>) => ({ ...e, params: { ...e.params, buyer: who } });
+    await indexer.process({
+      chains: {
+        [LOCAL]: {
+          simulate: [
+            sold(1n, 0n, 0n, 10_000n, 5),
+            sold(2n, 0n, 0n, 10_000n, 6),
+            sold(3n, 3n, 0n, 10_000n, 7),
+            by(OTHER, sold(4n, 3n, 0n, 10_000n, 8)),
+          ],
+        },
+      },
+    });
+    const a = await indexer.Agent.getOrThrow(BUYER);
+    t.expect([a.purchases, a.tasks, a.spent, a.lastTaskId, a.firstAt, a.lastAt]).toEqual([3, 2, 30_000n, 3n, BigInt(ts(5)), BigInt(ts(7))]);
+    t.expect(a.lastSha256).toBe(b32(9003));
+    const b = await indexer.Agent.getOrThrow(OTHER);
+    t.expect([b.purchases, b.tasks, b.spent]).toEqual([1, 1, 10_000n]);
+    const pairs = await indexer.AgentTask.getAll();
+    t.expect(pairs.map((x) => [x.agent, x.taskId, x.purchases]).sort()).toEqual([
+      [OTHER, 3n, 1],
+      [BUYER, 0n, 2],
+      [BUYER, 3n, 1],
+    ].sort());
+    const stats = await indexer.Stats.getOrThrow(String(LOCAL));
+    t.expect([stats.sales, stats.agents]).toEqual([4, 2]);
+  });
+});
+
 describe("daily buckets", () => {
   it("splits runs by UTC day and counts an operator once per day", async (t) => {
     const indexer = createTestIndexer();

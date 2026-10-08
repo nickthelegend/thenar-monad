@@ -58,6 +58,7 @@ export function newStats(chainId: number): Stats {
     sales: 0,
     paidSales: 0,
     freeSales: 0,
+    agents: 0,
     salesVolume: 0n,
     shareSupply: 0n,
     shareHolders: 0,

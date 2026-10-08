@@ -37,7 +37,7 @@ const ROUTES = [
   ["/foundry", 200], ["/handheld", 200], ["/inventory", 200], ["/lab", 200], ["/leaderboard", 200], ["/localnet", 200],
   ["/offline", 200], [`/operator/${operator}`, 200], ["/passkey", 200], ["/policies", 200], ["/portfolio", 200], ["/post", 200],
   ["/products", 200], ["/products/thenar", 200], ["/q/0", 200], [`/run/${hash}`, 200], ["/space", 200], ["/spec", 200],
-  ["/spec/so101", 200], ["/station/0", 200], ["/status", 200], ["/task/0", 200], ["/thenar", 200], ["/start", 200], ["/network", 200], ["/labs", 200],
+  ["/spec/so101", 200], ["/station/0", 200], ["/status", 200], ["/task/0", 200], ["/thenar", 200], ["/start", 200], ["/network", 200], ["/labs", 200], ["/agents?address=0x90F79bf6EB2c4f870365E785982E1f101E93b906", 200],
   ["/licence/0", policies > 0 ? 200 : 404], ["/task/999", 404], ["/no-such-page", 404],
 ];
 const VIEWPORTS = [{ name: "375", width: 375, height: 812 }, { name: "1280", width: 1280, height: 800 }];

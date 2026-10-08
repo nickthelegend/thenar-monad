@@ -54,6 +54,8 @@ type Stats {
   paidSales: Int!
   "Sales under AgentKit terms (free pulls)."
   freeSales: Int!
+  "Distinct buyers in SalesLog: agents, and people's own wallets paying the same way."
+  agents: Int!
   "Sum of every sale's amount in atomic units. Only meaningful while every sale uses one asset; see SaleAsset for per-asset volume."
   salesVolume: BigInt!
   "CorpusShares total supply."
@@ -281,6 +283,32 @@ type Sale {
   timestamp: BigInt! @index
   txHash: String!
   logIndex: Int!
+}
+
+"""
+A buyer of corpus in SalesLog: an AI agent, or a person's own wallet paying
+the same way over x402. id is the buyer's address. /leaderboard ranks these.
+"""
+type Agent {
+  id: ID!
+  purchases: Int!
+  "Distinct tasks bought."
+  tasks: Int!
+  "Atomic units of the payment asset, summed (Thenar sells in USDC only)."
+  spent: BigInt!
+  firstAt: BigInt!
+  lastAt: BigInt! @index
+  lastTaskId: BigInt!
+  "sha256 of the last file it was served, as SalesLog logged it."
+  lastSha256: String!
+}
+
+"Which buyer bought which task: backs Agent.tasks. id is `${buyer}-${taskId}`."
+type AgentTask {
+  id: ID!
+  agent: String! @index
+  taskId: BigInt!
+  purchases: Int!
 }
 
 "Sales volume per payment asset. id is the asset address."

@@ -63,14 +63,24 @@ export default function AgentsPage() {
     return () => { live = false; };
   }, []);
 
-  async function check() {
-    if (!/^0x[0-9a-fA-F]{40}$/.test(address.trim())) {
+  // /agents?address=0x… (from the agents ranking on /leaderboard) opens on that agent, looked up.
+  useEffect(() => {
+    const a = new URLSearchParams(location.search).get("address");
+    if (!a || !/^0x[0-9a-fA-F]{40}$/.test(a)) return;
+    const t = setTimeout(() => { setAddress(a); void check(a); }, 0);
+    return () => clearTimeout(t);
+    // Once, on arrival: the query string is the page's starting point, not state to follow.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  async function check(who = address) {
+    if (!/^0x[0-9a-fA-F]{40}$/.test(who.trim())) {
       setStatus({ error: "That is not a wallet address. It should be 0x followed by 40 hexadecimal characters." });
       return;
     }
     setChecking(true);
     try {
-      const r = await fetch(`/api/agent/status?address=${encodeURIComponent(address.trim())}`);
+      const r = await fetch(`/api/agent/status?address=${encodeURIComponent(who.trim())}`);
       setStatus(await r.json());
     } catch (e) {
       setStatus({ error: readableError(e) });

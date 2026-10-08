@@ -86,7 +86,10 @@ const SCREENS = {
       await page.waitForTimeout(700);
     },
   },
-  leaderboard: { nn: "13", path: "/leaderboard", ready: () => page.waitForTimeout(2500) },
+  leaderboard: {
+    nn: "13", path: "/leaderboard", anchor: "[data-testid=agent-leaderboard]", top: true,
+    ready: () => until(async () => (await page.locator("[data-testid=agent-leaderboard] tbody tr").count()) >= 1, 20_000, "the agents ranking"),
+  },
   labs: { nn: "12c", path: "/labs", ready: () => page.waitForTimeout(1500) },
   footer: { nn: "12d", path: "/corpus", anchor: "[data-testid=app-footer]" },
   receipts: {
