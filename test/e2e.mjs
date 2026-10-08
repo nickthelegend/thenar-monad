@@ -156,6 +156,16 @@ try {
   check("/api/network", false, String(e));
 }
 
+// One front door: on a host that serves the app and the company from one origin
+// (this machine), "/" is the product and the company's home is /labs.
+if (/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(BASE)) {
+  const root = await (await fetch(`${BASE}/`)).text();
+  check("a local root is the product, not the company page", root.includes('data-testid="monad-pipeline"'));
+  const labs = await fetch(`${BASE}/labs`);
+  const labsHtml = await labs.text();
+  check("the company's home is at /labs", labs.status === 200 && labsHtml.includes("We build") && !labsHtml.includes('data-testid="monad-pipeline"'));
+}
+
 // The live Monad pipeline: rendered on the landing, and allowed to reach Monad's socket.
 try {
   const r = await fetch(`${BASE}/thenar`, { signal: AbortSignal.timeout(30_000) });

@@ -18,3 +18,10 @@ export const LABS_ORIGIN = (process.env.NEXT_PUBLIC_LABS_ORIGIN ?? "").replace(/
 export const labsHref = (path: string) => (LABS_ORIGIN ? `${LABS_ORIGIN}${path}` : path);
 
 export const GITHUB = "https://github.com/nickthelegend";
+
+/**
+ * A host that serves the app and the company from one origin: this machine.
+ * There "/" is the app's front door and the company's home is /labs, so a
+ * judge who runs `pnpm demo` lands on the product (proxy.ts).
+ */
+export const singleOriginHost = (host: string) => /^(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/.test(host);

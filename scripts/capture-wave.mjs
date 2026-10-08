@@ -4,7 +4,8 @@
  *   pnpm demo --serve        (in another terminal)
  *   CHROMIUM=… node --import ./test/register.mjs scripts/capture-wave.mjs after landing station
  *
- * Writes docs/screens/wave/<nn>-<screen>-<phase>-{desktop,mobile}.png at
+ * Writes <OUT>/<nn>-<screen>-<phase>-{desktop,mobile}.png (OUT defaults to
+ * docs/screens/wave; wave 2 uses docs/screens/wave2) at
  * 1440×900 and 390×844. Each screen waits for its real state before the
  * shot: the Monad pipeline waits for live testnet blocks, the corpus for its
  * previews. One headless browser, closed at the end. Also checks each page's
@@ -15,7 +16,7 @@ import { execFileSync } from "node:child_process";
 import { mkdirSync } from "node:fs";
 
 const BASE = process.env.BASE ?? "http://localhost:3336";
-const OUT = "docs/screens/wave";
+const OUT = process.env.OUT ?? "docs/screens/wave";
 mkdirSync(OUT, { recursive: true });
 const [phase = "after", ...only] = process.argv.slice(2);
 const DESKTOP = { width: 1440, height: 900 };
@@ -75,6 +76,19 @@ const SCREENS = {
       && /bytes/.test(await page.getByTestId("network-canonical").textContent()), 30_000, "the live Monad reads"),
   },
   start: { nn: "11", path: "/start", ready: () => until(async () => (await page.locator("[data-step]").count()) === 5, 15_000, "the steps") },
+  home: { nn: "12", path: "/" },
+  menu: {
+    nn: "12b", path: "/thenar",
+    // The primary menus, opened: desktop opens Data, a phone opens its one menu.
+    ready: async () => {
+      const wide = page.viewportSize().width >= 768;
+      await page.getByRole("button", { name: wide ? /^Data/ : /^Menu/ }).first().click();
+      await page.waitForTimeout(700);
+    },
+  },
+  leaderboard: { nn: "13", path: "/leaderboard", ready: () => page.waitForTimeout(2500) },
+  labs: { nn: "12c", path: "/labs", ready: () => page.waitForTimeout(1500) },
+  footer: { nn: "12d", path: "/corpus", anchor: "[data-testid=app-footer]" },
   status: { nn: "08", path: "/status" },
 };
 
