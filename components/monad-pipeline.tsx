@@ -5,6 +5,7 @@ import { cadence, median, type Block, type CommitState } from "@/lib/monad-commi
 import { useMonadStream, WATCHED, type Connection } from "@/lib/monad-stream";
 import { LOCALNET } from "@/lib/chain";
 import { cn } from "@/lib/cn";
+import { EthereumFinalityLine } from "@/components/ethereum-compare";
 
 /**
  * Monad's consensus pipeline, live: each block as it is proposed, voted on,
@@ -142,6 +143,7 @@ export function MonadPipeline({ className }: { className?: string }) {
         A block is final two slots after it is proposed, and Monad sends no message for a proposal it abandons.
         {LOCALNET ? " This build's own transactions are on the local chain; this strip is the real network." : ""}
       </p>
+      <EthereumFinalityLine className="mt-2" />
       <p className="mt-2 text-xs text-scribe-3" data-testid="monad-logs">
         Thenar on Monad: {WATCHED.length} contracts watched with <span className="font-mono">monadLogs</span>
         {s.logs.length

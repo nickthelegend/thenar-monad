@@ -166,6 +166,17 @@ if (/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(BASE)) {
   check("the company's home is at /labs", labs.status === 200 && labsHtml.includes("We build") && !labsHtml.includes('data-testid="monad-pipeline"'));
 }
 
+// Ethereum read live, for the comparison: either its figures or a stated error, never a 5xx.
+try {
+  const r = await fetch(`${BASE}/api/compare`);
+  const c = await r.json();
+  const e = c.ethereum ?? {};
+  check("Ethereum is read for the comparison", r.status === 200 && (typeof e.error === "string" || (e.finalizedLagBlocks > 0 && e.usdPerEth > 0 && BigInt(e.gasPriceWei) > 0n)),
+    e.error ? `not read: ${e.error}` : `finalized trails by ${e.finalizedLagBlocks} blocks (${e.finalizedLagSeconds} s), ETH $${e.usdPerEth}`);
+} catch (err) {
+  check("compare", false, String(err));
+}
+
 // The agents ranking: from the indexer when it runs, else from the ledger, and it says which.
 try {
   const r = await fetch(`${BASE}/api/agents/leaderboard`);

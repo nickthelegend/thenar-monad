@@ -36,6 +36,7 @@ import type { Sample, Verdict } from "@/lib/types";
 import { useGasSponsored } from "@/lib/contract-write";
 import { MonadHeartbeat } from "@/components/monad-pipeline";
 import { ReceiptTimers } from "@/components/receipt-timers";
+import { EthereumReceiptLine } from "@/components/ethereum-compare";
 
 const StationViewport = dynamic(
   () => import("@/components/station/viewport").then((m) => m.StationViewport),
@@ -1025,6 +1026,7 @@ function MeasurementSnap({
                   </>
                 ) : null}
               </span>
+              <EthereumReceiptLine gasUsed={tx.gasUsed} />
             </div>
           ) : null}
 

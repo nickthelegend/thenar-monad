@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { Hex } from "viem";
 import { MonadPipeline } from "@/components/monad-pipeline";
 import { ReceiptHistogram } from "@/components/receipt-histogram";
+import { CompareCard } from "@/components/ethereum-compare";
 import { DimRule } from "@/components/primitives";
 import { CANONICAL, MONAD_RPC, P256_VERIFY, STAKING, callData, commissionPct, decode, monadBatch, p256Input, p256Valid } from "@/lib/monad-network";
 import { DIPPED_INTO_RESERVE, RESERVE_PRECOMPILE } from "@/lib/reserve";
@@ -82,7 +83,8 @@ export default function NetworkPage() {
   // latest, safe and finalized in one batch: separate calls can land on different nodes behind the load balancer.
   const tags = useLive(useCallback(async (signal: AbortSignal) => {
     const r = await monadBatch(["latest", "safe", "finalized"].map((t) => ({ method: "eth_getBlockByNumber", params: [t, false] })), signal);
-    return r.map((x) => hexNum((x.result as { number?: string } | null)?.number));
+    const blocks = r.map((x) => x.result as { number?: string; baseFeePerGas?: string } | null);
+    return { numbers: blocks.map((b) => hexNum(b?.number)), baseFee: blocks[0]?.baseFeePerGas ? BigInt(blocks[0].baseFeePerGas) : null };
   }, []), 3_000);
 
   const staking = useLive(useCallback(async (signal: AbortSignal) => {
@@ -148,7 +150,7 @@ export default function NetworkPage() {
   }, []);
   useEffect(() => { const t = setTimeout(() => void runP256(), 0); return () => clearTimeout(t); }, [runP256]);
 
-  const [latest, safe, finalized] = tags.data ?? [NaN, NaN, NaN];
+  const [latest, safe, finalized] = tags.data?.numbers ?? [NaN, NaN, NaN];
   const st = staking.data;
   const verified = offchain.data?.sourcify.contracts ?? [];
 
@@ -163,6 +165,8 @@ export default function NetworkPage() {
 
       <MonadPipeline className="mt-8" />
       <ReceiptHistogram className="mt-4" />
+
+      <div className="mt-4"><CompareCard monadBaseFeeWei={tags.data?.baseFee ?? null} /></div>
 
       <DimRule className="mt-10" note="Consensus" />
       <div className="mt-4 grid gap-4 md:grid-cols-2">
