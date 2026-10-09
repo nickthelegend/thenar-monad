@@ -125,6 +125,21 @@ Also new: [/start](docs/screens/wave/11b-start-done-after-desktop.png) (five ste
 [docs/screens/wave/](docs/screens/wave/) at 1440 px and 390 px, captured by `scripts/capture-wave.mjs` and
 `test/live-localnet.mjs`.
 
+### Wave 2 and the readability pass (8–9 Oct)
+
+- **One front door:** on `pnpm demo`, `/` is the product; the company page is at `/labs`, and side routes sit in a
+  footer.
+- **Receipts against Monad's finality:** the last 20 transactions, executed and final as measured, charted beside
+  Monad testnet's live finality ([screen](docs/screens/wave2/14-receipts-after-desktop.png)).
+- **Monad beside Ethereum, read live:** Ethereum mainnet's finality and gas price, read now; the strip says how much
+  sooner Monad is final, and the receipt prices the run's gas on Ethereum (`/api/compare`).
+- **Agents ranked from the indexer:** Envio's `Agent` entity over SalesLog, joined with each agent's signed trails on
+  /leaderboard ([screen](docs/screens/wave2/13-leaderboard-after-desktop.png)).
+- **Race the best run:** a translucent ghost of the task's best paid run at the station
+  ([screen](docs/screens/wave2/16-race-after-desktop.png)).
+- **Readability:** every judge-path card leads with one number or verdict; method and caveats are behind Details
+  ([before and after](docs/screens/wave3/)).
+
 ---
 
 ## Architecture

@@ -67,6 +67,7 @@ The user sets every secret. None of them is ever written into git, and none goes
 | `CRE_ETH_PRIVATE_KEY` | `cre/.env` on this machine only | The throwaway CRE key from section 2 | Sends the simulated report |
 | `DASHSCOPE_API_KEY` / `MOONSHOT_API_KEY` | `.env.local` on this machine only | Model Studio / platform.moonshot.ai | Runs the buyer agent on Qwen 3.8 Max or Kimi K2.6 |
 | `AGENT_PRIVATE_KEY` | `.env.local` (already set) | — | The demo agent's wallet |
+| `ETHEREUM_RPC_URL` (optional) | **Railway `web`** | Any Ethereum mainnet RPC; public publicnode is the default | The Monad-vs-Ethereum comparison (`/api/compare`), read-only |
 
 ## 4. Deploy CorpusAudit (5 min) 👤 the CRE key
 

@@ -170,14 +170,14 @@ It leads with what only Monad can show, then the product. Shots on a local build
 
 | Time | Shot | Say |
 |---|---|---|
-| 0:00–0:20 | /thenar: the block strip filling live, chips going grey → blue → green with their milliseconds | "Robot data, recorded by people who own it, bought by agents that verify it. This is Monad testnet right now: a block every 300 ms, final in under 600." |
+| 0:00–0:20 | `/`: the block strip filling live, chips going grey → blue → green; the line "Final 1,650× sooner than Ethereum" | "Robot data, recorded by people who own it, bought by agents that verify it. This is Monad testnet right now: a block every 300 ms, final in under 600." |
 | 0:20–0:40 | "Start earning" → /start; sign in; the steps turn green as the wallet, gas and passkey are read | "One way in. Every step is read from the chain, not remembered." |
 | 0:40–1:00 | /passkey: Face ID makes the passkey; *Prove it* turns green; *Derive my SO-101 key* | "One passkey: who I am, checked by Monad's P-256 precompile, and the key my robot arm obeys." |
-| 1:00–1:35 | /station/0: drive with the keyboard, then the leader arm, then the Quest 3S on the real table | "Three ways to drive, one recording format." |
-| 1:35–1:55 | Submit: IN TOLERANCE, then the receipt: executed, final, the gas limit and what it charged | "Scored, signed and paid in one transaction. Two timers, because a receipt isn't final until two slots later. Monad charges the limit, so we set it." |
-| 1:55–2:20 | /corpus: the grid of episode previews; pick a task: its root against the chain | "The data a buyer pays for, drawn from the samples the hashes commit to." |
-| 2:20–2:40 | /agents: a purchase opens into the agent's signed trail: model, tools, its check against SalesLog | "The agent paid a cent over x402, and signed its own account of why, with the key that paid." |
-| 2:40–3:00 | /network: a P-256 key made in the page, checked by `0x0100`; the staking epoch; contracts verified on MonadVision | "Identity, provenance, ownership and agent trust, each enforced by a contract on Monad. Thenar." |
+| 1:00–1:35 | /station/0: *Race the best run* on; drive against the ghost with the keyboard, then the leader arm, then the Quest 3S | "Three ways to drive, one recording format, and the best run to beat." |
+| 1:35–1:55 | Submit: IN TOLERANCE, paid, then "Executed · Final" on the receipt | "Scored, signed and paid in one transaction, and final two slots later." |
+| 1:55–2:20 | /corpus: the grid of episode previews; /leaderboard: agents ranked by what they bought | "The data, drawn from the samples the hashes commit to, and the agents that buy it." |
+| 2:20–2:40 | /agents: a purchase opens into the agent's signed trail | "The agent paid a cent over x402, and signed its own account of why, with the key that paid." |
+| 2:40–3:00 | /network: a P-256 key checked by `0x0100`, Monad beside Ethereum, contracts verified on MonadVision | "Identity, provenance, ownership and agent trust, each enforced by a contract on Monad. Thenar." |
 
 **Pitch video (2 minutes):**
 1. 0:00–0:20: the problem. Robots need demonstrations; the people who record them are not paid and do not own them.
