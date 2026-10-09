@@ -19,8 +19,6 @@ import { cn } from "@/lib/cn";
 
 type Receipt = { tx: string; action: string; via: string; executedMs: number; finalMs: number | null; at: number };
 
-const W = 600;
-const ROW = 16;
 const ms = (v: number | null) => (v === null ? "…" : v >= 1000 ? `${(v / 1000).toFixed(v >= 10_000 ? 0 : 1)} s` : `${Math.round(v)} ms`);
 const shortAction = (a: string) => a.replace(/([a-z])([A-Z])/g, "$1 $2").toLowerCase();
 
@@ -43,7 +41,6 @@ export function ReceiptHistogram({ className }: { className?: string }) {
   }, []);
 
   const s = summarize(rows ?? []);
-  const H = Math.max(1, rows?.length ?? 0) * ROW + 22;
 
   return (
     <section className={cn("w-full rounded-2xl border border-white/10 bg-ink-1 p-4 text-left sm:p-6", className)} data-testid="receipt-histogram" aria-label="Recent receipts, executed and final">
@@ -63,36 +60,39 @@ export function ReceiptHistogram({ className }: { className?: string }) {
       ) : rows.length === 0 ? (
         <p className="mt-4 text-sm text-scribe-2">No transactions timed yet. Each one sent from this app adds a row: a paid run, a passkey, a mint.</p>
       ) : (
-        <div className="mt-3 grid grid-cols-[7.5rem_1fr] gap-x-3 sm:grid-cols-[10rem_1fr]">
-          <ol className="flex flex-col pt-[22px] text-right font-mono text-xs leading-4 text-scribe-3">
-            {rows.map((r) => <li key={r.tx} className="h-4 truncate" title={r.tx}>{shortAction(r.action)}</li>)}
-          </ol>
-          <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" className="h-auto w-full overflow-visible" role="img"
-               aria-label={`Executed and final times for ${rows.length} transactions, on a log scale from 1 ms to 300 s`}>
-            {TICKS.map((t) => (
-              <g key={t}>
-                <line x1={logX(t) * W} x2={logX(t) * W} y1={14} y2={H} stroke="var(--color-rule)" />
-                <text x={logX(t) * W} y={10} textAnchor="middle" fontSize="10" fill="var(--color-scribe-3)" fontFamily="var(--font-mono)">{tickLabel(t)}</text>
-              </g>
-            ))}
-            {monadFinal !== null ? (
-              <g data-testid="monad-final-line">
-                <rect x={logX(monadFinal) * W - 1} y={14} width={2} height={H - 14} fill="var(--color-go)" opacity={0.35} />
-              </g>
-            ) : null}
-            {rows.map((r, i) => {
-              const y = 22 + i * ROW + ROW / 2 - 4;
-              const x1 = logX(r.executedMs) * W;
-              const x2 = r.finalMs === null ? null : logX(r.finalMs) * W;
-              return (
-                <g key={r.tx}>
-                  {x2 !== null ? <line x1={x1} x2={x2} y1={y} y2={y} stroke="var(--color-rule-strong)" strokeWidth="2" /> : null}
-                  <circle cx={x1} cy={y} r="4" fill="var(--color-probe)" />
-                  {x2 !== null ? <circle cx={x2} cy={y} r="4" fill="var(--color-go)" /> : null}
-                </g>
-              );
-            })}
-          </svg>
+        <div className="mt-3" role="img" aria-label={`Executed and final times for ${rows.length} transactions, on a log scale from 1 ms to 300 s`}>
+          {/* Drawn in HTML on a percentage axis, so rows and labels share one height at every width. */}
+          <div className="grid grid-cols-[6.5rem_1fr] gap-x-3 sm:grid-cols-[10rem_1fr]">
+            <span />
+            <div className="relative h-4">
+              {TICKS.map((t, i) => (
+                <span key={t} className={cn("absolute top-0 whitespace-nowrap font-mono text-[10px] text-scribe-3", i === TICKS.length - 1 ? "-translate-x-full" : "-translate-x-1/2")}
+                      style={{ left: `${logX(t) * 100}%` }}>{tickLabel(t)}</span>
+              ))}
+            </div>
+          </div>
+          <div className="grid grid-cols-[6.5rem_1fr] gap-x-3 sm:grid-cols-[10rem_1fr]">
+            <ol className="flex flex-col text-right font-mono text-xs leading-4 text-scribe-3">
+              {rows.map((r) => <li key={r.tx} className="h-4 truncate" title={r.tx}>{shortAction(r.action)}</li>)}
+            </ol>
+            <div className="relative">
+              {TICKS.map((t) => <span key={t} className="absolute inset-y-0 w-px bg-rule" style={{ left: `${logX(t) * 100}%` }} />)}
+              {monadFinal !== null ? (
+                <span data-testid="monad-final-line" className="absolute inset-y-0 w-0.5 -translate-x-1/2 bg-go/35" style={{ left: `${logX(monadFinal) * 100}%` }} />
+              ) : null}
+              {rows.map((r) => {
+                const x1 = logX(r.executedMs) * 100;
+                const x2 = r.finalMs === null ? null : logX(r.finalMs) * 100;
+                return (
+                  <div key={r.tx} className="relative h-4" data-testid="receipt-row">
+                    {x2 !== null ? <span className="absolute top-1/2 h-0.5 -translate-y-1/2 bg-rule-strong" style={{ left: `${x1}%`, width: `${x2 - x1}%` }} /> : null}
+                    <span className="absolute top-1/2 size-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-probe" style={{ left: `${x1}%` }} title={`executed in ${ms(r.executedMs)}`} />
+                    {x2 !== null ? <span className="absolute top-1/2 size-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-go" style={{ left: `${x2}%` }} title={`final in ${ms(r.finalMs)}`} /> : null}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         </div>
       )}
 
