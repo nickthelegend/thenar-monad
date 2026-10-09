@@ -6,6 +6,7 @@ import { median } from "@/lib/monad-commit";
 import { useMonadStream } from "@/lib/monad-stream";
 import { TICKS, logX, summarize, tickLabel } from "@/lib/receipt-stats";
 import { cn } from "@/lib/cn";
+import { Chip, Details } from "@/components/details";
 
 /**
  * Thenar's last twenty transactions, each as the browser that sent it timed
@@ -47,6 +48,7 @@ export function ReceiptHistogram({ className }: { className?: string }) {
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <p className="text-sm text-scribe">
           Thenar&rsquo;s last {s.count || ""} transactions, executed <span className="text-probe">●</span> and final <span className="text-go">●</span>
+          {LOCALNET ? <span className="ml-2"><Chip>local chain</Chip></span> : null}
         </p>
         <p className="font-mono text-xs tabular-nums text-scribe-3">
           median {ms(s.executed)} → {ms(s.final)}{s.pending ? ` · ${s.pending} not final yet` : ""}
@@ -96,13 +98,15 @@ export function ReceiptHistogram({ className }: { className?: string }) {
         </div>
       )}
 
-      <p className="mt-3 text-xs leading-relaxed text-scribe-3">
-        Each row is timed by the browser that sent it, from the send: the signing prompt is in neither number.
-        {monadFinal !== null ? <> The green band is Monad testnet&rsquo;s finality right now, {ms(monadFinal)}, measured live by the strip.</> : null}
-        {LOCALNET
-          ? " These receipts are the local chain's: anvil executes at once, and its finalized tag trails the head by about sixty blocks, so 'final' here is about a minute. After the testnet go they are Monad's."
-          : " These receipts are Monad testnet's."}
-      </p>
+      <Details className="mt-3">
+        <p>
+          Each row is timed by the browser that sent it, from the send: the signing prompt is in neither number.
+          {monadFinal !== null ? <> The green band is Monad testnet&rsquo;s finality right now, {ms(monadFinal)}, measured live by the strip.</> : null}
+          {LOCALNET
+            ? " These receipts are the local chain's: anvil executes at once, and its finalized tag trails the head by about sixty blocks, so 'final' here is about a minute. After the testnet go they are Monad's."
+            : " These receipts are Monad testnet's."}
+        </p>
+      </Details>
     </section>
   );
 }

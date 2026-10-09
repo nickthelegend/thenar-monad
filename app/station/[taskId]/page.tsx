@@ -37,6 +37,7 @@ import { useGasSponsored } from "@/lib/contract-write";
 import { MonadHeartbeat } from "@/components/monad-pipeline";
 import { ReceiptTimers } from "@/components/receipt-timers";
 import { EthereumReceiptLine } from "@/components/ethereum-compare";
+import { Details } from "@/components/details";
 import { RacePanel, useBestRun } from "@/components/station/race-panel";
 
 const StationViewport = dynamic(
@@ -1033,6 +1034,8 @@ function MeasurementSnap({
                 </a>
               </span>
               <ReceiptTimers timers={tx.timers} />
+              {/* Gas, and the same run on Ethereum: fine print, one tap away. */}
+              <Details label="Gas, and this run on Ethereum">
               <span>
                 gas <span className="text-scribe-2 tabular-nums">{(tx.gasMon ?? 0).toFixed(6)}</span> {CURRENCY}
                 {tx.gasLimit !== undefined && tx.gasUsed !== undefined ? (
@@ -1044,6 +1047,7 @@ function MeasurementSnap({
                 ) : null}
               </span>
               <EthereumReceiptLine gasUsed={tx.gasUsed} />
+              </Details>
             </div>
           ) : null}
 

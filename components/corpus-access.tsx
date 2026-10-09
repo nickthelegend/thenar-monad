@@ -1,5 +1,6 @@
 "use client";
 
+import { Details } from "@/components/details";
 import { useState } from "react";
 import { useReadContract, useSignMessage } from "wagmi";
 import { formatEther } from "viem";
@@ -106,14 +107,17 @@ export function CorpusAccessPanel({ taskId = "all" }: { taskId?: number | "all" 
         ) : null}
       </div>
 
-      <p className="mt-2 max-w-[66ch] text-[13px] leading-relaxed text-scribe-2">
-        It sells time, not rights. While it runs,{" "}
-        <code className="font-mono text-[12px] text-scribe">/api/dataset</code>{" "}
-        hands you a task&rsquo;s whole corpus as one JSON file, once you sign the
-        download with the subscribing wallet; it conveys no ownership of
-        anything, and every episode stays readable one at a time by hash without
-        paying at all. Extending adds to whatever is left rather than replacing it.
-      </p>
+      <p className="mt-2 text-[13px] text-scribe-2">Every task&rsquo;s whole corpus, for as long as you subscribe.</p>
+      <Details className="mt-1">
+              <p>
+          It sells time, not rights. While it runs,{" "}
+          <code className="font-mono text-[12px] text-scribe">/api/dataset</code>{" "}
+          hands you a task&rsquo;s whole corpus as one JSON file, once you sign the
+          download with the subscribing wallet; it conveys no ownership of
+          anything, and every episode stays readable one at a time by hash without
+          paying at all. Extending adds to whatever is left rather than replacing it.
+        </p>
+      </Details>
 
       <div className="mt-3 flex flex-wrap items-center gap-2">
         {[1, 7, 30, 90].filter((d) => d >= lo && d <= hi).map((d) => (

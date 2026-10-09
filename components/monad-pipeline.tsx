@@ -5,7 +5,8 @@ import { cadence, median, type Block, type CommitState } from "@/lib/monad-commi
 import { useMonadStream, WATCHED, type Connection } from "@/lib/monad-stream";
 import { LOCALNET } from "@/lib/chain";
 import { cn } from "@/lib/cn";
-import { EthereumFinalityLine } from "@/components/ethereum-compare";
+import { EthereumFinalityLine, EthereumFinalityChip } from "@/components/ethereum-compare";
+import { Details } from "@/components/details";
 
 /**
  * Monad's consensus pipeline, live: each block as it is proposed, voted on,
@@ -137,19 +138,24 @@ export function MonadPipeline({ className }: { className?: string }) {
         ))}
       </dl>
 
-      <p className="mt-4 text-xs leading-relaxed text-scribe-3">
-        Read live from Monad testnet&rsquo;s public WebSocket (<span className="font-mono">monadNewHeads</span>). Every time
-        is measured in this browser, as the median of the last {samples || "few"} blocks seen from the moment they were proposed.
-        A block is final two slots after it is proposed, and Monad sends no message for a proposal it abandons.
-        {LOCALNET ? " This build's own transactions are on the local chain; this strip is the real network." : ""}
-      </p>
-      <EthereumFinalityLine className="mt-2" />
-      <p className="mt-2 text-xs text-scribe-3" data-testid="monad-logs">
-        Thenar on Monad: {WATCHED.length} contracts watched with <span className="font-mono">monadLogs</span>
-        {s.logs.length
-          ? <> · {s.logs.length} event{s.logs.length === 1 ? "" : "s"} since you opened this page, the newest <span className={cn("font-mono", s.logs[0].state === "Proposed" ? "text-scribe-2" : "text-go")}>{s.logs[0].state}</span></>
-          : " · no events since you opened this page"}
-      </p>
+      <div className="mt-4 flex flex-wrap items-center justify-between gap-2">
+        <EthereumFinalityChip />
+        <Details>
+          <p>
+            Read live from Monad testnet&rsquo;s public WebSocket (<span className="font-mono">monadNewHeads</span>). Every time
+            is measured in this browser, as the median of the last {samples || "few"} blocks seen from the moment they were proposed.
+            A block is final two slots after it is proposed, and Monad sends no message for a proposal it abandons.
+            {LOCALNET ? " This build's own transactions are on the local chain; this strip is the real network." : ""}
+          </p>
+          <EthereumFinalityLine />
+          <p data-testid="monad-logs">
+            Thenar on Monad: {WATCHED.length} contracts watched with <span className="font-mono">monadLogs</span>
+            {s.logs.length
+              ? <> · {s.logs.length} event{s.logs.length === 1 ? "" : "s"} since you opened this page, the newest <span className={cn("font-mono", s.logs[0].state === "Proposed" ? "text-scribe-2" : "text-go")}>{s.logs[0].state}</span></>
+              : " · no events since you opened this page"}
+          </p>
+        </Details>
+      </div>
     </section>
   );
 }

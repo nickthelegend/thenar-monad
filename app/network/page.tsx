@@ -11,6 +11,7 @@ import { DIPPED_INTO_RESERVE, RESERVE_PRECOMPILE } from "@/lib/reserve";
 import { DEPLOYMENT } from "@/lib/deployment";
 import { LOCALNET, monadVisionAddress } from "@/lib/chain";
 import { cn } from "@/lib/cn";
+import { Details } from "@/components/details";
 
 /**
  * Monad testnet, read live by this page.
@@ -158,9 +159,7 @@ export default function NetworkPage() {
     <div className="mx-auto max-w-[960px] px-5 py-10">
       <h1 className="heading-glow text-4xl font-medium tracking-tight sm:text-5xl">Monad, read live</h1>
       <p className="mt-4 max-w-[64ch] text-base text-scribe-2 [text-wrap:pretty]">
-        The parts of Monad Thenar is built on, read from Monad testnet by this page as you watch: its consensus, its
-        precompiles, the shared contracts and Thenar&rsquo;s own. Nothing here is a figure we typed in.
-        {LOCALNET ? " This build's own transactions run on a local chain; everything on this page is the real network." : ""}
+        Monad testnet, read by this page as you watch.{LOCALNET ? " Everything here is the real network, not the local chain." : ""}
       </p>
 
       <MonadPipeline className="mt-8" />
@@ -180,11 +179,13 @@ export default function NetworkPage() {
               </div>
             ))}
           </dl>
-          <p className="mt-3">
-            On Monad a block is final two slots after it is proposed, so <span className="font-mono">finalized</span> trails
-            the head by two blocks: about 600 ms. Thenar credits value only at that tag (lib/receipt-timers.ts). On Ethereum the
-            same tag trails by two epochs, about 13 minutes.
-          </p>
+          <Details className="mt-3">
+            <p>
+              On Monad a block is final two slots after it is proposed, so <span className="font-mono">finalized</span> trails
+              the head by two blocks: about 600 ms. Thenar credits value only at that tag (lib/receipt-timers.ts). On Ethereum the
+              same tag trails by two epochs, about 13 minutes.
+            </p>
+          </Details>
           <Stamp s={tags} source={RPC_HOST} />
         </Card>
 
@@ -195,11 +196,13 @@ export default function NetworkPage() {
             <div><dt className="text-xs text-scribe-3">Its consensus stake</dt><dd className="font-mono tabular-nums text-scribe">{st ? `${(Number(st.consensusStake / 10n ** 15n) / 1000).toLocaleString("en-US")} MON` : "…"}</dd></div>
             <div><dt className="text-xs text-scribe-3">Its commission</dt><dd className="font-mono tabular-nums text-scribe">{st ? `${st.commission}%` : "…"}</dd></div>
           </dl>
-          <p className="mt-3">
-            Read with <span className="font-mono">getEpoch</span>, <span className="font-mono">getProposerValId</span> and{" "}
-            <span className="font-mono">getValidator</span>. Thenar does not stake its escrow: a funder&rsquo;s MON has to be
-            payable to an operator in the block a run is recorded, and staked MON takes an epoch to come back.
-          </p>
+          <Details className="mt-3">
+            <p>
+              Read with <span className="font-mono">getEpoch</span>, <span className="font-mono">getProposerValId</span> and{" "}
+              <span className="font-mono">getValidator</span>. Thenar does not stake its escrow: a funder&rsquo;s MON has to be
+              payable to an operator in the block a run is recorded, and staked MON takes an epoch to come back.
+            </p>
+          </Details>
           <Stamp s={staking} source={RPC_HOST} />
         </Card>
       </div>
@@ -207,10 +210,12 @@ export default function NetworkPage() {
       <DimRule className="mt-10" note="Precompiles" />
       <div className="mt-4 grid gap-4 md:grid-cols-2">
         <Card title="P-256 (precompile 0x0100)" testid="network-p256">
-          <p>
-            A key made in this page just now, a signature from it, and Monad&rsquo;s precompile asked to check it. Passkeys sign
-            with this curve, which is how PasskeyRegistry checks an operator&rsquo;s passkey on chain.
-          </p>
+          <Details className="mt-3">
+            <p>
+              A key made in this page just now, a signature from it, and Monad&rsquo;s precompile asked to check it. Passkeys sign
+              with this curve, which is how PasskeyRegistry checks an operator&rsquo;s passkey on chain.
+            </p>
+          </Details>
           <ul className="mt-3 flex flex-col gap-1 font-mono text-xs">
             <li>key <span className="text-scribe">{p256.key ?? "…"}</span></li>
             <li data-key="valid">signature: <span className={p256.ok ? "text-go" : p256.ok === false ? "text-reject" : "text-scribe-3"}>{p256.ok === null ? "checking…" : p256.ok ? "valid (the precompile returned 1)" : "refused"}</span></li>
@@ -223,12 +228,14 @@ export default function NetworkPage() {
         </Card>
 
         <Card title="Reserve balance (precompile 0x1001)" testid="network-reserve">
-          <p>
-            Every account keeps 10 MON that a transaction&rsquo;s value cannot dig into, because consensus runs ahead of
-            execution. A delegated (EIP-7702) account never gets the one-off exception. Thenar checks this before any write
-            that moves MON, and refuses one Monad would revert (lib/reserve.ts). Sponsored writes move none of the
-            operator&rsquo;s MON, so they never meet it.
-          </p>
+          <Details className="mt-3">
+            <p>
+              Every account keeps 10 MON that a transaction&rsquo;s value cannot dig into, because consensus runs ahead of
+              execution. A delegated (EIP-7702) account never gets the one-off exception. Thenar checks this before any write
+              that moves MON, and refuses one Monad would revert (lib/reserve.ts). Sponsored writes move none of the
+              operator&rsquo;s MON, so they never meet it.
+            </p>
+          </Details>
           <p className="mt-3 font-mono text-xs">
             dippedIntoReserve() as an eth_call: <span className="text-scribe">{st ? (st.dipped === "0x" + "0".repeat(64) ? "false" : st.dipped) : "…"}</span>
           </p>
@@ -238,12 +245,14 @@ export default function NetworkPage() {
 
       <DimRule className="mt-10" note="Gas" />
       <Card title="Charged on the limit" testid="network-gas">
-        <p>
-          Monad charges a transaction its whole gas limit, not the gas it uses, and a wallet whose estimate fails may fall back
-          to a large default. So every Thenar write first has the node estimate it under Monad&rsquo;s own rules; one whose
-          simulation reverts is not sent, and the rest go with the estimate plus a tenth as an explicit limit
-          (lib/monad-gas.ts). The station&rsquo;s receipt shows the limit, the gas used and what was charged.
-        </p>
+        <Details className="mt-3">
+          <p>
+            Monad charges a transaction its whole gas limit, not the gas it uses, and a wallet whose estimate fails may fall back
+            to a large default. So every Thenar write first has the node estimate it under Monad&rsquo;s own rules; one whose
+            simulation reverts is not sent, and the rest go with the estimate plus a tenth as an explicit limit
+            (lib/monad-gas.ts). The station&rsquo;s receipt shows the limit, the gas used and what was charged.
+          </p>
+        </Details>
       </Card>
 
       <DimRule className="mt-10" note="Shared contracts" />
@@ -284,17 +293,21 @@ export default function NetworkPage() {
           </tbody>
         </table>
       </div>
-      <p className="mt-2 text-xs text-scribe-3">
-        The deployer&rsquo;s pool, from <span className="font-mono">txpool_statusByAddress</span>: <span className="font-mono">{code.data?.pool ?? "…"}</span>. Sourcify status read by this server from{" "}
-        <span className="font-mono">{offchain.data?.sourcify.url.replace("https://", "") ?? "…"}</span>{offchain.data?.sourcify.error ? `: ${offchain.data.sourcify.error}` : ""}.
-      </p>
+      <Details className="mt-3">
+        <p>
+          The deployer&rsquo;s pool, from <span className="font-mono">txpool_statusByAddress</span>: <span className="font-mono">{code.data?.pool ?? "…"}</span>. Sourcify status read by this server from{" "}
+          <span className="font-mono">{offchain.data?.sourcify.url.replace("https://", "") ?? "…"}</span>{offchain.data?.sourcify.error ? `: ${offchain.data.sourcify.error}` : ""}.
+        </p>
+      </Details>
 
       <DimRule className="mt-10" note="Payments" />
       <Card title="Monad's x402 facilitator" testid="network-facilitator">
-        <p>
-          Agents pay for a task&rsquo;s corpus over x402 in USDC. On Monad the payment settles through Monad&rsquo;s own
-          facilitator{LOCALNET ? "; this local build uses a facilitator on this machine instead, since Monad's cannot see a local chain" : ""}. What it says it settles, asked just now by this server:
-        </p>
+        <Details className="mt-3">
+          <p>
+            Agents pay for a task&rsquo;s corpus over x402 in USDC. On Monad the payment settles through Monad&rsquo;s own
+            facilitator{LOCALNET ? "; this local build uses a facilitator on this machine instead, since Monad's cannot see a local chain" : ""}. What it says it settles, asked just now by this server:
+          </p>
+        </Details>
         <ul className="mt-3 flex flex-wrap gap-2 font-mono text-xs">
           {offchain.data?.facilitator.kinds?.map((k) => (
             <li key={`${k.scheme}-${k.network}`} className="rounded-full border border-white/10 px-2 py-1 text-scribe">{k.scheme} · {k.network}</li>

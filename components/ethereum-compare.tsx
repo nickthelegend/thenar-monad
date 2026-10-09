@@ -60,6 +60,21 @@ export function EthereumFinalityLine({ className }: { className?: string }) {
   );
 }
 
+/** The one comparison, as a chip: how much sooner Monad is final than Ethereum, right now. */
+export function EthereumFinalityChip() {
+  const c = useCompare();
+  const s = useMonadStream();
+  const e = eth(c);
+  const monadFinal = median(s.pipeline.latencies.Finalized);
+  if (!e || !monadFinal) return <span />;
+  const n = Math.round(e.finalizedLagSeconds / (monadFinal / 1000));
+  return (
+    <span className="text-xs text-scribe-2" data-testid="ethereum-chip">
+      Final <span className="text-go">{n.toLocaleString("en-US")}× sooner</span> than Ethereum ({duration(e.finalizedLagSeconds)})
+    </span>
+  );
+}
+
 /** The station receipt's line: this run's gas, priced and finalized on Ethereum now. */
 export function EthereumReceiptLine({ gasUsed }: { gasUsed?: bigint }) {
   const c = useCompare();

@@ -273,7 +273,7 @@ export default function AgentsPage() {
             keeps one only from the sale&apos;s buyer, and this page checks the signature again.
           </p>
           {sales.sales.filter((s) => s.decision).map((s, i) => (
-            <DecisionTrail key={s.id} id={s.id} record={s.decision!.record} signature={s.decision!.signature} open={i === 0} />
+            <DecisionTrail key={s.id} id={s.id} record={s.decision!.record} signature={s.decision!.signature} open={false} />
           ))}
         </div>
       ) : (

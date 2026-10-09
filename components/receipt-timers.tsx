@@ -4,6 +4,7 @@ import type { Timers } from "@/lib/receipt-timers";
 import { median } from "@/lib/monad-commit";
 import { useMonadStream } from "@/lib/monad-stream";
 import { cn } from "@/lib/cn";
+import { Chip, Details } from "@/components/details";
 
 /**
  * The two timers for a transaction this page sent: executed, then final.
@@ -39,28 +40,37 @@ export function ReceiptTimers({ timers, className }: { timers?: Timers; classNam
       : `${timers.finalMs === undefined ? "waiting for " : ""}${timers.blockNumber !== undefined ? `block ${timers.blockNumber.toLocaleString("en-US")} ` : ""}${timers.finalMs === undefined ? "to reach the finalized tag" : "at the finalized tag, hash checked"}${timers.moved ? " (it moved to another proposal first)" : ""}${!local && lag !== undefined ? `; the tag trails the head by ${lag} block${lag === 1 ? "" : "s"}` : ""}`,
   ]);
 
+  const value = (key: string) => rows.find((r) => r[0] === key)?.[2] ?? "…";
   return (
     <div className={cn("flex flex-col gap-1.5", className)} data-testid="receipt-timers" data-where={timers.where}>
-      <dl className="flex flex-col gap-1">
-        {rows.map(([key, label, value, note]) => (
-          <div key={key} className="flex flex-wrap items-baseline gap-x-3">
-            <dt className="w-[108px] shrink-0 text-scribe-3">{label}</dt>
-            <dd className="w-[64px] shrink-0 tabular-nums text-scribe" data-key={key}>{value}</dd>
-            <dd className="w-full min-w-0 text-scribe-3 [overflow-wrap:anywhere] sm:w-auto sm:flex-1">{note}</dd>
-          </div>
-        ))}
-      </dl>
-      <p className="leading-relaxed text-scribe-3">
-        {local ? (
-          <>
-            Local chain timings, not Monad&rsquo;s: anvil mines on demand, and its finalized tag trails the head by
-            {lag !== undefined ? ` ${lag} blocks` : " dozens of blocks"}, the way Ethereum&rsquo;s trails by two epochs. Monad&rsquo;s trails by two.
-            {liveFinal !== null ? <> Monad testnet right now finalizes a block {ms(liveFinal)} after it is proposed, measured live in this page.</> : null}
-          </>
-        ) : (
-          <>Measured in this browser on Monad testnet, from the moment the wallet sent the transaction. The signing prompt is in neither number.</>
-        )}
-      </p>
+      {/* One line: the two timers, and whose chain they are. The method and caveats sit under Details. */}
+      <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
+        <span className="text-scribe-3">Executed <span className="text-sm tabular-nums text-scribe" data-key="executed">{value("executed")}</span></span>
+        <span className="text-scribe-3">Final <span className="text-sm tabular-nums text-go" data-key="final">{value("final")}</span></span>
+        {local ? <Chip>local chain</Chip> : <Chip tone="go">Monad testnet</Chip>}
+      </div>
+      <Details>
+        <dl className="flex flex-col gap-1">
+          {rows.map(([key, label, v, note]) => (
+            <div key={key} className="flex flex-wrap items-baseline gap-x-3">
+              <dt className="w-[108px] shrink-0">{label}</dt>
+              <dd className="w-[64px] shrink-0 tabular-nums text-scribe-2">{v}</dd>
+              <dd className="w-full min-w-0 [overflow-wrap:anywhere] sm:w-auto sm:flex-1">{note}</dd>
+            </div>
+          ))}
+        </dl>
+        <p>
+          {local ? (
+            <>
+              Local chain timings, not Monad&rsquo;s: anvil mines on demand, and its finalized tag trails the head by
+              {lag !== undefined ? ` ${lag} blocks` : " dozens of blocks"}, the way Ethereum&rsquo;s trails by two epochs. Monad&rsquo;s trails by two.
+              {liveFinal !== null ? <> Monad testnet right now finalizes a block {ms(liveFinal)} after it is proposed, measured live in this page.</> : null}
+            </>
+          ) : (
+            <>Measured in this browser on Monad testnet, from the moment the wallet sent the transaction. The signing prompt is in neither number.</>
+          )}
+        </p>
+      </Details>
     </div>
   );
 }
