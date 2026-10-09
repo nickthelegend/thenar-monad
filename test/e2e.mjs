@@ -140,13 +140,28 @@ async function ethCall(data) {
 console.log(`\n  thenar e2e — ${BASE}\n`);
 
 // --- every page answers -----------------------------------------------------
+/**
+ * A deployment older than this code (the read-only check of thenar.io while
+ * deploys are on hold) lacks the routes added since. It is checked for what it
+ * has, and the rest is reported as skipped, not failed. The marker is a route
+ * from the 7 Oct wave, read from the deployment's own API catalogue.
+ */
+const catalogue = await fetch(`${BASE}/api/openapi`).then((r) => r.json()).catch(() => ({}));
+const CURRENT = Boolean(catalogue.paths?.["/api/receipts"]);
+if (!CURRENT) console.log("  note  this deployment predates the 7 Oct wave: its new pages and APIs are skipped\n");
+const NEW_PAGES = new Set(["/start", "/network"]);
+
 const PAGES = [
   "/", "/hub", "/space", "/inventory", "/post", "/leaderboard", "/portfolio",
   "/foundry", "/spec", "/archive", "/passkey", "/status", "/changelog", "/corpus", "/policies",
   "/task/0", "/station/4", "/start", "/thenar", "/network",
 ];
-for (const p of PAGES) check(`page ${p}`, (await status(p)) === 200);
+for (const p of PAGES) {
+  if (!CURRENT && NEW_PAGES.has(p)) { console.log(`  skip page ${p} (not deployed yet)`); continue; }
+  check(`page ${p}`, (await status(p)) === 200);
+}
 
+if (CURRENT) {
 // The reads about Monad a browser cannot make: the facilitator's offer and Sourcify's verification.
 try {
   const n = await json("/api/network");
@@ -203,6 +218,9 @@ try {
   check("receipts", false, String(e));
 }
 
+}
+
+if (CURRENT) {
 // The live Monad pipeline: rendered on the landing, and allowed to reach Monad's socket.
 try {
   const r = await fetch(`${BASE}/thenar`, { signal: AbortSignal.timeout(30_000) });
@@ -212,6 +230,7 @@ try {
     (r.headers.get("content-security-policy") ?? "").includes("wss://testnet-rpc.monad.xyz"));
 } catch (e) {
   check("the landing carries the live Monad pipeline", false, String(e));
+}
 }
 
 // A licence page exists only for a minted policy: /licence/0 is a page while
@@ -318,6 +337,7 @@ try {
   check("openapi reachable", false, String(e));
 }
 
+if (CURRENT) {
 // The corpus previews: a page of episodes in one request, thinned from the real samples.
 try {
   const runs = (feed?.runs ?? []).slice(0, 5).map((r) => r.traj_hash);
@@ -332,6 +352,7 @@ try {
   check("previews refuse something that is not a run hash", (await status("/api/corpus/previews?hashes=0x12")) === 400);
 } catch (e) {
   check("corpus previews", false, String(e));
+}
 }
 
 const health = await fetch(`${BASE}/api/health`, { signal: AbortSignal.timeout(30_000) })
