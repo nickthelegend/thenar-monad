@@ -85,7 +85,8 @@ if (await listening("http://127.0.0.1:4021/supported")) {
 
 // 3. The indexer, only on its own database containers (indexer/scripts/start.sh checks them).
 let indexerStarted = false;
-const healthy = (c) => spawnSync("docker", ["inspect", "-f", "{{.State.Health.Status}}", c], { encoding: "utf8" }).stdout?.trim() === "healthy";
+// With Docker Desktop installed but not running, `docker inspect` can hang; give it five seconds.
+const healthy = (c) => spawnSync("docker", ["inspect", "-f", "{{.State.Health.Status}}", c], { encoding: "utf8", timeout: 5_000 }).stdout?.trim() === "healthy";
 if (healthy("thenar-envio-pg") && healthy("thenar-envio-hasura")) {
   const r = spawnSync("sh", ["scripts/start.sh", "--bg"], { cwd: "indexer", encoding: "utf8" });
   indexerStarted = r.status === 0;

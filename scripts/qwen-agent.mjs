@@ -39,6 +39,7 @@ import { SALES_LOG_ABI } from "../lib/registry-abi.ts";
 import { AXON_ABI } from "../lib/abi.ts";
 import { armOf } from "../lib/scan.ts";
 import { ADDR, appChain, env, need, transport, txUrl } from "./monad.mjs";
+import { consumeLLMStream } from "./llm-stream.mjs";
 
 const BASE = process.argv[2] ?? "http://localhost:3336";
 const GOAL = process.argv[3] ??
@@ -241,18 +242,7 @@ async function turn() {
   });
   if (!r.ok) throw new Error(`the model answered ${r.status}: ${(await r.text()).slice(0, 400)}`);
   const msg = { role: "assistant", content: "", reasoning_content: "", tool_calls: [] };
-  const decoder = new TextDecoder();
-  let buffer = "";
-  for await (const chunk of r.body) {
-    buffer += decoder.decode(chunk, { stream: true });
-    let nl;
-    while ((nl = buffer.indexOf("\n")) >= 0) {
-      const line = buffer.slice(0, nl).trim();
-      buffer = buffer.slice(nl + 1);
-      if (!line.startsWith("data:")) continue;
-      const data = line.slice(5).trim();
-      if (data === "[DONE]") continue;
-      const delta = JSON.parse(data).choices?.[0]?.delta ?? {};
+  await consumeLLMStream(r.body, (delta) => {
       if (delta.content) msg.content += delta.content;
       if (delta.reasoning_content) msg.reasoning_content += delta.reasoning_content;
       for (const t of delta.tool_calls ?? []) {
@@ -263,7 +253,11 @@ async function turn() {
           at.function.arguments += typeof t.function.arguments === "string" ? t.function.arguments : JSON.stringify(t.function.arguments);
         }
       }
-    }
+  });
+  // A tool call must name its tool and carry arguments that parse; its id is filled in below if missing.
+  for (const call of msg.tool_calls) {
+    if (!call.function.name) throw new Error("The model returned a tool call with no name");
+    JSON.parse(call.function.arguments || "{}");
   }
   if (!msg.tool_calls.length) delete msg.tool_calls;
   if (!msg.reasoning_content) delete msg.reasoning_content;
