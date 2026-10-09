@@ -37,6 +37,7 @@ import { useGasSponsored } from "@/lib/contract-write";
 import { MonadHeartbeat } from "@/components/monad-pipeline";
 import { ReceiptTimers } from "@/components/receipt-timers";
 import { EthereumReceiptLine } from "@/components/ethereum-compare";
+import { RacePanel, useBestRun } from "@/components/station/race-panel";
 
 const StationViewport = dynamic(
   () => import("@/components/station/viewport").then((m) => m.StationViewport),
@@ -99,6 +100,9 @@ export default function StationPage() {
   const [tel, setTel] = useState<Telemetry | null>(null);
   const [verdict, setVerdict] = useState<Verdict | null>(null);
   const [elapsed, setElapsed] = useState(0);
+  // Race the task's best paid run: a translucent arm in step with this one (SO-101 tasks).
+  const [raceOn, setRaceOn] = useState(false);
+  const best = useBestRun(task?.id ?? -1, raceOn && task?.arm === "so101");
   /** Bumped on every run so the viewport resets its payload and arm. */
   // The objects the instruction names, so the viewport renders the task rather
   // than an anonymous puck.
@@ -544,6 +548,17 @@ export default function StationPage() {
             <DriveWith taskId={task.id} so101={task.arm === "so101"} />
           </div>
 
+          {task.arm === "so101" ? (
+            <RacePanel
+              on={raceOn}
+              onToggle={() => setRaceOn((v) => !v)}
+              best={best}
+              elapsed={elapsed}
+              running={phase === "running"}
+              measuredSeconds={phase === "measured" && verdict ? verdict.raw.seconds : null}
+            />
+          ) : null}
+
           <details className="group mt-auto rounded-xl border border-white/10 p-4">
             <summary className="flex cursor-pointer list-none items-center justify-between text-sm text-scribe-2 hover:text-white">
               More <span className="text-scribe-3 transition-transform group-open:rotate-90">›</span>
@@ -598,6 +613,8 @@ export default function StationPage() {
             environmentUrl={room.url}
             lighting={lightingFor(room.id)}
             ghosts={ghosts}
+            race={raceOn ? best?.race ?? null : null}
+            raceElapsed={elapsed}
           />
           )}
 
