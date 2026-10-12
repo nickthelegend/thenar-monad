@@ -17,6 +17,11 @@
  * asks it to sign something the policy forbids and prints the refusal.
  *
  *   node --import ./test/register.mjs scripts/privy-lab.mjs ["task name"]
+ *   node --import ./test/register.mjs scripts/privy-lab.mjs --setup-only
+ *
+ * --setup-only creates the policy and the wallet in the Privy app and stops
+ * before anything touches the chain: no top-up, no bounty. It is the step to
+ * run when the Privy app changes and no Monad transaction may be sent yet.
  */
 import { appendFileSync } from "node:fs";
 import {
@@ -98,6 +103,11 @@ if (!walletId) {
   console.log(`wallet   ${walletId}  ${walletAddress}`);
 } else {
   console.log(`wallet   ${walletId}  ${walletAddress}  already recorded`);
+}
+
+if (process.argv.includes("--setup-only")) {
+  console.log("setup    policy and wallet are in the Privy app; stopping before any transaction (--setup-only)");
+  process.exit(0);
 }
 
 const pub = createPublicClient({ chain: monad, transport: transport() });

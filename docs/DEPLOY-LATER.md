@@ -60,6 +60,9 @@ The user sets every secret. None of them is ever written into git, and none goes
 
 | Variable | Set on | From | Effect |
 |---|---|---|---|
+| `PRIVY_APP_ID`, `PRIVY_APP_SECRET`, `NEXT_PUBLIC_PRIVY_APP_ID` | **Railway `web`** (the two secrets), **Vercel** (the public ID, at build time) | The shared "monad hub" Privy app (12 Oct); copy from this machine's `.env.local` | Replaces Thenar's old Privy app. The origins to allow are in `metropolis-funding/PRIVY-ORIGINS.md` |
+| `PRIVY_LAB_POLICY_ID`, `PRIVY_LAB_WALLET_ID`, `PRIVY_LAB_WALLET_ADDRESS` | **Railway `web`** | `.env.local`, written by `scripts/privy-lab.mjs --setup-only` on 12 Oct | The lab's policy-bound wallet in the new app. At the go it needs 0.15 MON: run `scripts/privy-lab.mjs` without the flag |
+| `ENVIO_API_TOKEN` | Envio hosted indexing; `indexer/.env` locally | The shared key | HyperSync on Monad testnet (checked on 12 Oct) |
 | `NEXT_PUBLIC_PRIVY_GAS_SPONSORSHIP=1` | **Vercel** (project `thenar`), at build time | Privy dashboard → gas sponsorship → enable Monad Testnet first (testnet subsidy: monad@privy.io) | Operators who signed in with email pay no gas |
 | `ENVIO_GRAPHQL_URL` (`ENVIO_GRAPHQL_SECRET` only for a self-hosted Hasura) | **Railway `web`** | The Envio Cloud dashboard, after step 5 | The history on /leaderboard |
 | `CORPUS_AUDIT=0x…` | **Railway `web`** | The address printed in step 4 | `/api/task/{id}/manifest` reports the DON's verdict |
