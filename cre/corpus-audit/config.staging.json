@@ -4,6 +4,6 @@
   "chainId": 10143,
   "chainSelectorName": "monad-testnet",
   "corpusManifest": "0x692190b7955821C050FFFbC7741D31a65Ecd5c48",
-  "corpusAudit": "0x0000000000000000000000000000000000000000",
+  "corpusAudit": "0xC913C03FbE2F8901296FC69dF3b136f9889b86Dd",
   "gasLimit": "600000"
 }

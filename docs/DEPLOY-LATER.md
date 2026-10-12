@@ -74,6 +74,8 @@ The user sets every secret. None of them is ever written into git, and none goes
 
 ## 4. Deploy CorpusAudit (5 min) 👤 the CRE key
 
+**Done on 12 Oct:** CorpusAudit `0xC913C03FbE2F8901296FC69dF3b136f9889b86Dd` (deploy tx `0x26adbcdd537ad5e17a8687591b5e2cecf5a3b066cf12b45a4d9cb11c70a26280`, sent from the shared CRE key), verified on Sourcify as an exact match, set in `config.staging.json`.
+
 ```bash
 cd contracts
 forge script script/DeployCorpusAudit.s.sol --rpc-url monad --broadcast --private-key <CRE key>
