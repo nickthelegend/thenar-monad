@@ -1,5 +1,251 @@
 [
   {
+    "hash": "93ef474",
+    "date": "2026-10-12T22:54:22+05:30",
+    "subject": "Deploy CorpusAudit to Monad testnet and verify it",
+    "body": "0xC913C03FbE2F8901296FC69dF3b136f9889b86Dd, sent from the shared CRE key\nagainst the simulation forwarder, and an exact match on Sourcify. The CRE\nworkflow's staging config now writes to it.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+  },
+  {
+    "hash": "2533f27",
+    "date": "2026-10-12T22:43:11+05:30",
+    "subject": "Move to the shared Privy app, set up without touching the chain",
+    "body": "scripts/privy-lab.mjs --setup-only creates the lab's policy and wallet in a\nPrivy app and stops before the top-up and the bounty, so it can run while\nMonad transactions are on hold. Done on 12 Oct against the shared app.\nDEPLOY-LATER names the new variables and the lab wallet's 0.15 MON for the\ngo. No key is in this commit.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+  },
+  {
+    "hash": "40604b7",
+    "date": "2026-10-09T22:36:49+05:30",
+    "subject": "Bring the story up to date with wave 2 and the readability pass",
+    "body": "README lists the wave's additions with screens. SUBMISSION's three-minute\nscript opens on the front door and the Ethereum comparison and races the best\nrun. DEPLOY-LATER names the optional Ethereum RPC.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+  },
+  {
+    "hash": "08eb0db",
+    "date": "2026-10-09T22:36:24+05:30",
+    "subject": "Check an older deployment for what it has, not for what it lacks",
+    "body": "The scheduled read-only check of thenar.io failed every run since 7 Oct,\nbecause deploys are on hold and the site predates the new pages and APIs.\nThe e2e now reads the deployment's own API catalogue. When the 7 Oct routes\nare absent, it checks everything the site has and reports the rest as\nskipped: 60 passed against thenar.io.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+  },
+  {
+    "hash": "d4314c3",
+    "date": "2026-10-09T22:34:45+05:30",
+    "subject": "Readability pass: one headline per card, the rest behind Details",
+    "body": "The judge path showed every caveat at once. Now each card leads with one\nnumber or verdict and one short line, with honesty as a small chip ('local\nchain', 'Monad testnet'):\n- the live strip makes one comparison, how much sooner Monad is final than\n  Ethereum right now;\n- the station receipt shows executed and final, and folds the method, the\n  gas and the Ethereum pricing into Details;\n- the receipts chart, /network, /corpus and /agents fold their explanations\n  the same way.\nNothing was removed: every figure is one tap away.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+  },
+  {
+    "hash": "9a38de2",
+    "date": "2026-10-09T22:28:33+05:30",
+    "subject": "Refuse a cut-off model answer, and don't hang on a stopped Docker",
+    "body": "- The buyer agent acts only on a stream that ended with [DONE] after a stop\n  or tool_calls finish, so a truncated tool call is never paid for.\n- pnpm demo's indexer probe times out after five seconds, instead of\n  hanging when Docker Desktop is installed but not running.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+  },
+  {
+    "hash": "9a6a45c",
+    "date": "2026-10-09T22:28:33+05:30",
+    "subject": "Race the best run: a ghost arm at the station",
+    "body": "An SO-101 station can draw the task's best paid run as a translucent arm,\nposed from its recorded joints on the station's own clock, with the payload\nit was carrying. It is drawn only, never scored or recorded.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+  },
+  {
+    "hash": "5ef557e",
+    "date": "2026-10-09T22:28:33+05:30",
+    "subject": "Draw the receipts chart in HTML, so it reads on a phone",
+    "body": "The SVG scaled its row height with its width, so at 390 px the rows shrank\naway from their labels. Rows and labels now share one height at any width.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+  },
+  {
+    "hash": "7aa6f56",
+    "date": "2026-10-08T09:44:46+05:30",
+    "subject": "Set Monad beside Ethereum, both read live",
+    "body": "/api/compare reads Ethereum mainnet now, read-only through a public\nendpoint: its gas price, how far its finalized tag trails the head (in\nblocks and in seconds), its block time, and ETH/USD from Chainlink's feed.\n- The live strip adds one line: Ethereum's finality right now, against\n  Monad's as the strip measured it (on 8 Oct: 16 min 24 s, about 1,650\n  times longer).\n- /network puts the two chains side by side.\n- The station's receipt prices this run's gas on Ethereum at today's price\n  and says how long it would take to be final there.\nGas is priced differently on each chain, and the page says the comparison\nis the same gas at each one's price.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+  },
+  {
+    "hash": "7cc505b",
+    "date": "2026-10-08T09:17:44+05:30",
+    "subject": "Rank the agents that buy the data, from the indexer",
+    "body": "The Envio indexer gains Agent and AgentTask, aggregated from SalesLog's\nCorpusSold events: each buyer's purchases, distinct tasks and spend.\n/leaderboard ranks them. An agent's reasons live off chain, so each row is\njoined with the decision records it signed: how many purchases it explained,\nand how many of those it checked against SalesLog. With no indexer running,\nthe same ranking is counted from the app's ledger and says so. The ranking\nlinks to /agents, which now opens on that agent.\n\nChecked with Docker up for the run (stopped after): the indexer tests, the\ne2e, and live-localnet step 8, which last wave could not run.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+  },
+  {
+    "hash": "f03dd03",
+    "date": "2026-10-08T09:17:44+05:30",
+    "subject": "Chart Thenar's own receipts against Monad's live finality",
+    "body": "Every transaction the app sends now reports the two timers its browser\nmeasured, executed and final, to /api/receipts. That covers paid runs and\nevery other write: certificates, tasks, subscriptions. The server keeps a\ntiming only for a successful transaction on this chain that touched Thenar's\ncontracts, from a build on this same chain, so another app's transactions\nor a local timing passed off as Monad's are refused.\n\n/thenar and /network draw the last twenty on a log axis, from 1 ms to 300 s,\nwith Monad testnet's finality right now as a band from the live strip. Local\nreceipts say they are the local chain's, whose finalized tag trails by about\na minute, until the testnet go.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+  },
+  {
+    "hash": "fe09792",
+    "date": "2026-10-08T09:07:31+05:30",
+    "subject": "One front door: the product at /, the side routes in a footer",
+    "body": "On a host that serves the app and the company from one origin (pnpm demo),\n'/' was the ThenarLabs company page, and a judge's first minute went to a duck\nrobot and a humanoid. Now '/' is the product, and the company lives at /labs.\napp.thenar.io already did this, and production hosts are unchanged.\n\nThe object library, live floor, labs and changelog leave the primary menus\nfor a footer on app pages, beside the archive, handheld recorder, policies\nand status, so every page is still one click away.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+  },
+  {
+    "hash": "223cf32",
+    "date": "2026-10-08T09:07:31+05:30",
+    "subject": "Say the indexer is down without a console error",
+    "body": "/api/indexer answered 503 when a local indexer was not running, which the\nbrowser logs as an error on /leaderboard: the route walk caught it on a\npnpm demo without Docker. Down is now a 200 that says the indexer is\nunavailable, as 'not configured' already was.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+  },
+  {
+    "hash": "9d7b8eb",
+    "date": "2026-10-08T08:46:52+05:30",
+    "subject": "Plan wave 2: the next five, with two swaps recorded",
+    "body": "Skips going live and a real model's trail, which need the testnet go, MON or\nkeys, and puts a live Monad-vs-Ethereum comparison and racing the best run in\ntheir place. The before screens are in docs/screens/wave2/.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+  },
+  {
+    "hash": "56a113e",
+    "date": "2026-10-08T01:41:13+05:30",
+    "subject": "Lead the story with what only Monad can show",
+    "body": "- README and SUBMISSION gain a Monad-native section: each of the eight items,\n  where it runs (live read, local, awaiting the testnet go) and where to see\n  it, with before and after screens.\n- The three-minute demo opens on the live block strip and runs through the\n  new surfaces: /start, the two-timer receipt, the dataset explorer, the\n  agent's signed trail and /network.\n- The 'source-verified' checkbox is now true: all twelve Monad testnet\n  contracts are exact matches on Sourcify (MonadVision), verified on 7 Oct.\n  The runbook verifies CorpusAudit the same way when it is deployed.\n- docs/ROADMAP-WIN.md records what shipped, by commit, and the next five.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+  },
+  {
+    "hash": "10c53a1",
+    "date": "2026-10-08T01:35:15+05:30",
+    "subject": "Read Monad live, and pay gas the way Monad charges it",
+    "body": "/network reads Monad testnet from the page, each value dated:\n- latest, safe and finalized in one batch (N, N-1, N-2);\n- staking 0x1000: the epoch, the validator proposing now, its stake and\n  commission;\n- a P-256 key made in the page, its signature checked by 0x0100, and a\n  tampered copy refused;\n- dippedIntoReserve() on 0x1001;\n- code at ten canonical contracts and at all of Thenar's, with what Thenar\n  does with each;\n- txpool_statusByAddress.\nThe server reads what browsers cannot: Monad's x402 facilitator and Sourcify.\n\nGas: Monad charges the whole limit. Every write is now estimated by the\nnode, refused if its simulation reverts, and sent with the estimate plus a\ntenth as an explicit limit. A MON spend is checked against the 10 MON reserve\nfirst, and a delegated account is refused a send Monad would revert. The\nstation's receipt shows the limit, the gas used and what was charged.\nMonadVision links sit beside Monadscan.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+  },
+  {
+    "hash": "4d76721",
+    "date": "2026-10-08T01:33:56+05:30",
+    "subject": "Give a newcomer one way in: five steps to a first paid run",
+    "body": "/start lists what it takes to earn, in order, and reads each step instead of\nremembering it:\n1. the wallet, from the session;\n2. gas, or a sponsor, from the balance or the sponsorship;\n3. the passkey, from PasskeyRegistry on chain;\n4. a drive at the station, from this browser;\n5. the first paid run, from the ledger.\nOnly the next step offers its action. The landing's primary button and the\nEarn menu now lead there, and the live journey checks a fresh wallet goes\nfrom 0/5 to 5/5.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+  },
+  {
+    "hash": "b148d14",
+    "date": "2026-10-08T01:33:34+05:30",
+    "subject": "Let long hashes wrap in agent trails, and add the /agents screens",
+    "body": "A model's report quotes the full settlement hash, which pushed /agents 175 px\npast a phone's width.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+  },
+  {
+    "hash": "2e166e7",
+    "date": "2026-10-08T01:07:40+05:30",
+    "subject": "Show why an agent bought, signed by the key that paid",
+    "body": "After each purchase the buyer agent writes down:\n- the model and the endpoint it ran on;\n- every tool it called, in order, and what came back;\n- its own report;\n- its check of the file against SalesLog.\nIt signs that record (EIP-191, bound to the sale and to the record's digest)\nand publishes it. /api/agent/decision keeps a record only when the signer is\nthe sale's buyer and the sale is in the ledger, and never replaces it. /agents\nshows each trail beside its sale and checks the signature again in the page.\nA hosted provider reached through an overridden endpoint is flagged as a\nstand-in.\n\n/agents also stops calling the local facilitator 'the Monad facilitator' on a\nlocal build, and its commands use the page's own origin, not a stale port.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+  },
+  {
+    "hash": "d91c403",
+    "date": "2026-10-08T01:03:43+05:30",
+    "subject": "Let a buyer see the corpus, not a list of hashes",
+    "body": "/corpus is now a grid of episode cards drawn from each run's own samples:\n- the payload's path from above, with the goal ring and the carried stretch;\n- the six joints over time;\n- score, time, frames and lift, with replay and LeRobot links.\nEach run is thinned to 48 points with both ends kept (lib/corpus-preview.ts),\nand a page of cards is one /api/corpus/previews request, cached as\nimmutable once complete.\n\nChoosing a task adds its summary: episodes, pass rate, median score, the\nMerkle root against the one committed in CorpusManifest, and agent sales.\nA corpus that has only grown since its last commitment says so instead of\nshowing as a mismatch.\n\nAlso refreshes the landing's after-screens with the tightened block chips.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+  },
+  {
+    "hash": "9ae7cb0",
+    "date": "2026-10-08T00:17:10+05:30",
+    "subject": "Show Monad's pace instead of claiming it",
+    "body": "- A live block pipeline on the landing and the station: Monad testnet's\n  monadNewHeads over its public WebSocket, each block moving Proposed, Voted,\n  Finalized, Verified, with the milliseconds measured in the browser\n  (297 ms a block, 577 ms to final on 7 Oct). monadLogs watches Thenar's\n  Monad contracts. Read-only, on every build, and labelled as the real\n  network beside a local chain.\n- Two-timer receipts: executed and final, measured from the send. The local\n  wallet sends with eth_sendRawTransactionSync, so its receipt comes back in\n  the send's own response. On Monad a run is credited at finality, and\n  txpool_statusByHash says when the node has it. Local timings say they are\n  anvil's, whose finalized tag trails by about 60 blocks; Monad's trails by 2.\n- 300 ms blocks and about 600 ms finality in every line of copy: no more\n  'single-slot finality'.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+  },
+  {
+    "hash": "2ce9b21",
+    "date": "2026-10-08T00:17:09+05:30",
+    "subject": "Review Thenar as a judge would, and plan the wave",
+    "body": "docs/ROADMAP-WIN.md ranks the ten weaknesses a judge with five minutes would\nhit, picks the five fixes that need no MON or keys, and tracks Monad-native\ncoverage item by item. The before screens are in docs/screens/wave/.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+  },
+  {
+    "hash": "cbe5fb5",
+    "date": "2026-10-07T19:57:15+05:30",
+    "subject": "Record the local deploy deadlock CI found, now fixed",
+    "body": "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+  },
+  {
+    "hash": "bbabfb4",
+    "date": "2026-10-07T19:52:25+05:30",
+    "subject": "Never block localnet.mjs while it is reading anvil's output",
+    "body": "localnet.mjs ran forge's deploy with spawnSync while it was also the reader\nof anvil's stdout. Blocked, it stopped draining the pipe; anvil filled it,\nblocked on its next log line, and stopped answering. The deploy then failed\nwith 'Failed to send transaction after 4 attempts'. On Linux, with its\nsmaller pipe buffer, that happened on every fresh chain, which is how CI\nfound it. The deploy and the occasional forge build now run asynchronously.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+  },
+  {
+    "hash": "a7a3998",
+    "date": "2026-10-07T19:45:14+05:30",
+    "subject": "Give CI's local deploy time to finish, and compile it first",
+    "body": "The deploy did not fail on the pinned Foundry; it was still broadcasting,\none confirmed transaction at a time on anvil's one-second blocks, when the\nfour-minute wait gave up. A cold compile of every contract was part of that\nwait. Contracts now compile in their own step, and the chain step waits up\nto fifteen minutes, stopping early on an error.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+  },
+  {
+    "hash": "9f49d70",
+    "date": "2026-10-07T19:39:43+05:30",
+    "subject": "Pin CI's Foundry to 1.7.1, and add the key screens",
+    "body": "CI used Foundry's newest release (1.8.5). It counts gas differently from the\n1.7.1 the snapshot was taken with: every external call cost about 21k more,\nso forge snapshot --check failed everywhere. Its forge script also timed out\nagainst anvil when deploying the local chain. Both jobs now pin v1.7.1, the\nversion the suite and the snapshot were made with.\n\ndocs/screens: seven key screens at 1440x900 and 390x844, captured from the\nlocal stack with real signed state by scripts/capture-screens.mjs:\n- landing;\n- the station mid-drive;\n- a paid run;\n- an x402 corpus purchase;\n- the leaderboard;\n- the passkey's derived SO-101 key;\n- agents.\nscripts/contact-sheet.py lays them out as two sheets, which the README now\nshows.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+  },
+  {
+    "hash": "45f1e84",
+    "date": "2026-10-07T19:34:23+05:30",
+    "subject": "Get CI working again: pnpm, forge-std, and the product on anvil",
+    "body": "verify.yml had failed on every run since the move to pnpm:\n- npm ci found no package-lock;\n- forge test found no forge-std (contracts/lib is ignored, not vendored);\n- the live job ran before installing anything.\n\nNow:\n- static: pnpm, tsc, eslint over the repo, the unit suite, the model check;\n- contracts: forge-std v1.16.2 installed, forge test, the gas snapshot\n  (re-snapshotted on purpose; it dated from 12 Sep), forge lint;\n- localnet, new: anvil with the contracts DeployMonad.s.sol deploys, the\n  local x402 facilitator, the app built and served against them, then\n  every page and API (pnpm test:e2e:local) with real transactions behind;\n- live, on the schedule: the read-only e2e against https://thenar.io,\n  which passes. The itemised qa-* suite assumes paid runs on the Monad\n  deployment, so it runs on demand until the testnet go.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+  },
+  {
+    "hash": "7e339e7",
+    "date": "2026-10-06T03:27:53+05:30",
+    "subject": "Finish and package: zero-mock verification, quality gate, judge package",
+    "body": "docs/TEST-PLAN-ZERO-MOCK.md, executed on the local stack. Every page, API,\nflow, integration and contract suite has a stated expected result, run\nthrough the in-app browser, Playwright or Node with real contracts and\nsigned transactions. 76 items: 63 PASS, 11 UNTESTED with the dependency\nnamed, 2 PASS locally with the hosted half UNTESTED, 0 FAIL. Seven failed\nfirst and were fixed at the root (earlier commits). The whole plan was\nre-run on this final build.\n\nQuality gate:\n- the lint errors were build output and two React-compiler rules. useLeader\n  now reads the leader through useSyncExternalStore, and the per-frame ref\n  writes in the SO-101 arm are annotated with why;\n- eslint: 0 errors. tsc: clean. Unit 124/124. forge 133/133. e2e:local 68/68.\n  walk 74/74;\n- slither and the secret scan are in docs/STATIC-ANALYSIS.md.\n\nJudge package:\n- LICENSE (MIT, matching the contracts' SPDX headers);\n- README: one-command demo, what was built in the window, attribution of\n  external code, the AI tools disclosure, an architecture diagram with\n  Envio, CRE and the agent, and the sponsor integrations;\n- SUBMISSION.md: links and judge logins, each bounty's portal fields with\n  evidence, a 3-minute demo script, the pitch outline, the checklist;\n- docs/DEPLOY-LATER.md: the ordered runbook for the testnet go, with\n  addresses, the MON needed, every key and where it is set, the commands,\n  the smoke test and the shot list.\n\nPLAN.md: 73% at the start of 6 Oct, 97% of what can be done without the\nuser now (Cleanverse blocked), 85% counting the user's go-live items.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+  },
+  {
+    "hash": "242a115",
+    "date": "2026-10-06T02:58:51+05:30",
+    "subject": "Fix what the zero-mock pass found: relay port, stale copy, slow balances, demo cleanup",
+    "body": "Found by docs/TEST-PLAN-ZERO-MOCK.md on the local stack:\n- The page only ever looked for the arm relay on ws://127.0.0.1:8787, and the\n  CSP allowed only that port, though the relay takes --port. With 8787 taken\n  by another program, nobody could connect an arm. The page now accepts\n  ?relay=ws://127.0.0.1:PORT (loopback only) and remembers it; the CSP allows\n  any loopback port; the relay prints the URL when it isn't on 8787.\n- On a local build, the call-history panels and /api/calls blamed a missing\n  Etherscan key. Monadscan does not index a local chain at all, and they now\n  say so.\n- Signing in with the local wallet re-reads every balance once the faucet\n  has sent, instead of waiting for a poll a background tab never runs.\n- pnpm demo left anvil, the facilitator and a hung build running when\n  startup failed. It now stops everything it started on any failure, kills\n  whole process trees by PID, and waits up to 30 minutes for a build on a\n  busy machine.\n- test/live-duplicate.mjs: a run replaying a paid route is refused (409,\n  naming the run, no signature) for another operator and for its own, and\n  the chain's trajectory count does not move.\n- docs/STATIC-ANALYSIS.md: slither's High and Medium findings triaged\n  against the code (none needs a change), and the secret scan (clean).\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+  },
+  {
+    "hash": "36fe03d",
+    "date": "2026-10-06T02:10:29+05:30",
+    "subject": "Walk every screen at 375 and 1280 px, and stop 'not configured' logging an error",
+    "body": "test/walk.mjs (pnpm test:walk) visits all 37 routes at both widths. The ids\nit uses (task, run, operator, transaction) are read from the local chain and\ndatabase. Each screen must:\n- answer with its intended status;\n- show a visible h1;\n- fit the screen;\n- log no console error and fail no request.\n\nThe walk found one class of problem. /lab and /api/indexer answered 503\nwhen their service wasn't configured, and the browser logs every 503 as a\nconsole error, including on the production leaderboard. Not configured is a\nstate, not a failure: both now answer 200 with configured: false. /lab\nshows 'Not configured on this deployment' with the reason (on a local\nbuild: Privy's server wallets sign on Monad, not on anvil). A real outage\nof a configured indexer still answers 503. 74/74 screens are clean.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+  },
+  {
+    "hash": "b107d85",
+    "date": "2026-10-06T01:55:51+05:30",
+    "subject": "Take the model fixture out of the agent, and start everything with pnpm demo",
+    "body": "The buyer agent no longer has a fixture mode. Without its provider's key it\nsays the provider is not configured and exits. QWEN_BASE_URL and\nKIMI_BASE_URL point it at another endpoint, honestly labelled, which is how\ntest/live-agent.mjs reaches the model double. The double moved to test/\n(test/llm-double.mjs), where only tests can start it. A real model drove the\nagent end to end on the local chain on 6 Oct: Qwen 3 (4B) on Ollama listed,\npriced, paid 0.01 USDC over x402 and verified SalesLog entry 9.\n\npnpm demo (scripts/demo.mjs) starts the local chain, the x402 facilitator,\nthe indexer (when its database is up) and the app, and Ctrl-C stops exactly\nwhat it started, by PID.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+  },
+  {
+    "hash": "9e23d74",
+    "date": "2026-10-06T01:45:28+05:30",
+    "subject": "Plan the rest of Metropolis: goals, phases, tasks, gap audit, completion",
+    "body": "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+  },
+  {
+    "hash": "a8ad21c",
+    "date": "2026-10-06T01:42:41+05:30",
+    "subject": "Say the sponsor pays the gas on the station's cost line",
+    "body": "A sponsored wallet was still quoted the gas other submits paid, and a net\npayout below what it would actually receive. When useGasSponsored is true\n(Privy sponsorship on Monad, or the local stand-in) the line now says the\nsponsor pays and nets the full payout. The sponsored journey checks it and\npasses again on a fresh task.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+  },
+  {
+    "hash": "ca1a815",
+    "date": "2026-10-06T01:40:47+05:30",
+    "subject": "Size the sponsor checkbox, and document running everything on the local chain",
+    "body": "The checkbox on /localnet was squeezed to 2px wide by its flex row; it is\n16px with the probe accent now. The README lists the local stack and each\nlocal test, with the current counts (125 unit, 133 contract tests), and\npackage.json gains test:e2e:local, test:localnet:sponsored, test:agent and\ntest:cre. The local E2E run passes 68/68.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+  },
+  {
+    "hash": "148a39c",
+    "date": "2026-10-06T01:37:57+05:30",
+    "subject": "Bring the gap doc and the submission up to date with 6 Oct's work",
+    "body": "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+  },
+  {
+    "hash": "739ba70",
+    "date": "2026-10-06T01:34:15+05:30",
+    "subject": "Run a whole operator's day on the local chain with no MON, the gas sponsored",
+    "body": "Privy's gas sponsorship can't run on anvil, so a local build now reproduces\nits on-chain shape. With 'A sponsor pays this wallet's gas' ticked on\n/localnet:\n- the local wallet delegates its address to SponsoredAccount under EIP-7702\n  and signs each call;\n- /api/localnet/sponsor sends the call from a sponsor key (anvil #9),\n  scoped to Thenar's contracts and the local USDC;\n- the protocol sees the operator's own address and pays it;\n- the faucet sends USDC only, and the gas warnings stand down.\n\nSponsoredAccount (deployed by localnet.mjs at its CREATE2 address) accepts\na call only with the address's own signature over chain, nonce, target,\nvalue and data, so the sponsor cannot alter or replay what it delivers.\n\nIt also answers EIP-1271. The first run without it showed why it matters:\nonce an address carries delegated code, the x402 facilitator verifies its\nUSDC authorisation through isValidSignature, and the purchase was refused\n(invalid_exact_evm_signature). Privy's delegate accounts answer EIP-1271,\nand a stand-in that didn't would have hidden that dependency.\n\nSPONSORED=1 test/live-localnet.mjs (npm run test:localnet:sponsored) passes:\n- a 0-MON operator registers its passkey, runs, and is paid exactly the run's\n  payout while the sponsor pays the gas;\n- it buys the corpus over x402 from its delegated address.\nThe unsponsored journey still passes. Foundry covers the account (7 tests).\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+  },
+  {
+    "hash": "396a21d",
+    "date": "2026-10-06T01:34:03+05:30",
+    "subject": "Show the indexer's history on a local build, and say why when it can't",
+    "body": "A local-chain build now reads the indexer that indexer/scripts/start.sh runs\nbeside it (Hasura on 8089) without being told, so /leaderboard shows the\nhistory wherever the indexer is. When the indexer is configured but cannot\nbe reached, the panel says so and, on a local build, how to start it. An\nindexer with no events yet says that too, instead of drawing nothing.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+  },
+  {
+    "hash": "5d8a65f",
+    "date": "2026-10-06T01:16:12+05:30",
+    "subject": "Map Cleanverse's deployed contracts and record why CVA can't move yet",
+    "body": "The docs are still behind an invite. From bytecode and read-only calls (and\na local anvil fork of Monad testnet), the deployed surface is now written\ndown: the validator's complianceVerify, the soulbound A-Pass, aUSDC and its\ntransfer policy. Every unregistered pool gets PoolNotRegistered(), and every\naUSDC move reverts TransferNotAllowed(), even the token owner's own mint. A\ngate built now could only be tested on its refusals. docs/CLEANVERSE.md\nholds the findings, the gate Thenar would build, and what to ask Cleanverse\nfor.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+  },
+  {
+    "hash": "a214250",
+    "date": "2026-10-06T01:10:54+05:30",
+    "subject": "Choose the buyer agent's model with AGENT_LLM, and run it on a fixture without a key",
+    "body": "AGENT_LLM is qwen (Model Studio, qwen3.8-max), kimi (Moonshot, kimi-k2.6)\nor ollama (local Qwen 3). AGENT_LLM_FIXTURE=1 swaps the endpoint for\nscripts/llm-fixture.mjs: scripted replies over the same streamed,\ntool-calling API, labelled as a fixture in the agent's output. The tool\nloop, the x402 payment and the SalesLog check stay real; only the choices\nare scripted. The fixture also refuses what each real endpoint refuses: a\nwrong model id, a temperature for Kimi, a Kimi turn sent back without its\nreasoning, a tool call without exactly one answer.\n\nWithout a key and without the fixture, the agent refuses to start and\nnames the key it needs.\n\ntest/llm-fixture.test.mjs checks the fixture's rules. test/live-agent.mjs\nruns the agent on both providers against the local chain: list, datasheet,\nprice, buy, verify, one cent of USDC spent, the sale's sha256 matching the\nbytes.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+  },
+  {
+    "hash": "d01a8df",
+    "date": "2026-10-05T15:41:51+05:30",
+    "subject": "Anchor every .railwayignore pattern so app/api/indexer is uploaded",
+    "body": "The unanchored `indexer/` also matched app/api/indexer/, so the route\nthat reads the Envio indexer never reached the Railway backend and\n/api/indexer answered 404 in production.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+  },
+  {
+    "hash": "91f85b5",
+    "date": "2026-10-05T15:24:54+05:30",
+    "subject": "Bring the changelog up to date with the history",
+    "body": "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+  },
+  {
     "hash": "d5c8471",
     "date": "2026-10-05T15:24:20+05:30",
     "subject": "Record what shipped against each sponsor gap",
@@ -112,251 +358,5 @@
     "date": "2026-10-02T01:00:23+05:30",
     "subject": "Re-read after a failed write too, and judge a deadline by block time",
     "body": "A revert usually means the page's view was stale (somebody else minted,\nfilled or closed it first), so the cached reads are refreshed then as\nwell. The signer compares a task's deadline with the latest block's\ntimestamp, the clock the contract and closeTask use, not its own.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
-  },
-  {
-    "hash": "706ce30",
-    "date": "2026-10-02T00:40:36+05:30",
-    "subject": "Every write refreshes what it changed, reverts say what they mean, and no fake push",
-    "body": "- After any confirmed transaction the cached chain reads are invalidated,\n  so a minted certificate stops offering its mint and a closed task its\n  close. The certificate panel also re-reads itself after a mint.\n- A revert from a contract whose errors the page's ABI leaves out was\n  shown as a bare selector (\"reverted with the following signature:\n  0xddefae28\"). Every custom error the contracts declare is now named by\n  selector, and the ones a page can hit are said in words.\n- Web push was a stub: /status let a browser subscribe to notices that\n  nothing ever sent (no sending key, no sender). The subscription UI, the\n  route and the service worker's push handler are gone.\n- A licence's \"Download the corpus\" went to the API, which a plain link\n  can never satisfy now that a download is signed; it opens the corpus\n  page on that task (/corpus?task=N), where the signed download is. The\n  licence copy says one JSON file, not newline-delimited.\n- \"1 contributors\", \"1 runs ×\", \"1 runs stored\" read as one.\n- The Qwen agent streams each model turn: on this machine's CPU a turn\n  outlasted fetch's five-minute wait for headers.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
-  },
-  {
-    "hash": "8032227",
-    "date": "2026-10-02T00:11:24+05:30",
-    "subject": "Bring the changelog up to date with the history",
-    "body": "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
-  },
-  {
-    "hash": "e7029e9",
-    "date": "2026-10-02T00:11:23+05:30",
-    "subject": "Tell a non-subscriber so before asking it to sign",
-    "body": "An address with no time on CorpusAccess gets 402 at once; only one that\nhas a subscription is asked to prove it is the caller (401 until it signs).\nA signature window longer than ten minutes now says that, not 'expired'.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
-  },
-  {
-    "hash": "55ed5f9",
-    "date": "2026-10-01T23:48:39+05:30",
-    "subject": "Bring the changelog up to date with the history",
-    "body": "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
-  },
-  {
-    "hash": "a81386f",
-    "date": "2026-10-01T23:48:39+05:30",
-    "subject": "Close what a full browser pass of the app found",
-    "body": "Security and correctness on the API:\n- /api/submitted settles a run only when the transaction's own\n  TrajectoryAccepted log carries that run's hash; any successful protocol\n  transaction used to settle any stored hash and issue it shares. The\n  hash is normalised once, and an unknown run is a 404.\n- The verifier refuses to sign for a task that is closed, past its\n  deadline or minted (the contract records a signed run regardless), and\n  answers 404 for a task id past the registry, 400 for a non-integer id.\n- A whole-task dataset pull needs the subscriber's own signature, good\n  for ten minutes; naming a subscriber's public address no longer\n  downloads. An unreadable subscription contract now fails closed (503).\n- The scheduled routes (reconcile GET and POST, snapshot, drill) close\n  when CRON_SECRET is unset instead of opening to anyone.\n- The x402 offer names the public URL, not the backend's localhost:8080.\n- /api/feed clamps limit to 1..50 (−1 and 2.5 were 500s) and serves one\n  contributor's whole history; /api/corpus bounds minScore; team POST on\n  an unknown task is a 404, not a 500; the lab checks its receipt and\n  reads the task id from its own TaskCreated log.\n\nPages:\n- The company home drew the app's nav under its own: on Vercel the\n  prerendered \"/\" hydrates as \"/index\". One normalised path hook now\n  serves every component that asks where it is.\n- Home, hub and floor agree on what is open: tasks taking runs now, not\n  every unfilled slot on closed or expired tasks.\n- /run/<unknown hash> and /task/007 are real 404s; 404 tabs say \"Not\n  found\"; /localnet has its own title; an address in any letter case\n  opens its operator page, which reads that operator's own runs.\n- Corpus subscribers get a signed \"Download task #N\" and an honest time\n  left (\"24 h left\", not \"0 days\"); /post computes escrow in wei, so a\n  tiny reward posts instead of dying in parseEther; tiny MON amounts no\n  longer print as 0.000; the practice button cannot open sign-in; the gas\n  note names the floor it is raised at.\n- Read failures say so on /task, /foundry, /licence and /space instead\n  of \"no such task\", \"no policy\" or \"every task is full\".\n- Copy that had drifted from the code: /contracts, the app home, the\n  inventory's upload line, the corpus panel, /status explanations,\n  README and SUBMISSION (Envio does not drive the feed).\n\ntest/live-station-gates.mjs drives the station's refusals in a real\nbrowser; e2e expects a subscriber's bare address to be refused.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
-  },
-  {
-    "hash": "32de412",
-    "date": "2026-10-01T21:54:06+05:30",
-    "subject": "Say how to drive from a Quest 3S: the short link, placing on the table, testing without a headset",
-    "body": "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
-  },
-  {
-    "hash": "1621800",
-    "date": "2026-10-01T21:48:58+05:30",
-    "subject": "Shadows on the real table, and headset buttons that wait for the arm",
-    "body": "- In mixed reality a shadow-only plane catches the arm's and the\n  objects' shadows on the operator's own table, so nothing floats.\n- The Quest panel's buttons stay disabled (\"Loading the arm…\") until\n  the scene can actually start a session; a tap before that used to do\n  nothing at all.\n- While the operator is in the headset the desktop page drops the brief\n  for a small \"In the headset. Press A to begin.\" On a Quest the first\n  visit hint names the headset controls, not W A S D.\n\nThe headset tests now check where the bench lands, from the head pose\nthe renderer is given: 0.3 m behind and 0.5 m above the base in VR, and\non the hit-tested table in MR. That check exposed an IWER 2.5 bug: its\ngetOffsetReferenceSpace drops the offset (it copies the transform\nobject, not its matrix), so in the emulator every bench sat at the\nfloor. The tests patch that before the page loads. The VR probe now\ntries each axis both ways, since pulling straight in from the home pose\nruns into the SO-101's IK limit.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
-  },
-  {
-    "hash": "7c0150b",
-    "date": "2026-10-01T21:20:34+05:30",
-    "subject": "Keep the local production build out of deploy uploads",
-    "body": "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
-  },
-  {
-    "hash": "8ddc8e1",
-    "date": "2026-10-01T21:15:30+05:30",
-    "subject": "Put the arm on your real table from a Quest 3S, and say less on the station",
-    "body": "In mixed reality the headset now finds your table with hit testing: the\nbench follows where the right controller points (or where you look, with\nhands), a ring marks the spot, and the trigger or a pinch sets it down.\nIf the room was never scanned, the trigger keeps the bench where it\nstands after a moment. B picks it up again. The trigger that placed the\narm does not close the jaws until it is let go.\n\nThe station's left column is now the goal and one \"Drive with\" choice:\nKeyboard, Leader or Quest 3S. On a headset the Quest panel opens with\n\"Put it on my table\" and \"Enter in VR\"; anywhere else it shows a short\nlink, app.thenar.io/q/<task>, to type into the Quest browser. Voice,\npolicy, teaching and sound sit under More; the right column is the pay,\nthe live placement and how it is scored.\n\ntest/live-station-mr.mjs places the arm on an emulated table and runs.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
-  },
-  {
-    "hash": "580f521",
-    "date": "2026-10-01T19:02:44+05:30",
-    "subject": "Start the hero film after hydration, muted",
-    "body": "React leaves muted out of the server HTML, so Chrome treated the film as\nhaving sound and would not autoplay it on thenar.io. It is muted and\nplayed on mount now; reduced motion keeps the poster.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
-  },
-  {
-    "hash": "defb54e",
-    "date": "2026-10-01T19:00:39+05:30",
-    "subject": "The hero moves: a glass arm lifting a cube, on a seamless loop",
-    "body": "Made with Google Veo in Gemini from the hero's own description, cropped\nclear of the corner mark, and played forward then back so the loop has\nno seam: 20 seconds, 1.4 MB as WebM with an MP4 fallback, no audio, its\nfirst frame as the poster. The footer credits Veo and ChatGPT.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
-  },
-  {
-    "hash": "78ad5cb",
-    "date": "2026-10-01T18:56:23+05:30",
-    "subject": "Point people at app.thenar.io",
-    "body": "The sitemap lists both sites, the contract API names the app's registry\npage, and the README, the submission and the Quest guide say where to\ntry it.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
-  },
-  {
-    "hash": "b56ade4",
-    "date": "2026-10-01T18:49:35+05:30",
-    "subject": "Let the arm relay take Thenar's own sites without --origin",
-    "body": "The station now runs on app.thenar.io, and a relay started without the\nflag refused it, so the leader and the mirror did nothing from the real\nsite. Thenar's two origins are let in by default; every other site still\nhas to be named.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
-  },
-  {
-    "hash": "ecf8ce3",
-    "date": "2026-10-01T02:25:39+05:30",
-    "subject": "The ThenarLabs mark, a solid nav, and a new hero",
-    "body": "The mark is a grip: two opposed gripper jaws cut from a hexagon's halves\ncradling a crescent palm, drawn as one-weight SVG from the ChatGPT concept\nand used in the nav, the favicon and the app icons. The nav pill is now\nnear-opaque dark glass with a real backdrop blur, so nothing scrolling\nbeneath reads through it. The hero is a new render (a prismatic glass arm\nlifting a glass cube), anchored under the headline and ready to swap for\nits animated film.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
-  },
-  {
-    "hash": "a1d8068",
-    "date": "2026-10-01T02:12:54+05:30",
-    "subject": "Real Hotaru in 3D, and lighter fonts",
-    "body": "Hotaru's model is its own web export, stood upright and scaled to metres\n(the rig GLB it replaces is posed by another app's code and lies in\npieces on its own). The viewer computes normals a trimmed export leaves\nout, and stands Z-up CAD upright where a product says so. Plex Mono is\ngone and DM Mono is no longer preloaded on pages that show no data.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
-  },
-  {
-    "hash": "7641cec",
-    "date": "2026-10-01T02:05:57+05:30",
-    "subject": "A short app home: teach a robot, get paid on Monad",
-    "body": "The old poster page (a giant wordmark, the THENAR-6, spaced capitals and\nfigures everywhere) becomes six plain sections: the line, live figures\nfrom the chain, the open tasks as cards, the three ways to drive, how\npayment works, and a pointer for agents. It renders the app's nav\nitself, since on app.thenar.io its path is the company home's.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
-  },
-  {
-    "hash": "c728598",
-    "date": "2026-10-01T02:03:45+05:30",
-    "subject": "ThenarLabs: the company site, its products, and one dark theme",
-    "body": "thenar.io is now ThenarLabs, a physical AI lab: a landing page in black\nglass (Poppins, a floating glass nav, a lilac action, a statement that\nlights word by word) and /products with every robot the lab has built or\nis building, from its own repositories: Thenar, Quest capture, Thenar\nArms, Hotaru, Thenar Band, JX1, JX0, Thenar Duck and the GT240 wheel.\nEach has /products/<id> with its real renders, its GitHub repository and\nits CAD as a meshopt GLB to turn in the browser.\n\nThe Thenar app moves to its own home at /thenar, served at the root of\napp.thenar.io by proxy.ts once NEXT_PUBLIC_APP_ORIGIN names it. The whole\napp takes the same theme through its tokens: black ground, white type,\nlavender accent, rounded lilac and glass controls, and labels in Poppins\ninstead of spaced capitals. The light theme and its toggle are gone.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
-  },
-  {
-    "hash": "4c3c09c",
-    "date": "2026-09-30T02:10:56+05:30",
-    "subject": "Keep the local chain and the indexer out of Vercel uploads",
-    "body": "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
-  },
-  {
-    "hash": "1ab6b0d",
-    "date": "2026-09-30T02:10:43+05:30",
-    "subject": "Drive the task's SO-101 with a physical AS5600 leader",
-    "body": "Plug the leader (six AS5600 encoders on an ESP32, thenar-arms firmware)\ninto a computer and press Drive with my leader arm: Web Serial reads its\nL lines at 50 Hz and the SO-101 on screen takes each pose joint for joint,\nno inverse kinematics, with the jaw from the trigger. The panel zeroes an\nuncalibrated leader at home and reverses a joint that turns the wrong\nway. A leader on the arm relay drives the page the same way while it\ndrives the physical follower.\n\ntest/live-localnet.mjs DRIVE=leader plays a hand's pick-and-place through\na stand-in for the leader firmware on a pseudo-terminal and the real\nrelay: placed in tolerance, submitted, paid and issued its shares, with\nevery recorded sample a pose the leader sent.\n\nAlso the Envio HyperIndex indexer over Axon, SalesLog, CorpusShares,\nPasskeyRegistry and CorpusAccess: Monad testnet over HyperSync once an\nAPI token exists, the local chain over RPC today, matching the chain on\nevery field checked.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
-  },
-  {
-    "hash": "f503343",
-    "date": "2026-09-30T01:41:45+05:30",
-    "subject": "Keep the indexer out of the app's type-check and Railway uploads",
-    "body": "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
-  },
-  {
-    "hash": "d7ecd2e",
-    "date": "2026-09-30T01:02:50+05:30",
-    "subject": "A Qwen agent that shops for robot data and pays for it on chain",
-    "body": "scripts/qwen-agent.mjs gives Qwen six tools over the real API and chain:\nlist the tasks, read a datasheet, ask a price, buy over x402 with its\nown key, verify the bytes against SalesLog, inspect what it bought. Qwen\non Alibaba Cloud with DASHSCOPE_API_KEY, Qwen 3 through Ollama without.\nOne tool per turn, task ids checked against the list, the budget held in\ncode, and a ledger of what actually happened printed beside the model's\nown report, flagged if the two disagree.\n\nFixed on the way: an agent's purchases were never found (stored\nchecksummed, looked up lowercased), and the datasheet called every\ncorpus a THENAR-6's and said no screening where a passkey is required.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
-  },
-  {
-    "hash": "61de8d5",
-    "date": "2026-09-30T00:52:34+05:30",
-    "subject": "Run every flow end to end on a local chain with Monad's shape",
-    "body": "scripts/localnet.mjs starts anvil with the Osaka hardfork, which has the\nP-256 precompile at 0x0100 that Monad has, copies Multicall3 from Monad,\nand deploys the same DeployMonad.s.sol plus a USDC with Circle's EIP-3009\ninterface. NEXT_PUBLIC_CHAIN=local builds the app against it into\n.next-local: a browser-held local wallet in place of Privy, a local faucet,\n/explorer for transactions and addresses, and a banner on every page saying\nit is not Monad. scripts/x402-facilitator.mjs settles corpus sales there\nwith x402's own facilitator library.\n\ntest/live-localnet.mjs drives the whole first day in a real browser:\nwallet, passkey registered and admitted, a keyboard-driven SO-101 run\nplaced in tolerance, submitted, paid and issued its corpus shares.\n\nFixed on the way: /passkey kept saying 'not registered' after setup until\na reload, and a page opened at an IP address now says passkeys need a\nname instead of 'creation failed'.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
-  },
-  {
-    "hash": "d191768",
-    "date": "2026-09-24T08:32:13+05:30",
-    "subject": "Sign the gate test's assertions for the site under test, not localhost",
-    "body": "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
-  },
-  {
-    "hash": "0883a2d",
-    "date": "2026-09-24T08:19:33+05:30",
-    "subject": "Replace World ID with a passkey on Monad; the passkey also owns the robot; plain-language menus",
-    "body": "Operators are admitted by a passkey instead of World ID. The device makes\nthe passkey (Face ID, a fingerprint, a PIN) through Mera, Monad's passkey\nlibrary. Its P-256 key is registered in PasskeyRegistry from the operator's\nown wallet. To join the CorpusShares whitelist, the passkey signs a\none-time challenge (/api/operator). The server checks the challenge,\norigin, relying party and user verification. PasskeyRegistry then verifies\nthe signature on Monad through the P-256 precompile. /api/verify,\n/api/sign and /api/submitted all read that whitelist.\n\n- World AgentKit and AgentBook are gone. Agents pay per pull over x402 in\n  USDC on Monad, and /api/agent/status now reports what a wallet bought.\n- The old /passkey page used a WebCrypto key, not a passkey. It is now\n  the real one, with a \"prove it on Monad\" read.\n- The per-run passkey path is retired. The deployed Axon verifies\n  sha256(trajHash), which a WebAuthn passkey cannot sign.\n- The passkey owns the arm (the Mera \"One Passkey, Many Keys\" bounty). A\n  PRF salt for \"SO-101 commands\" derives, via HKDF, an Ed25519 key in a\n  Mera signing session. scripts/arm-relay.mjs --owner <key> moves the\n  physical arm only for frames signed by it. An unsigned frame, another\n  key, a stale timestamp or a replayed sequence gets STOP instead.\n- The nav keeps every page, grouped into three menus (Earn, Data,\n  Protocol) with a line on what each page is. On phones it is one Menu\n  button. \"Connect\" is now \"Sign in\".\n- README and SUBMISSION describe the passkey, and list the four bounties\n  entered: Privy, Mera, Qwen 3.8 Max and Envio.\n\nTests:\n- test/webauthn.test.mjs: the digest and DER arithmetic. With LIVE=1,\n  PasskeyRegistry on Monad accepts a real assertion and refuses a\n  tampered one.\n- test/live-operator.mjs: every refusal the gate makes, over HTTP.\n- test/live-passkey.mjs: Mera plus Chromium's WebAuthn authenticator. It\n  checks the key, user verification, stable and separated PRF, and\n  verification on Monad.\n- test/live-arm-owner.mjs: the owner's passkey moves the follower;\n  another passkey's frames stop it.\n- test/arm-relay.test.mjs covers --owner.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
-  },
-  {
-    "hash": "6cea426",
-    "date": "2026-09-24T07:47:44+05:30",
-    "subject": "Record the full test pass: every item, what failed, what fixed it",
-    "body": "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
-  },
-  {
-    "hash": "91dedf6",
-    "date": "2026-09-24T07:38:18+05:30",
-    "subject": "Fix what the full test pass found: scan positions, the hub toggle, phone widths, honest inventory",
-    "body": "The scan measured detected objects at their front edge. On rendered\nphotos with a known layout, a 98 mm apple came out 38 mm short, outside\nthe 25 mm placement band. The sheet's homography now also yields the\ncamera's pose (one-view calibration). The footprint centre is the bottom\nedge pushed back by r·tan(θ/2). The apple now lands 17 mm and 12 mm from\nwhere it stands, from two viewpoints; objects added by a click land\nwithin 2 mm. test/live-scan.mjs runs this against fixtures rendered from\nthe photoscanned props.\n\n- The hub's \"+N identical\" toggle was declared inside the page, so it\n  remounted on every six-second refetch and swallowed clicks. It is now a\n  component of its own.\n- At 375 px, /agents overflowed on an unbroken address (475 px), and\n  /spec/so101's joint table overflowed too (403 px). Every page now fits.\n- /inventory said every object is generated with \"no asset file to lose\".\n  Seventeen are now photoscans, so the copy says so and each one is\n  marked \"scan\", with its source.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
-  },
-  {
-    "hash": "8d3d629",
-    "date": "2026-09-24T01:49:12+05:30",
-    "subject": "Add a script that closes the lab's expired bounties through Privy",
-    "body": "The demo takes posted the same lab bounty four times (tasks 7 to 10).\nAxonProtocolV2 lets a funder close a task only after its deadline, so the\nduplicates can come back on 30 September. closeTask carries no value, so\nthe lab wallet's Privy policy (to AxonProtocolV2, chain 10143, at most\n0.1 MON) already allows it; this signs it there, broadcasts it, and reads\nthe task back.\n\nEvery id is checked first and skipped with the reason unless the lab\nfunded it, it is open, and its deadline has passed. --check reports only.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
-  },
-  {
-    "hash": "30aa570",
-    "date": "2026-09-24T01:17:07+05:30",
-    "subject": "Regenerate the changelog from git",
-    "body": "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
-  },
-  {
-    "hash": "91e0ccf",
-    "date": "2026-09-24T00:49:18+05:30",
-    "subject": "Put the SO-101 on the bench and give the props real models",
-    "body": "Your SO-101 is now the default arm. Every single-arm task runs on it, so\n10 of the 11 live tasks now draw the MG996R arm and record its joints.\n\"[arm thenar6]\" still selects the THENAR-6, and the two-arm task keeps its\nTHENAR-6 pair. /post always writes the arm tag, so a task never depends on\na default. Joint callouts sit at the SO-101's own shoulder and base.\n\nSeventeen props are now CC0 photoscans from Poly Haven instead of\nprocedural stand-ins. Ten replace procedural props: bottle, can, bowl,\nspoon, ball, screwdriver, plate, basket, crate and tray. Seven are new:\napple, lemon, onion, pliers, stapler, cutting board and pot. Each is\nconverted by scripts/real-props.mjs into the props' convention and passes\nthe Khronos validator. The camera scan maps apple, orange and scissors onto\nthe new ones. The laptop and the drawer stay procedural: the live tasks ask\nfor a closed laptop and an open drawer, and the scans are an open laptop\nand a closed chest.\n\nAlso fixed along the way:\n- The CSP blocked the blob: URLs GLTFLoader reads embedded textures\n  through, so every textured model failed to load.\n- Previews are now stills from one shared offscreen renderer. The old\n  per-tile canvases hit the browser's WebGL context cap and left four\n  tiles blank on a full screen; /post now renders 41 of 41 with no canvas.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
-  },
-  {
-    "hash": "572c590",
-    "date": "2026-09-24T00:31:42+05:30",
-    "subject": "Point the production frontend at the Monad backend, and stop pinning Arc addresses",
-    "body": "vercel.json set NEXT_PUBLIC_AXON_ADDRESS and three other contract addresses\nfrom the Arc deployment. Those override lib/deployment.ts, so any Vercel\nbuild from this tree would have read Arc addresses on Monad. It now sets\nonly what the deployment file cannot: BACKEND_ORIGIN, the Railway web\nservice the frontend proxies /api to, and the public web-push key. The\nPrivy and World app ids are Vercel project variables.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
-  },
-  {
-    "hash": "9521c85",
-    "date": "2026-09-24T00:29:36+05:30",
-    "subject": "Refuse to sign runs whose arm did not move the payload",
-    "body": "A scripted recording could leave the joints at zero while gliding the\npayload onto the goal. It scored 100.00 and would have been paid in full.\nThe coherence check that caught it only ran at export time.\n\nThe signer now checks physicality before scoring:\n- Every frame where a payload moves across the table must have a closed\n  tool of some arm in the scene on it. The tool comes from that arm's own\n  forward kinematics (THENAR-6, the second THENAR-6, or the SO-101).\n- The payloads must begin where the task puts them. The start is read\n  from the task on chain, and a scanned task's start is used when it has\n  one.\n\nA recording driven in the station passes by construction. A real run\nrecorded through the headset emulator passes; the scripted one is refused\nwith 422.\n\nThe signer also checks the human itself now. /api/sign refuses any\ncontributor that is not on the CorpusShares whitelist, which only a World\nID Selfie Check can put them on. Before this, anyone who could reach the\nsigner directly skipped the check that /api/verify makes.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
-  },
-  {
-    "hash": "b295e7b",
-    "date": "2026-09-23T17:51:35+05:30",
-    "subject": "Add a short demo: ten beats, plain captions, one real transaction",
-    "body": "demo/v2 records the full walkthrough in 25 beats. demo/simple is the\nversion a first-time viewer can follow in under a minute and a half:\nwhat Thenar is, the live hub, a practice drive at the station, a lab\nfunding a task from its Privy wallet (a real bounty, confirmed from its\nMonad receipt before the narration says so), Privy refusing any other\nspend, agents buying data, the share whitelist refusing an unverified\naddress, and the twelve verified contracts.\n\nCaptions are drawn in the page, so they are in the recorded frames;\nmake.mjs trims silent waits to the last 2.5 seconds before the next line\nand lays each Kokoro line at its mark.\n\nThe station beat is a keyboard practice drive, not the built-in policy.\nprobe-policy.mjs ran the policy on tasks 0, 1, 2 and 4: it barely moves\nand never grasps on those scenes, as the station itself warns, and a demo\nof it failing, or of a success it did not earn, says the wrong thing.\n\n  python3 demo/simple/tts.py\n  BASE=http://localhost:3333 node demo/simple/driver.mjs\n  node demo/simple/make.mjs\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
-  },
-  {
-    "hash": "eee3a36",
-    "date": "2026-09-23T17:02:40+05:30",
-    "subject": "Regenerate the changelog from git",
-    "body": "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
-  },
-  {
-    "hash": "057162f",
-    "date": "2026-09-23T16:46:19+05:30",
-    "subject": "Add the SO-101 (MG996R) as a second arm, and mirror it onto a real one",
-    "body": "A task can now be for the open SO-101 as well as the THENAR-6. The arm\ntravels in the task's name on chain as \"[arm so101]\", next to any scan tag,\nso the station, the verifier and the exports all read it from chain state.\n\n- Every task is shaped into its sentence (name), its stored name\n  (chainName, which scoring reads), its arm and its scanned bench. Cards,\n  the hub and the station show the sentence and add SO-101 and Scanned\n  chips. The hub gets an Arm filter.\n- The station draws and solves the SO-101 from thenar-arms' CAD chain\n  (DLS IK with the gripper down and joint limits enforced). It records the\n  arm's own joints and tool. Replays pose the right arm.\n- Teach, the coherence check and dataset exports read the joints back\n  through the arm that recorded them. Exports name the embodiment and its\n  joints.\n- /post has an Arm picker, and shows the tagged name that goes on chain.\n- /spec/so101 lets you drive the arm and read the joints it solves.\n- scripts/arm-relay.mjs streams the station to a real follower using the\n  thenar-arms firmware protocol. It listens on loopback only, refuses other\n  websites, and arms only with --arm and only from home. It refuses poses\n  into the table or past the joint limits, and stops the arm when the page\n  goes quiet. \"Mirror to my SO-101\" holds home, then eases to the pose on\n  screen.\n- Lint skips MediaPipe's copied WASM glue.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
-  },
-  {
-    "hash": "49b0574",
-    "date": "2026-09-23T16:11:15+05:30",
-    "subject": "Scan a task from the real table, drive the station from a Quest, and teach the arm",
-    "body": "/post can measure a task from a photo of the bench: four clicks on a sheet\nof A4 fix a homography to the arm's frame, MediaPipe (served from this site)\nnames what is on the table, and the pick and place positions go into the\ntask's name on chain as \"[scan x,y > x,y]\". goalFor/startFor read them back,\nso the station draws the payload where it stood and /api/sign scores against\nwhere its target is, from chain state; untagged tasks score as before.\n\nThe station's headset mode is now real teleop: squeeze to take hold and the\ntool follows the controller 1:1, the trigger sets the jaws, hands work too,\nA begins and ends a run, B stands the bench where the controller rests, and\nmixed reality puts it on your own table. It drives the same target and jaws\nas the keyboard, so runs keep one shape.\n\nTeach learns from the best paid run through /api/dataset and Repeat runs it\nbent to the scene, as practice only.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
-  },
-  {
-    "hash": "d942ec4",
-    "date": "2026-09-23T16:48:18+05:30",
-    "subject": "Record the first pass of the Monad test plan",
-    "body": "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
-  },
-  {
-    "hash": "80a587f",
-    "date": "2026-09-23T16:46:53+05:30",
-    "subject": "Document the statuses the index and physics routes really answer",
-    "body": "The end-to-end check that every route answers only what the OpenAPI\ndocument says caught three: /api/task/{id}/history and /api/calls/{address}\nanswer 503 on a deployment with no key for Monadscan's index and 502 when\nthe index errors, and /api/physics/{hash} answers 404 for a hash nothing\nwas stored under. All three are the right answers; they were missing from\nthe document.\n\nThe page sweep asked for /licence/0 to be a 200. A licence page exists only\nfor a minted policy, and that page is now a 404 until policy 0 exists, so\nthe check asks the contract's policyCount which answer to expect.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
-  },
-  {
-    "hash": "d82e5ff",
-    "date": "2026-09-23T16:26:54+05:30",
-    "subject": "Skip a tour stop that has nothing to show yet, instead of ending the tour there",
-    "body": "Step 4 opens a paid run, and a deployment with no paid run has none to\nopen. Next was disabled there, which is right about step 4 and wrong about\neverything after it: the foundry and the status page always exist, and a\nreader could not reach them until somebody had been paid.\n\nNext and Back now move to the nearest step whose subject exists, and the\npanel says which step it passes over and why. A step with nothing to show\nis still never a destination. The README no longer says /archive shows the\nBlitz contract; /contracts lists it under Superseded, and /archive holds\nstored runs.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
-  },
-  {
-    "hash": "db7a267",
-    "date": "2026-09-23T16:21:55+05:30",
-    "subject": "Let the issuer reclaim a dividend nobody can hold, and redeploy CorpusShares",
-    "body": "A dividend declared while no share exists is owed to nobody: at its record\ndate every holder's entitlement is zero, so no claim can ever succeed. The\nfirst CorpusShares had no other way for that MON to leave, and the test\nrun's 0.01 MON dividend is still locked in it.\n\nreclaimDividend returns what is left of such a dividend to the issuer,\nonly after the record date and only when the supply at that date was\nzero. A dividend with holders is theirs and it cannot touch it. Three new\ntests; on chain, a dividend was declared on the new contract, the record\ndate passed, and it came back in full, leaving the contract empty.\n\nCorpusShares alone is redeployed by DeployShares.s.sol at 0xAE1F…0fc7,\nexact_match on Sourcify; apply-deploy overlays it from that script's\nconfirmed broadcast. The first one is listed as superseded with the reason.\n\n/corpus-token's event list now says it is this server's writes, which it\nis: the issuer can also write from scripts/shares.mjs, and those are in\nthe figures above but not in that log.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
-  },
-  {
-    "hash": "a1cd3c4",
-    "date": "2026-09-23T16:06:57+05:30",
-    "subject": "Stop showing numbers nobody measured, and 404 what does not exist",
-    "body": "The first browser pass against the Monad deployment found pages stating\nfigures that were not readings:\n\n- /operator reported \"0 protocol calls, 0 reverted\" whenever the index or\n  the ledger failed, because a failure was stored as an empty list. It now\n  says \"—\" and why, and \"no runs\" means only that.\n- /post showed \"Your balance 0.0000 MON\" with no wallet connected, and\n  projected the whole escrow as \"scoring shortfall\" from a mean score of\n  zero when no run had been scored. Its gas note named \"the six tasks\n  here\" after a seventh was posted; it now says what the receipts show.\n- /task said a task \"was posted with createTask\" when it was posted with\n  createTaskUntil and a zero deadline; it now says what the state shows.\n- /handheld said the arm reaches 408 mm beside a spec sheet saying 512.\n  Both are true of different things, so it now names the solver's reach\n  and reads it from REACH_MAX.\n- The manifest answered matches: false for a task with nothing committed,\n  which reads as a mismatch. It is null until there is something to compare.\n\nPages that call Monadscan's index no longer ask when this deployment has\nno key: next.config.ts exposes whether one exists, not the key, so an\nunconfigured index is a stated reason rather than a 503 and a console\nerror on every load. A failure that does happen shows the server's own\nsentence instead of \"would not answer just now\".\n\n/station/999, /station/abc, /licence/<unminted>, /operator/nope were 200s\nsaying \"not found\"; they are 404s, asked of the contract the same way\n/task asks, and still rendered when the chain does not answer.\n\n/lab refetched its list once on the receipt, and on Monad the endpoint\nserving the read can be a block behind the one that confirmed it, so the\nlist omitted the task the line above had just announced. It asks again\neach second until the task is there. The Privy policy name is shortened\nto Privy's 50-character limit, and the changelog is regenerated from this\nrepository's own history.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
-  },
-  {
-    "hash": "a935ab1",
-    "date": "2026-09-23T15:44:13+05:30",
-    "subject": "Deploy Thenar to Monad testnet",
-    "body": "Twelve contracts from DeployMonad.s.sol in one broadcast, seventeen\ntransactions, every receipt status 1, AxonProtocolV2 at block 64987386.\nFive tasks seeded at 0.002 MON a run, six slots each, task 4 with a\nseven-day deadline. The verifier is 0xC7D1…893D on the protocol and the\nmanifest; the corpus issuer 0x9a6A…e6b2 owns CorpusShares and SalesLog.\nAll twelve are exact_match on Sourcify for chain 10143.\n\napply-deploy.mjs now reads the newest record whose every transaction has a\nsuccessful receipt, not run-latest.json: forge wrote a second record a\nminute after the broadcast, simulated against an endpoint that had not\ncaught up, with nonces five behind, addresses that belong to other\ncontracts and no receipts at all, and it overwrote run-latest with it.\nAddresses are written checksummed.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
   }
 ]
