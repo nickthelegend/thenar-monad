@@ -2,6 +2,7 @@
  * One operator's paid run on Monad testnet, end to end, without a browser.
  *
  *   node --import ./test/register.mjs scripts/monad-operator-run.mjs [taskId]
+ *   OPERATOR_KEY_FILE=.data/seed-1.key FUNDER_KEY_FILE=.data/monad-operator.key RECORDING=0x… … [taskId]
  *
  * The same steps the station takes, against the live app (APP_ORIGIN,
  * default https://app.thenar.io) and Monad testnet:
@@ -34,7 +35,7 @@ const tx = (h) => `https://testnet.monadvision.com/tx/${h}`;
 
 // 1. An operator wallet, kept in .data/ (gitignored) so a failed run resumes
 //    with the same address instead of funding a new one.
-const KEY_FILE = ".data/monad-operator.key";
+const KEY_FILE = process.env.OPERATOR_KEY_FILE ?? ".data/monad-operator.key";
 if (!existsSync(KEY_FILE)) writeFileSync(KEY_FILE, generatePrivateKey(), { mode: 0o600 });
 const operator = privateKeyToAccount(readFileSync(KEY_FILE, "utf8").trim());
 if ((await pub.getBalance({ address: operator.address })) < parseEther("0.05")) {
@@ -54,8 +55,7 @@ const jwk = publicKey.export({ format: "jwk" });
 const coord = (b64) => `0x${Buffer.from(b64, "base64url").toString("hex").padStart(64, "0")}`;
 const registry = DEPLOYMENT.contracts.passkeyRegistry;
 const regAbi = parseAbi(["function register(bytes32 x, bytes32 y)"]);
-const has = await pub.readContract({ address: registry, abi: parseAbi(["function hasPasskey(address) view returns (bool)"]), functionName: "hasPasskey", args: [operator.address] });
-if (has) throw new Error("this operator already has a passkey on chain; remove .data/monad-operator.key to start over");
+// register() replaces any earlier key for this address, so a resumed run binds this process's fresh key.
 const regGas = await pub.estimateContractGas({ address: registry, abi: regAbi, functionName: "register", args: [coord(jwk.x), coord(jwk.y)], account: operator });
 const reg = await wallet.writeContract({ address: registry, abi: regAbi, functionName: "register", args: [coord(jwk.x), coord(jwk.y)], gas: (regGas * 11n) / 10n });
 await pub.waitForTransactionReceipt({ hash: reg });
@@ -78,10 +78,10 @@ console.log(`admitted ${admitted.status} ${JSON.stringify(admitted.body).slice(0
 if (!admitted.body.admitted) process.exit(1);
 
 // 4. The hosted verifier scores a recording of this task's scene and signs it.
-const [row] = execFileSync("sqlite3", ["-json", ".data/localnet.db",
-  `select samples, duration_s, deviation_mm, payload_ids from trajectory where task_id = ${TASK} and settled = 1 order by score desc limit 1;`], { encoding: "utf8" }).trim()
-  ? JSON.parse(execFileSync("sqlite3", ["-json", ".data/localnet.db", `select samples, duration_s, deviation_mm, payload_ids from trajectory where task_id = ${TASK} and settled = 1 order by score desc limit 1;`], { encoding: "utf8" }))
-  : [];
+// RECORDING picks one recording by its hash; otherwise the task's best.
+const where = process.env.RECORDING ? `traj_hash = '${process.env.RECORDING.replace(/[^0-9a-fx]/gi, "")}'` : `task_id = ${TASK} and settled = 1 order by score desc`;
+const out = execFileSync("sqlite3", ["-json", ".data/localnet.db", `select samples, duration_s, deviation_mm, payload_ids from trajectory where ${where} limit 1;`], { encoding: "utf8" }).trim();
+const [row] = out ? JSON.parse(out) : [];
 if (!row) throw new Error(`no recorded run for task ${TASK} on this machine`);
 const verdict = await post("/api/verify", {
   taskId: TASK, contributor: operator.address, samples: JSON.parse(row.samples), durationSeconds: row.duration_s,

@@ -37,3 +37,6 @@ One operator, end to end, scripted (`scripts/monad-operator-run.mjs`) against th
 The run's page: <https://app.thenar.io/run/0x2cbb297cc1a7409ad8b6bdf356d3e1bf56799949bf8c613d7af273a24f927ad8>.
 The recording is one the verifier accepted on the local chain for the task of the same name. The hosted verifier
 re-scored it for this operator, since the contributor is part of what it hashes.
+
+Three more paid runs from separate wallets and a second x402 sale came later on 13 Oct. All of them were
+**seeded by the team**, and they are listed in [evidence/seed-13oct.md](evidence/seed-13oct.md).
