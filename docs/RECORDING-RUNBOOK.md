@@ -35,4 +35,4 @@
 **Consumes, per take:**
 - About 0.07 MON from the Privy wallet: passkey 0.01, which is once only, plus the run 0.06.
 - 0.01 USDC from the agent.
-- Run 4 has 4 open slots left on task 0. If they run out, use task 4 ("Put the pen on the closed laptop", 6 open).
+- Task 0 has 5 open slots. If they run out, use task 4 ("Put the pen on the closed laptop", 6 open).
