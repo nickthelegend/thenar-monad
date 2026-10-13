@@ -1,0 +1,64 @@
+1
+00:00:03,350 --> 00:00:06,466
+Beyond login, Privy holds a robotics lab's money.
+
+2
+00:00:06,496 --> 00:00:09,334
+The lab's budget is a Privy server wallet, under a
+
+3
+00:00:09,364 --> 00:00:11,435
+policy with one allowed action:
+
+4
+00:00:11,465 --> 00:00:15,383
+a transaction to Thenar's contract on Monad testnet,
+
+5
+00:00:15,413 --> 00:00:17,541
+worth at most a tenth of a MON.
+
+6
+00:00:17,721 --> 00:00:19,421
+Here it posts a bounty.
+
+7
+00:00:19,451 --> 00:00:24,111
+Privy signs, and Monad executes it and makes it final.
+
+8
+00:00:24,141 --> 00:00:26,503
+Then the same wallet is asked to send money to another
+
+9
+00:00:26,533 --> 00:00:29,986
+address, and Privy's policy engine refuses before a
+
+10
+00:00:30,016 --> 00:00:31,541
+signature exists.
+
+11
+00:00:32,221 --> 00:00:34,338
+An operator picks up the lab's task.
+
+12
+00:00:36,868 --> 00:00:39,613
+And one Monad transaction records their run and pays
+
+13
+00:00:39,643 --> 00:00:42,179
+them from the escrow the Privy wallet funded.
+
+14
+00:00:42,209 --> 00:00:46,044
+Operators sign in with Privy too, and get paid into that wallet.
+
+15
+00:00:46,724 --> 00:00:49,260
+A lab can automate bounties, and the worst case is that
+
+16
+00:00:49,290 --> 00:00:51,163
+it funded Thenar tasks.
+

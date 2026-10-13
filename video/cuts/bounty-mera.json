@@ -1,0 +1,62 @@
+{
+ "name": "bounty-mera",
+ "out": "docs/demo/bounty-mera.mp4",
+ "max": 120,
+ "scenes": [
+  {
+   "id": "open",
+   "card": {
+    "kicker": "BOUNTY",
+    "head": "Mera: One Passkey, Many Keys \u00b7 Thenar",
+    "sub": "Live on Monad testnet \u00b7 app.thenar.io"
+   },
+   "hold": 0.5,
+   "lines": []
+  },
+  {
+   "id": "passkey",
+   "title": "One passkey: identity",
+   "cap": 14,
+   "notes": [
+    "PASSKEY: CHROMIUM VIRTUAL AUTHENTICATOR"
+   ],
+   "lines": [
+    "One passkey, made through Mera. Its P-256 key goes into PasskeyRegistry, and Monad's precompile verifies every signature, so each paid run comes from a person."
+   ]
+  },
+  {
+   "id": "derive",
+   "title": "Many keys: the arm's key from the PRF",
+   "upto": 5,
+   "cap": 20,
+   "lines": [
+    "Then the non-account part. Mera evaluates the passkey's PRF with a purpose salt, thenar so101 commands, and HKDF turns it into an Ed25519 key, held in a Mera signing session. Nothing is stored. Derive it again, and it's the same key; a different purpose gives an independent one."
+   ]
+  },
+  {
+   "id": "drive",
+   "title": "The key the robot obeys",
+   "skip": 10,
+   "upto": 6,
+   "cap": 6,
+   "notes": [
+    "WEBXR \u00b7 EMULATED HEADSET (IWER) \u00b7 LIVE MONAD TESTNET"
+   ],
+   "lines": [
+    "That key signs the commands to the operator's own arm, and the arm relay obeys only its owner."
+   ]
+  },
+  {
+   "id": "end",
+   "card": {
+    "kicker": "ONE PASSKEY \u00b7 MANY KEYS",
+    "head": "Who you are. What your robot obeys.",
+    "sub": "P-256 \u2192 PasskeyRegistry (0x0100) \u00b7 PRF(\"thenar:so101-commands:v1\") \u2192 HKDF \u2192 Ed25519"
+   },
+   "hold": 1.0,
+   "lines": [
+    "No seed phrase, no key file: one passkey, many keys."
+   ]
+  }
+ ]
+}

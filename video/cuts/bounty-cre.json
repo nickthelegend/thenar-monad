@@ -1,0 +1,66 @@
+{
+ "name": "bounty-cre",
+ "out": "docs/demo/bounty-cre.mp4",
+ "max": 120,
+ "scenes": [
+  {
+   "id": "open",
+   "card": {
+    "kicker": "BOUNTY",
+    "head": "Chainlink CRE \u00b7 Thenar",
+    "sub": "Live on Monad testnet \u00b7 app.thenar.io"
+   },
+   "hold": 0.5,
+   "lines": []
+  },
+  {
+   "id": "corpus",
+   "title": "What gets audited",
+   "upto": 6,
+   "cap": 8,
+   "lines": [
+    "Thenar sells robot demonstration data, and its own server is the party being checked. So a Chainlink CRE workflow audits it."
+   ]
+  },
+  {
+   "id": "cre",
+   "title": "cre workflow simulate --broadcast",
+   "upto": 13,
+   "cap": 30,
+   "mask": [
+    56,
+    885,
+    1810,
+    80
+   ],
+   "notes": [
+    "CRE CLI SIMULATION \u00b7 REAL BROADCAST TO MONAD"
+   ],
+   "lines": [
+    "This is the CRE CLI running the corpus-audit workflow. On a cron trigger, every node fetches the served episode hashes over HTTP and rebuilds each task's Merkle root itself, with consensus on identical roots.",
+    "Then it reads the roots our verifier committed on Monad, in one Multicall3 call, decides a verdict per task, and writes a report to the CorpusAudit contract on Monad testnet. Here it audited three tasks, in transaction 0xf154."
+   ]
+  },
+  {
+   "id": "audit",
+   "title": "The verdict, read back by the app",
+   "upto": 4.5,
+   "cap": 10,
+   "lines": [
+    "The app reads the verdict back. For this task it is uncommitted: the episodes are served, but no root is committed yet, and CRE says so on chain, beside the data, for any buyer to read."
+   ]
+  },
+  {
+   "id": "end",
+   "card": {
+    "kicker": "WRITTEN TO MONAD TESTNET",
+    "head": "CorpusAudit \u00b7 tx 0xf1546ec9\u2026a5f72",
+    "sub": "cre/corpus-audit: HTTP \u2192 consensus \u2192 EVM read \u2192 verdict \u2192 EVM write"
+   },
+   "hold": 1.0,
+   "lines": [
+    "Chainlink CRE, auditing the data Thenar sells, on Monad."
+   ]
+  }
+ ]
+}

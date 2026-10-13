@@ -1,0 +1,59 @@
+{
+ "name": "bounty-privy",
+ "out": "docs/demo/bounty-privy.mp4",
+ "max": 120,
+ "scenes": [
+  {
+   "id": "open",
+   "card": {
+    "kicker": "BOUNTY",
+    "head": "Privy \u00b7 Thenar",
+    "sub": "Live on Monad testnet \u00b7 app.thenar.io"
+   },
+   "hold": 0.5,
+   "lines": []
+  },
+  {
+   "id": "lab",
+   "title": "A lab's budget in a Privy server wallet",
+   "upto": 9.5,
+   "cap": 30,
+   "notes": [
+    "PRIVY SERVER WALLET \u00b7 REAL TX"
+   ],
+   "lines": [
+    "Beyond login, Privy holds a robotics lab's money. The lab's budget is a Privy server wallet, under a policy with one allowed action: a transaction to Thenar's contract on Monad testnet, worth at most a tenth of a MON.",
+    "Here it posts a bounty. Privy signs, and Monad executes it and makes it final. Then the same wallet is asked to send money to another address, and Privy's policy engine refuses before a signature exists."
+   ]
+  },
+  {
+   "id": "station",
+   "title": "The lab's task, task 13",
+   "cap": 6,
+   "lines": [
+    "An operator picks up the lab's task."
+   ]
+  },
+  {
+   "id": "paid",
+   "title": "Paid from the lab's escrow",
+   "upto": 6,
+   "cap": 10,
+   "lines": [
+    "And one Monad transaction records their run and pays them from the escrow the Privy wallet funded. Operators sign in with Privy too, and get paid into that wallet."
+   ]
+  },
+  {
+   "id": "end",
+   "card": {
+    "kicker": "PRIVY POLICY \u00b7 ONE ALLOWED ACTION",
+    "head": "No payout key on a laptop.",
+    "sub": "to == AxonProtocolV2 \u00b7 chain 10143 \u00b7 value \u2264 0.1 MON \u00b7 everything else: policy_violation"
+   },
+   "hold": 1.0,
+   "lines": [
+    "A lab can automate bounties, and the worst case is that it funded Thenar tasks."
+   ]
+  }
+ ]
+}

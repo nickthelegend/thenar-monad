@@ -1,0 +1,56 @@
+1
+00:00:03,350 --> 00:00:05,674
+One passkey, made through Mera.
+
+2
+00:00:05,704 --> 00:00:09,253
+Its P-256 key goes into PasskeyRegistry, and Monad's
+
+3
+00:00:09,283 --> 00:00:13,115
+precompile verifies every signature, so each paid run
+
+4
+00:00:13,145 --> 00:00:14,662
+comes from a person.
+
+5
+00:00:15,342 --> 00:00:17,262
+Then the non-account part.
+
+6
+00:00:17,292 --> 00:00:20,757
+Mera evaluates the passkey's PRF with a purpose salt,
+
+7
+00:00:20,787 --> 00:00:26,005
+thenar so101 commands, and HKDF turns it into an Ed25519
+
+8
+00:00:26,035 --> 00:00:28,919
+key, held in a Mera signing session.
+
+9
+00:00:28,949 --> 00:00:32,367
+Nothing is stored. Derive it again, and it's the same
+
+10
+00:00:32,397 --> 00:00:35,524
+key; a different purpose gives an independent one.
+
+11
+00:00:36,204 --> 00:00:39,042
+That key signs the commands to the operator's own arm,
+
+12
+00:00:39,072 --> 00:00:41,293
+and the arm relay obeys only its owner.
+
+13
+00:00:42,204 --> 00:00:43,950
+No seed phrase, no key file:
+
+14
+00:00:43,980 --> 00:00:45,528
+one passkey, many keys.
+

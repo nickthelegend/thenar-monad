@@ -1,0 +1,64 @@
+1
+00:00:03,350 --> 00:00:06,484
+Thenar sells robot demonstration data, and its own
+
+2
+00:00:06,514 --> 00:00:08,603
+server is the party being checked.
+
+3
+00:00:08,633 --> 00:00:12,154
+So a Chainlink CRE workflow audits it.
+
+4
+00:00:12,834 --> 00:00:16,960
+This is the CRE CLI running the corpus-audit workflow.
+
+5
+00:00:16,990 --> 00:00:20,745
+On a cron trigger, every node fetches the served episode
+
+6
+00:00:20,775 --> 00:00:24,832
+hashes over HTTP and rebuilds each task's Merkle root
+
+7
+00:00:24,862 --> 00:00:28,279
+itself, with consensus on identical roots.
+
+8
+00:00:28,459 --> 00:00:31,749
+Then it reads the roots our verifier committed on Monad,
+
+9
+00:00:31,779 --> 00:00:35,592
+in one Multicall3 call, decides a verdict per task, and
+
+10
+00:00:35,622 --> 00:00:38,448
+writes a report to the CorpusAudit contract on Monad
+
+11
+00:00:38,478 --> 00:00:44,415
+testnet. Here it audited three tasks, in transaction 0xf154.
+
+12
+00:00:45,095 --> 00:00:47,160
+The app reads the verdict back.
+
+13
+00:00:47,190 --> 00:00:49,327
+For this task it is uncommitted:
+
+14
+00:00:49,357 --> 00:00:52,630
+the episodes are served, but no root is committed yet,
+
+15
+00:00:52,660 --> 00:00:57,940
+and CRE says so on chain, beside the data, for any buyer to read.
+
+16
+00:00:58,620 --> 00:01:02,362
+Chainlink CRE, auditing the data Thenar sells, on Monad.
+

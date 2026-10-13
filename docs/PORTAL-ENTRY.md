@@ -149,7 +149,7 @@ The app reads the verdict back: /api/task/<id>/manifest returns it under "audit"
 It runs through the CRE CLI simulator with a real broadcast: cre workflow simulate corpus-audit --target staging-settings --broadcast. Deploying to a hosted DON needs CRE deploy access, which we don't have. The latest audit (0xf1546ec9...a5f72) found tasks 0, 12 and 13 "uncommitted": their episodes are served, but no root is committed yet. We left that verdict showing, because an outside auditor is only useful if it says so.
 ```
 **Video (required, ≤ 2:00) of a CRE CLI simulation or live deployment**
-`docs/demo/bounty-cre.mp4`: upload it, then paste the link.
+`docs/demo/bounty-cre.mp4` (1:04: the CLI simulation, its Monad tx and the verdict read back): upload it, then paste the link.
 
 **What we did**
 - Wrote the `cre/corpus-audit` workflow: cron → HTTP fetch → consensus on the roots → EVM read (Multicall3 on Monad)
@@ -182,7 +182,7 @@ So a lab can automate bounties without a payout key on a laptop or in CI. The wo
 Operators also sign in with Privy (email or an external wallet, components/providers.tsx) and receive their pay in that wallet. The bounty Privy signed in the demo, task #13, was then driven and paid on Monad in the same video.
 ```
 **Video (optional, ≤ 2:00)**
-`docs/demo/bounty-privy.mp4`: upload it, then paste the link.
+`docs/demo/bounty-privy.mp4` (0:52): upload it, then paste the link.
 
 **What we did**
 - Wrote a Privy policy: allow only `to == AxonProtocolV2`, `chain_id == 10143`, `value ≤ 0.1 MON`; deny everything
@@ -212,7 +212,7 @@ Mera gives each operator one passkey that does two jobs. The second job is not a
 One passkey, two keys: who you are (P-256, checked on chain) and what your robot obeys (Ed25519 from the PRF). There is no seed phrase and no key file.
 ```
 **Video (optional, ≤ 2:00)**
-`docs/demo/bounty-mera.mp4`: upload it, then paste the link.
+`docs/demo/bounty-mera.mp4` (0:47): upload it, then paste the link.
 
 **What we did**
 - Built a PRF namespace in Mera: `SHA-256("thenar:<purpose>:v1")` salts. "so101-commands" → HKDF → an Ed25519
