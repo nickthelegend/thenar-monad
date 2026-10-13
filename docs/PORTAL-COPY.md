@@ -71,3 +71,13 @@ code and assets are listed in the README's Attribution section.
 
 **AI tools:** the code was written with Claude Code (Anthropic), as disclosed in the README. The hero film was made with
 Google Veo; the glass renders with ChatGPT.
+
+
+## Bounty article links
+
+One article per bounty claimed, each on how the sponsor is used and what value it brought, with testnet tx proof:
+
+- **Privy:** https://github.com/nickthelegend/thenar-monad/blob/main/docs/PRIVY.md
+- **Mera:** https://github.com/nickthelegend/thenar-monad/blob/main/docs/MERA.md
+- **Chainlink CRE:** https://github.com/nickthelegend/thenar-monad/blob/main/docs/CHAINLINK-CRE.md
+- **Envio** (built and tested; hosted indexing pending, stated in the article): https://github.com/nickthelegend/thenar-monad/blob/main/docs/ENVIO.md

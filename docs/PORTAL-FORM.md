@@ -153,6 +153,7 @@ node --import ./test/register.mjs scripts/agent-buy.mjs https://app.thenar.io 13
 ### 12. Bounties
 
 **Privy**
+- **Article:** https://github.com/nickthelegend/thenar-monad/blob/main/docs/PRIVY.md
 - **How it's used:**
   - Operators sign in with email (or an external wallet) and get an embedded wallet on Monad.
   - A lab's budget is a **Privy server wallet under a Privy policy** with one allowed action: a transaction to
@@ -167,6 +168,7 @@ node --import ./test/register.mjs scripts/agent-buy.mjs https://app.thenar.io 13
   - The demo video at 0:16.
 
 **Mera (One Passkey, Many Keys)**
+- **Article:** https://github.com/nickthelegend/thenar-monad/blob/main/docs/MERA.md
 - **How it's used:** one passkey is the operator's identity and their arm's key.
   - Its P-256 public key is registered in PasskeyRegistry, and each assertion is verified on chain through Monad's
     P-256 precompile (0x0100). That admission puts them on the corpus-shares whitelist.
@@ -181,6 +183,7 @@ node --import ./test/register.mjs scripts/agent-buy.mjs https://app.thenar.io 13
   - The demo video at 0:35–0:48.
 
 **Chainlink CRE**
+- **Article:** https://github.com/nickthelegend/thenar-monad/blob/main/docs/CHAINLINK-CRE.md
 - **How it's used:** the `cre/corpus-audit` workflow audits the party being checked: Thenar's server.
   - It fetches the served episode hashes, rebuilds each task's Merkle root itself (consensus on identical roots), and
     reads CorpusManifest on Monad through Multicall3.
@@ -195,6 +198,7 @@ node --import ./test/register.mjs scripts/agent-buy.mjs https://app.thenar.io 13
   - the demo video at 2:09.
 
 **Envio** *(built; hosted indexing pending)*
+- **Article:** https://github.com/nickthelegend/thenar-monad/blob/main/docs/ENVIO.md
 - **How it's used:** an Envio HyperIndex indexer over Thenar's contracts: run history and the agents ranking for
   /leaderboard. It reads Monad testnet through HyperSync.
 - **Code:** `indexer/`.
