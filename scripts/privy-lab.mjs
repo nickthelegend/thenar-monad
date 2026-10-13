@@ -28,6 +28,7 @@ import {
   createPublicClient, createWalletClient, encodeFunctionData, formatEther, parseAbi, parseEther, toHex,
 } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
+import { noteSynced, trackReceipt } from "../lib/receipt-timers.ts";
 import { ADDR, monadTestnet, need, readEnvFile, transport, txUrl } from "./monad.mjs";
 
 const local = readEnvFile(".env.local");
@@ -161,8 +162,22 @@ if (!signed.ok) {
   console.log(`bounty   Privy refused to sign: ${signed.status} ${JSON.stringify(signed.json)}`);
   process.exit(1);
 }
-const hash = await pub.sendRawTransaction({ serializedTransaction: signed.json.data.signed_transaction });
-const receipt = await pub.waitForTransactionReceipt({ hash, timeout: 60_000 });
+// Sent with Monad's eth_sendRawTransactionSync: the receipt comes back in the send's own response.
+// Executed and final are timed the way the station times them (lib/receipt-timers.ts).
+const sentAt = performance.now();
+const synced = await pub.request({ method: "eth_sendRawTransactionSync", params: [signed.json.data.signed_transaction] });
+const hash = synced.transactionHash;
+noteSynced(hash, sentAt, performance.now());
+const tracked = await trackReceipt(pub, hash, { sentAt, where: "monad" });
+const { receipt, timers } = await tracked.final;
+console.log(`timers   executed ${Math.round(timers.executedMs)} ms, final ${timers.finalMs === undefined ? "not seen" : `${Math.round(timers.finalMs)} ms`} (Monad testnet, from the send)`);
+// The live receipts chart takes the timing only because this transaction touched Thenar's contract.
+const site = process.env.APP_ORIGIN ?? "https://app.thenar.io";
+const posted = await fetch(`${site}/api/receipts`, {
+  method: "POST", headers: { "content-type": "application/json" },
+  body: JSON.stringify({ tx: hash, action: "createTaskUntil", chain: "monad", via: timers.via, executedMs: Math.round(timers.executedMs), finalMs: timers.finalMs === undefined ? null : Math.round(timers.finalMs) }),
+}).then((r) => r.status, () => 0);
+console.log(`receipts posted to ${site}/api/receipts -> ${posted}`);
 const after = await pub.readContract({ address: AXON, abi, functionName: "taskCount" });
 console.log(`bounty   signed by Privy, ${receipt.status} on Monad; task #${after - 1n} (${before} -> ${after})`);
 console.log(`         ${formatEther(reward * BigInt(slots))} MON escrowed  ${txUrl(hash)}`);
