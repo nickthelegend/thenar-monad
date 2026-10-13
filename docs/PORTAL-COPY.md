@@ -21,7 +21,8 @@ on chain.
   - A verifier re-scores the recording from its samples and signs it. One transaction records the trajectory's hash
     and pays the operator. A second, a moment later, issues their share of the corpus in CorpusShares.
   - Operators are people: a passkey (Mera), checked on chain by Monad's P-256 precompile.
-  - AI agents buy a task's corpus over x402 (one cent of USDC), check the file against SalesLog, and sign their reasons.
+  - AI agents buy a task's corpus over x402 (one cent of USDC), and check the file against SalesLog. The language-model agent can also sign its reasons for a purchase; the live sale
+    was made by the plain buyer, so none is published yet.
   - A Chainlink CRE workflow audits the corpus served against its on-chain commitment. It runs today through
     `cre workflow simulate --broadcast`, which writes the real report to CorpusAudit; a hosted DON needs CRE deploy access.
 - **Why Monad:**

@@ -32,5 +32,7 @@ export const DEPLOYMENT = {
     foundry: "0x9Fba189A0C60500c760d49C98d695861f7395311",
     prizePool: "0xcf5E9A252d90A1D08C1909cD4022C5188CCe4E5E",
     confidentialPayouts: "0x4CC9Dd3b85Fa3E1D69f365f26eD80c9c1068A4A0",
+    /** Deployed 13 Oct from the CRE key (docs/DEPLOY-LATER.md, step 4); the Chainlink CRE receiver. */
+    corpusAudit: "0xC913C03FbE2F8901296FC69dF3b136f9889b86Dd",
   },
 } as const;
