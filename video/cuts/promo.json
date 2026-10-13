@@ -1,0 +1,10 @@
+{
+ "name": "promo", "out": "docs/demo/thenar-promo.mp4", "max": 30,
+ "scenes": [
+  {"id": "drive", "title": "Drive a robot", "skip": 10, "cap": 7, "notes": ["WEBXR · EMULATED HEADSET (IWER) · LIVE MONAD TESTNET"], "lines": ["Drive a robot arm, from a browser or a headset."]},
+  {"id": "paid", "title": "Paid on Monad", "upto": 6, "cap": 6, "lines": ["Get paid on Monad, final in about a second."]},
+  {"id": "agent", "title": "Agents buy the data", "upto": 8, "cap": 6, "notes": ["THE AGENT CLI, RUN LIVE"], "lines": ["AI agents buy the data over x402."]},
+  {"id": "network", "title": "Monad, read live", "upto": 10, "cap": 4, "lines": ["Every step, on chain."]},
+  {"card": {"kicker": "LIVE ON MONAD TESTNET", "head": "Thenar", "sub": "Teach a robot. Own the data. Get paid on Monad.", "url": "app.thenar.io"}, "id": "outro", "hold": 1.5, "lines": ["Thenar."]}
+ ]
+}

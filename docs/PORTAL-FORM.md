@@ -103,7 +103,7 @@ It's one live take on Monad testnet:
 - 2:31, the leaderboard;
 - 2:37, Monad beside Ethereum.
 
-Waits are fast-forwarded with a visible speed chip. There are no slides.
+Waits and the teleop run are fast-forwarded under a visible "⏩ ×N" chip, and the receipt's timers are never sped up. There are no slides. A 4:00 walkthrough of the same take is in `docs/demo/thenar-walkthrough.mp4`.
 
 ### 10. Pitch video (≤ 2:00)
 Upload **`docs/demo/thenar-pitch.mp4`** (1:20): hook → who we are → problem → why now → drive / get paid / own it
@@ -202,7 +202,7 @@ node --import ./test/register.mjs scripts/agent-buy.mjs https://app.thenar.io 13
   live leaderboard reads the protocol's own ledger until Envio hosting is set up.
 
 ### 13. Promo clip (optional, ≤ 0:30)
-`docs/demo/thenar-promo.mp4` (to come; the demo and pitch come first)
+`docs/demo/thenar-promo.mp4` (0:27): drive in the headset → paid on Monad → an agent buys over x402 → close.
 
 ### 14. X link
 **[you]**

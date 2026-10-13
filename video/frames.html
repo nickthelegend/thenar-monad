@@ -214,13 +214,13 @@ if (D.mode === "overlay2") {
       // a card fades in over footage, except the first scene, which starts on it
       card.style.opacity = s.start === 0 ? 1 : inn; card.style.visibility = "visible";
       ["ck", "cm", "cs", "cu"].forEach((id, i) => set($(id), out3((u - .1 - i * .18) / .5), (1 - out3((u - .1 - i * .18) / .5)) * 18));
-      $("tl").style.visibility = "hidden"; $("notes").innerHTML = "";
+      $("tl").style.display = "none"; $("notes").innerHTML = "";
       return;
     }
     card.style.visibility = "hidden"; card.style.opacity = 0;
     const mk = s && s.mask; $("mask").style.display = mk ? "" : "none";
     if (mk) Object.assign($("mask").style, { left: mk[0] + "px", top: mk[1] + "px", width: mk[2] + "px", height: mk[3] + "px" });
-    $("tl").style.visibility = s ? "visible" : "hidden";
+    $("tl").style.display = s ? "" : "none";
     if (s) {
       $("sn").textContent = s.n || ""; $("st").textContent = s.title || "";
       set($("scene"), out3((t - s.start) / .3) * (t > s.start + 4 ? 1 - ease((t - s.start - 4) / .35) : 1));

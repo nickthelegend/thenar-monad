@@ -12,27 +12,28 @@
    },
    "id": "w_open",
    "lines": [
-    "This is a full walkthrough of Thenar, recorded live against Monad testnet. Every transaction you'll see is real."
+    "A full walkthrough of Thenar, live on Monad testnet. Every transaction is real."
    ]
   },
   {
    "id": "home",
    "title": "Who it is for",
-   "cap": 20,
+   "cap": 19,
    "lines": [
-    "Robots learn from human demonstrations, and the people who record them are rarely paid, and never own the result. Thenar is for them. The front page shows Monad testnet live, every block timed from proposed to final."
+    "Robots learn from human demonstrations, and the people who record them are rarely paid and never own the result. Thenar is for them. The front page times Monad's blocks live."
    ]
   },
   {
    "id": "lab",
    "title": "The lab's side: a bounty from a Privy wallet",
-   "cap": 30,
+   "cap": 14,
    "notes": [
     "PRIVY SERVER WALLET \u00b7 REAL TX"
    ],
    "lines": [
-    "First, the other side of the market: a robotics lab that needs demonstrations. Its budget lives in a Privy server wallet, under a policy that allows exactly one action: funding a task on Thenar's contract.",
-    "Here it posts a bounty for the toothpaste task. Privy signs it, and Monad makes it final. Asked to send money anywhere else, Privy refuses to sign."
+    "First, the other side: a robotics lab. Its budget is a Privy server wallet, under a policy that allows exactly one action, funding a task on Thenar's contract.",
+    "It posts a bounty, Privy signs, and Monad makes it final. Asked to send money anywhere else, Privy refuses.",
+    "That's the lab side done: a funded task, with no payout key on anyone's laptop."
    ],
    "upto": 9.5
   },
@@ -44,7 +45,7 @@
     "INJECTED TEST WALLET"
    ],
    "lines": [
-    "An operator arrives. In production they sign in by email through Privy; here a test wallet is injected. Each step is read from the chain."
+    "An operator arrives. In production they sign in by email through Privy; here a test wallet is injected."
    ]
   },
   {
@@ -55,7 +56,7 @@
     "PASSKEY: CHROMIUM VIRTUAL AUTHENTICATOR"
    ],
    "lines": [
-    "Next, a passkey. Its public key goes into PasskeyRegistry, and Monad's P-256 precompile checks every signature, so a paid run always comes from a person."
+    "Next, a passkey: Face ID, a fingerprint or a PIN. Its public key goes into PasskeyRegistry, and Monad's P-256 precompile checks every signature, so a paid run always comes from a person. The server then admits them to the corpus shares."
    ]
   },
   {
@@ -63,7 +64,7 @@
    "title": "Mera: the key that drives the arm",
    "cap": 8,
    "lines": [
-    "With Mera, the passkey's PRF derives a second key: the one a physical SO-101 obeys. No seed phrase, and nothing leaves the device."
+    "Through Mera, the passkey also derives the key a physical SO-101 obeys."
    ],
    "upto": 5.0
   },
@@ -81,14 +82,13 @@
   {
    "id": "drive",
    "title": "Drive it with your hands",
-   "cap": 30,
+   "cap": 16,
    "notes": [
     "WEBXR \u00b7 EMULATED HEADSET (IWER) \u00b7 LIVE MONAD TESTNET",
     "CONTROLLER PATH SCRIPTED BY PLAYWRIGHT"
    ],
    "lines": [
-    "Press A to begin. Squeeze to take hold of the arm, and the tool follows the controller millimetre for millimetre. The trigger closes the jaws on the payload.",
-    "Lift it, carry it round, and lower it into the ring. Every sample of the arm is recorded, because the verifier scores the motion, not just where it ends."
+    "Squeeze to take the arm; it follows the controller millimetre for millimetre. The trigger closes the jaws. Lift, carry, and lower it into the ring. Every sample is kept for the verifier."
    ]
   },
   {
@@ -96,7 +96,7 @@
    "title": "In tolerance",
    "cap": 6,
    "lines": [
-    "In tolerance: placement, smoothness and efficiency, scored in the page from the same samples the verifier will check."
+    "In tolerance, scored from the same samples the verifier checks."
    ]
   },
   {
@@ -104,16 +104,16 @@
    "title": "Gas, then submit",
    "cap": 10,
    "lines": [
-    "Before submitting, the page shows the gas: Monad charges the limit, not the gas used. Submit: the verifier re-scores the samples and signs, and one transaction records the run and pays the operator."
+    "The page prices gas on the limit, the way Monad charges it. Submit: the verifier re-scores and signs, and one transaction records the run and pays."
    ]
   },
   {
    "id": "paid",
    "title": "Executed, then final",
-   "cap": 16,
+   "cap": 14,
    "lines": [
     "{TIMERS}",
-    "The details show each step: the node saw it in its pool, the receipt came back, then its block reached Monad's finalized tag, with the hash checked. The page also prices the same run on Ethereum."
+    "Details show the txpool, the receipt, and the block reaching the finalized tag, hash checked."
    ]
   },
   {
@@ -121,47 +121,47 @@
    "title": "A share of the corpus",
    "cap": 6,
    "lines": [
-    "And the run issues corpus shares to the operator, so they own a part of the dataset they helped build."
+    "The run also issues the operator shares of the corpus."
    ],
    "upto": 3.5
   },
   {
    "id": "corpus",
    "title": "The dataset",
-   "cap": 14,
+   "cap": 18,
    "lines": [
-    "The run is now data. The corpus page shows each episode drawn from the samples its hash commits to, a Merkle root over the paid set, and two ways to buy: a subscription for every task, or one task over x402."
+    "The corpus page: each episode drawn from the samples its hash commits to, a Merkle root over the paid set, and two ways to buy: a subscription for every task, or one task over x402."
    ]
   },
   {
    "id": "agent",
    "title": "An agent buys over x402",
-   "cap": 16,
+   "cap": 14,
    "notes": [
     "THE AGENT CLI, RUN LIVE"
    ],
    "lines": [
-    "Here's the buyer: an AI agent with a wallet and no account. It asks for the lab's corpus, gets a 402 with the terms, and signs a one-cent USDC authorisation. Monad's facilitator settles it, and the file comes back. The agent hashes the file and checks it against the sale logged on chain."
+    "An AI agent with a wallet and no account asks for the corpus, gets a 402, and pays one cent of USDC. Monad's facilitator settles it, and the agent checks the file against the sale log on chain."
    ],
    "upto": 8.5
   },
   {
    "id": "agents",
    "title": "Terms and sales, in public",
-   "cap": 10,
+   "cap": 12,
    "lines": [
-    "The agents page states the terms the 402 gives, where the money goes, and every sale in the log."
+    "The terms and every sale are public."
    ]
   },
   {
    "id": "cre",
    "title": "Chainlink CRE audits the corpus",
-   "cap": 22,
+   "cap": 14,
    "notes": [
     "CRE WORKFLOW SIMULATE --BROADCAST \u00b7 REAL WRITE"
    ],
    "lines": [
-    "Thenar's server is the party being checked, so a Chainlink CRE workflow audits it. It fetches the episode hashes, rebuilds each task's Merkle root itself, reads what the verifier committed on Monad, and writes a verdict per task to the CorpusAudit contract. This run uses the CRE simulator, with a real broadcast to Monad."
+    "Chainlink CRE audits Thenar's server: it rebuilds each task's Merkle root from the episodes, reads what's committed on Monad, and writes a verdict to CorpusAudit. This is the CRE simulator, with a real broadcast."
    ],
    "mask": [
     56,
@@ -176,7 +176,7 @@
    "title": "CRE's verdict: uncommitted",
    "cap": 8,
    "lines": [
-    "Its verdict for the lab's task is uncommitted: the episodes are served, but the verifier hasn't committed their root yet. CRE says so on chain, and the corpus page shows it beside the data, for any buyer to read."
+    "The verdict, uncommitted, sits beside the data for any buyer to read."
    ],
    "upto": 4.5
   },
@@ -192,16 +192,16 @@
   {
    "id": "network",
    "title": "Monad, read live",
-   "cap": 22,
+   "cap": 21,
    "lines": [
-    "Finally, the network page. It reads Monad and Ethereum side by side: block time, time to final, gas price, and how each one charges gas. It checks a P-256 signature through the precompile live, and shows the staking epoch.",
+    "Finally, the network page reads Monad and Ethereum side by side: block time, time to final, gas price, and how each one charges gas. It checks a P-256 signature through the precompile live.",
     "That's Thenar: identity, provenance, payment and ownership, each enforced on Monad."
    ]
   },
   {
    "id": "quest_slot",
    "title": "On a real Quest 3S",
-   "cap": 28,
+   "cap": 14,
    "lines": [
     "And this is a real Quest 3S: the operator's own view, hands on the controllers, driving the same arm."
    ]

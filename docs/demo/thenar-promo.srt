@@ -1,0 +1,20 @@
+1
+00:00:00,350 --> 00:00:03,210
+Drive a robot arm, from a browser or a headset.
+
+2
+00:00:07,350 --> 00:00:09,699
+Get paid on Monad, final in about a second.
+
+3
+00:00:13,350 --> 00:00:15,931
+AI agents buy the data over x402.
+
+4
+00:00:19,350 --> 00:00:20,817
+Every step, on chain.
+
+5
+00:00:23,350 --> 00:00:24,167
+Thenar.
+

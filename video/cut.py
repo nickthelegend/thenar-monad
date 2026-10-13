@@ -127,7 +127,7 @@ for sc in CUT["scenes"]:
         speed = max(1.0, foot / dur)
         n += 1
         notes = list(sc.get("notes", []))
-        if speed > 1.04: notes.append(f"{speed:.1f}× SPEED")
+        if speed > 1.04: notes.append(f"⏩ ×{speed:.1f}".replace(".0", ""))
         scenes.append({"id": sc["id"], "n": f"{n:02d}", "title": sc.get("title", ""), "start": round(start, 3), "end": round(start + dur, 3), "speed": round(speed, 3), "notes": notes, "mask": sc.get("mask")})
         idx = [i for i, ft in enumerate(frames) if a <= ft < b]
         if not idx or frames[idx[0]] > a:   # start on the frame showing at a

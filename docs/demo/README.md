@@ -4,7 +4,8 @@
 |---|---|---|
 | `thenar-demo.mp4` | 2:56 | **The demo to submit.** The whole flow, live on Monad testnet |
 | `thenar-pitch.mp4` | 1:20 | **The pitch.** Kinetic type over the brand art: hook, who we are, problem, why now, the product in three verbs, one proof card, who it is for, close. One 4 s glimpse of the VR run |
-| `thenar-walkthrough.mp4` | 4:50 | **The full walkthrough.** The same take, every screen explained, the lab's side included |
+| `thenar-walkthrough.mp4` | 4:00 | **The full walkthrough.** The same take, every screen explained, the lab's side included |
+| `thenar-promo.mp4` | 0:27 | **The promo.** Drive, get paid, agents buy, on chain, from the same take |
 | `*.srt` | | Captions for each, timed from ElevenLabs' word timestamps |
 | `VIDEO-CRITIQUE.md` | | Why the 13 Oct cut was replaced |
 | `thenar-metropolis.mp4` | 2:51 | The 13 Oct cut, superseded |
@@ -34,7 +35,7 @@ Chromium, and a visible cursor glides to every click. Every transaction in it is
 - **The terminals.** The Privy lab, the agent and the CRE run are real commands. Their output is drawn in the browser
   as it arrived.
 - **CRE.** It ran through `cre workflow simulate --broadcast`, not a deployed DON. That needs CRE deploy access.
-- **Speed.** Scenes played faster than real time carry a "×N SPEED" tag. Timers on the receipt are never sped up.
+- **Speed.** Waits, loads and the teleop run are fast-forwarded, under a visible "⏩ ×N" chip. The narration plays at normal speed. Timers on the receipt are never sped up.
 
 **The numbers in the pitch:**
 - 7 paid runs and 5 agent sales;
