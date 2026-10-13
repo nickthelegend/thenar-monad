@@ -1,0 +1,24 @@
+PROBLEM
+Robot policies learn from human demonstrations: someone drives an arm through a task, again and again, and the recording becomes training data. Physical AI is short of these demonstrations, and the people who record them are rarely paid or credited and never own the result. Buyers can't check that a dataset is what it claims to be, or that a person, not a script, made it.
+
+SOLUTION
+Thenar is a market for robot demonstrations.
+- Labs post funded tasks. A lab's budget can live in a Privy server wallet whose policy only lets it fund Thenar.
+- Operators drive an SO-101 robot arm from a browser, a Meta Quest 3S (WebXR, hands on the controllers) or a physical leader arm. A verifier scores the recording from its samples and signs, and one Monad transaction records the run and pays the operator from the task's escrow. Every paid run also issues the operator shares of the corpus.
+- AI agents buy a task's corpus over x402: one cent of USDC per pull, with no account. Every sale is logged on Monad with the file's sha256, so the agent checks it got the bytes that were sold.
+- Chainlink CRE audits the served corpus against the Merkle root committed on Monad and writes its verdict on chain.
+
+WHY MONAD
+- Paid while you watch. A paid run is executed in about 0.4 to 1.1 s and final in about 0.8 to 1.3 s from the send, measured in the browser. It is sent with eth_sendRawTransactionSync and checked against Monad's finalized tag. The operator sees the payment before they take the headset off.
+- A person behind every paid run. The operator's passkey is registered in PasskeyRegistry and verified by Monad's P-256 precompile (0x0100). Through Mera, the same passkey derives the key that commands their arm.
+- Monad-native receipts. Each receipt shows seen in the txpool (txpool_statusByHash), executed, then final, with the block hash checked. Gas is priced on the limit, the way Monad charges it. /network reads Monad and Ethereum side by side, live.
+
+WHAT'S LIVE (Monad testnet, chain 10143)
+- App: https://app.thenar.io. 13 contracts, all verified on Sourcify / MonadVision.
+- A lab bounty from a Privy server wallet: task #13, 0x8dc67558b4a17ccbd2d3c85f13b723082ac2ba2e19e5922ddf78289c5ca2138c. The policy refuses any other send (policy_violation).
+- A paid run driven in WebXR: 0x909f2c23ccae46476bbf18f55fb0a7e85d56a0cf23a642f47ea2375f0eda0d59, executed 1.09 s and final 1.21 s from the send.
+- An agent purchase over x402: 0x16eedac1431a7533415cfa6866abe764ef5d1d22aa1cfffb5b8fb1ad1f686281.
+- A Chainlink CRE audit written to CorpusAudit: 0xf1546ec91261ed5ec2750f58a71a37d0d7a1405f21c3fd057b4af921f73a5f72.
+- So far: 7 paid runs from 7 wallets, 5 agent sales, 2 Privy lab bounties.
+
+Team-seeded activity, labelled as such: every run, sale and bounty above was made by our team's wallets on 13 and 14 Oct. In the recordings, the passkey is Chromium's virtual authenticator and the headset is Meta's WebXR emulator, both labelled on screen.

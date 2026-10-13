@@ -1,0 +1,7 @@
+Mera gives each operator one passkey that does two jobs. The second job is not about accounts: it is a key that commands a physical robot arm.
+
+1. The PRF namespace (the non-account work). lib/passkey.ts calls Mera's getPasskeyPrfOutput with a purpose-specific salt, SHA-256("thenar:<purpose>:v1"). For the purpose "so101-commands", lib/robot-key.ts runs the PRF output through HKDF-SHA-256 (info "thenar so101 command key v1") to get an Ed25519 seed. It hands that seed to Mera's createEd25519SigningSession and zeroes it. That key signs every command frame the station sends to the operator's own SO-101. The arm relay (scripts/arm-relay.mjs --owner <public key>) moves the arm only for frames signed by it. Nothing is stored: "Derive my SO-101 key" on /passkey re-derives the same key each time, and another purpose (salt) gives an independent key. test/live-passkey.mjs checks in a real browser that the PRF is stable for one purpose and separated between purposes.
+
+2. Identity. Mera's ceremony creates the passkey, and its P-256 public key is registered in PasskeyRegistry on Monad. Admission assertions are verified through Monad's P-256 precompile (0x0100), so every paid run comes from a person.
+
+One passkey, two keys: who you are (P-256, checked on chain) and what your robot obeys (Ed25519 from the PRF). There is no seed phrase and no key file.

@@ -1,0 +1,11 @@
+Thenar sells robot-demonstration data, and its own server is the party being checked, so the audit runs as a Chainlink CRE workflow (cre/corpus-audit, TypeScript, @chainlink/cre-sdk). CRE orchestrates the whole check across off-chain data and two Monad contracts:
+1. Cron trigger.
+2. HTTP capability: every node fetches the served episode hashes from https://app.thenar.io/api/corpus/episodes and rebuilds each task's Merkle root itself.
+3. Consensus (identical aggregation) on those roots, so a node that saw different files cannot move the result.
+4. EVM read capability on monad-testnet: CorpusManifest.latest for every task, in one Multicall3 call at the last finalized block. These are the roots our verifier committed.
+5. A verdict per task: Matches, Grown, Short, Altered or Uncommitted (cre/corpus-audit/audit.ts, a pure function).
+6. EVM write capability: writeReport to CorpusAudit (0xC913C03FbE2F8901296FC69dF3b136f9889b86Dd, a ReceiverTemplate, verified on Sourcify) on Monad testnet.
+
+The app reads the verdict back: /api/task/<id>/manifest returns it under "audit", and the corpus page shows "Chainlink CRE audit: <verdict>" beside the data, so a buyer or an agent can read it before paying.
+
+It runs through the CRE CLI simulator with a real broadcast: cre workflow simulate corpus-audit --target staging-settings --broadcast. Deploying to a hosted DON needs CRE deploy access, which we don't have. The latest audit (0xf1546ec9...a5f72) found tasks 0, 12 and 13 "uncommitted": their episodes are served, but no root is committed yet. We left that verdict showing, because an outside auditor is only useful if it says so.

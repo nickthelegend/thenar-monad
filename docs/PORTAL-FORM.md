@@ -1,5 +1,7 @@
 # Thenar: the portal form (hackathon.monad.xyz → "Complete your entry")
 
+> **Superseded by [PORTAL-ENTRY.md](PORTAL-ENTRY.md)**: it follows the real portal layout, with character counts and the exact bounty names. Use that one.
+
 Every field is in the portal's order and within its limit. Paste it straight in. Fields marked **[you]** are yours to
 fill.
 

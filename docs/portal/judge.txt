@@ -1,0 +1,25 @@
+Live app: https://app.thenar.io (Monad testnet, chain 10143).
+
+NO LOGIN NEEDED TO LOOK AROUND
+1. https://app.thenar.io: the live block strip, each block timed from proposed to final.
+2. /network: Monad beside Ethereum, read live, with a P-256 key checked through the 0x0100 precompile.
+3. /corpus: every episode, the Merkle root and the Chainlink CRE verdict.
+4. /leaderboard: operators by earnings and agents by purchases. /agents: the x402 terms and the sale log.
+5. Any run's page: https://app.thenar.io/run/0x2cbb297cc1a7409ad8b6bdf356d3e1bf56799949bf8c613d7af273a24f927ad8 shows the replay and its on-chain proof.
+
+DRIVE THE ARM FOR FREE (no wallet)
+6. Open https://app.thenar.io/station/2 and choose "Practise first, no wallet needed", then "Begin run".
+7. W A S D move the arm, Q and E lower and raise it, Space opens and closes the jaws. Pick the payload up and set it inside the ring. The score appears as soon as it settles.
+
+EARN (about 0.1 MON of testnet gas)
+8. "Start earning": sign in with email (Privy) or any EVM wallet on Monad testnet. Get MON from the faucet link on the page.
+9. "Set up your passkey" (Face ID, a fingerprint or a PIN). It is registered on Monad and you are admitted. "Derive my SO-101 key" shows the arm key Mera derives from it.
+10. Open a task with free slots (task 2 or task 3), drive it, then "Submit and get paid". The receipt shows executed and final times. Open "Details" for the txpool, block and finalized-tag steps.
+11. On a Quest 3S: open https://app.thenar.io/q/2 in the headset browser, then "Enter in VR". The grip takes the arm, the trigger closes the jaws, and A starts and ends a run.
+
+NOTES AND CAPS
+- Each task pays a fixed number of runs, and each operator has a per-task cap (5).
+- The verifier refuses a run that copies a route already recorded on the task.
+- An agent purchase needs a wallet with 0.01 testnet USDC (scripts/agent-buy.mjs in the repo).
+- Chainlink CRE runs through "cre workflow simulate --broadcast" with real writes to Monad. A hosted DON needs CRE deploy access.
+- Some activity is team-seeded and labelled as such.

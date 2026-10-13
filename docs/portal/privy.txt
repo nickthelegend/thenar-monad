@@ -1,0 +1,12 @@
+Beyond login, Privy holds a robotics lab's money. A lab funds Thenar tasks (bounties that pay operators per accepted run) from a Privy server wallet that carries a Privy policy with exactly one allowed action:
+- a transaction to Thenar's AxonProtocolV2;
+- on Monad testnet (chain_id 10143);
+- worth at most 0.1 MON (value <= LIMIT);
+- for both eth_sendTransaction and eth_signTransaction.
+Everything else is denied when Privy signs, before a signature exists.
+
+scripts/privy-lab.mjs creates the policy and the wallet (policy_ids: [policy]) through Privy's API. It prices and nonces a createTaskUntil transaction from Monad, has Privy sign it (eth_signTransaction on the wallet's RPC), then broadcasts the signed bytes with Monad's eth_sendRawTransactionSync, timing executed and final. It then asks the same wallet to sign a 0.01 MON transfer to another address. Privy returns 400 policy_violation, and no signature is made.
+
+So a lab can automate bounties without a payout key on a laptop or in CI. The worst case for a leaked app secret is "it funded Thenar tasks". Monad charges the gas limit, so the transaction Privy signs carries a thin margin (estimate x 1.1).
+
+Operators also sign in with Privy (email or an external wallet, components/providers.tsx) and receive their pay in that wallet. The bounty Privy signed in the demo, task #13, was then driven and paid on Monad in the same video.

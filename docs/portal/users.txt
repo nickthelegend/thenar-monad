@@ -1,0 +1,11 @@
+FIRST USERS
+- Makers who already print robot arms. The SO-101 and its leader arm are open hardware, and our own Thenar Arms are a printable leader and follower pair. A maker with one can earn on Thenar the day they plug it in.
+- Quest 3S owners. They need no hardware beyond the headset: open app.thenar.io in the headset and drive with their hands.
+- Small robotics labs and research groups. They need task-specific demonstrations and don't want a payout key on a laptop. A Privy policy wallet lets them post bounties with a hard cap.
+- AI agents and data teams. They buy per task over x402, or by subscription, and verify what they bought against the chain.
+
+HOW WE REACH THEM?
+- Through the hardware. ThenarLabs publishes the arms, the leader rig and the teleop software as open source, and every build guide ends at a funded task on Thenar.
+- Through the communities that print arms: LeRobot and SO-101 builders, maker spaces and Quest developer communities. We start with the tasks they already practise: pick-and-place, drawers and transfers.
+- To labs, we come with a dataset that is already verifiable, priced per run and audited by CRE on chain.
+- To agents, a 402 that states its terms is the whole onboarding. No sales call needed.
