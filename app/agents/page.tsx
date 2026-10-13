@@ -96,7 +96,7 @@ export default function AgentsPage() {
       <h1 className="font-display text-4xl font-600 leading-none">Agents</h1>
       <p className="mt-4 max-w-[64ch] text-[15px] leading-relaxed text-scribe-2">
         An agent can take one task&apos;s corpus without a subscription. It asks for the file, is
-        answered <span className="font-mono text-[13px]">402</span>, and pays {agentCorpusPrice()} on
+        answered <span className="font-mono text-[13px]">402</span>, and pays {agentCorpusPrice()} on{" "}
         {LOCALNET ? "the local chain" : "Monad"} in the request that fetches it, final about 600 ms after it lands on Monad. No account, no API key
         and no subscription: the payment is the permission.
       </p>

@@ -8,8 +8,8 @@ Paste-ready. Every claim has a link or a transaction in [SUBMISSION.md](../SUBMI
 **Tagline (≤ 80 chars):** Teach a robot, get paid on Monad, own the data, sell it to AI agents.
 
 **Short description (≤ 280 chars):**
-People drive a robot arm in the browser, on a Quest 3S or with a leader arm. A verifier scores the run, and one Monad
-transaction records it and pays them, issuing their share of the corpus. AI agents buy the data over x402 and check it
+People drive a robot arm in the browser, on a Quest 3S or with a leader arm. A verifier scores the run; one Monad
+transaction records it and pays them, and their share of the corpus follows. AI agents buy the data over x402 and check it
 on chain.
 
 **Full description:**
@@ -19,10 +19,11 @@ on chain.
   - A funder escrows MON for a task. An operator drives an SO-101 arm (browser, Meta Quest 3S on their own table, or
     a USB leader arm).
   - A verifier re-scores the recording from its samples and signs it. One transaction records the trajectory's hash
-    and pays the operator, and CorpusShares issues their share of the corpus.
+    and pays the operator. A second, a moment later, issues their share of the corpus in CorpusShares.
   - Operators are people: a passkey (Mera), checked on chain by Monad's P-256 precompile.
   - AI agents buy a task's corpus over x402 (one cent of USDC), check the file against SalesLog, and sign their reasons.
-  - A Chainlink CRE workflow audits the corpus served against its on-chain commitment.
+  - A Chainlink CRE workflow audits the corpus served against its on-chain commitment. It runs today through
+    `cre workflow simulate --broadcast`, which writes the real report to CorpusAudit; a hosted DON needs CRE deploy access.
 - **Why Monad:**
   - 300 ms blocks, final in about 600 ms, so the payout lands while the operator is still looking at the station.
     The app shows the live block pipeline and both timers.
@@ -38,11 +39,13 @@ on chain.
 
 | Bounty | One-line answer | Evidence |
 |---|---|---|
-| Privy (beyond authentication) | Embedded wallets for operators; a lab budget in a policy-bound server wallet that can only fund Thenar | Bounty tx `0xdfb15157…8d7c5`; a forbidden send refused with `policy_violation` |
+| Privy (beyond authentication) | Embedded wallets for operators; a lab budget in a policy-bound server wallet that can only fund Thenar | Bounty tx `0xdfb15157…8d7c5` from the policy wallet. The same wallet's forbidden send was answered by Privy (off chain): `400 {"error":"RPC request denied due to policy violation","code":"policy_violation"}`. Reproduce: `scripts/privy-lab.mjs` |
 | Mera (One Passkey, Many Keys) | One passkey is the operator's on-chain identity and, through PRF → HKDF, the Ed25519 key their robot arm obeys | Passkey tx `0x3d763ead…b408fe`; /passkey derives and verifies the arm key live |
-| Chainlink CRE | A DON audits the corpus served against its on-chain Merkle commitment and writes a verdict per task | Audit tx `0x2ac5873d…24a84` → CorpusAudit `0xC913…86Dd` |
-| Envio | HyperIndex over five Thenar contracts; history and an agents ranking on /leaderboard | `indexer/`, tests 9/9; HyperSync on Monad testnet |
-| Qwen | The buyer agent's model decides through tool calls: list, read, price, pay, verify, sign its reasons | Real Qwen 3 run (local); Model Studio key pending |
+| Chainlink CRE | A CRE workflow (consensus over the episodes, an EVM read of CorpusManifest) writes a verdict per task to CorpusAudit | Audit tx `0x2ac5873d…24a84` → CorpusAudit `0xC913…86Dd`, from `cre workflow simulate --broadcast`. A hosted DON deploy is pending CRE access |
+| Envio | HyperIndex over five Thenar contracts, with an Agent entity for the ranking on /leaderboard | `indexer/`, tests 9/9; HyperSync on Monad testnet reads with the token. Hosting on Envio Cloud is pending, so the live /leaderboard says so and counts from the app's ledger |
+
+**Not claimed:** Qwen and Kimi. The agent supports both, and has run on a real Qwen 3 locally, but there is no hosted
+model key, so the live app shows no model-driven purchase.
 
 **Links:**
 - Repo: https://github.com/nickthelegend/thenar-monad
@@ -56,6 +59,7 @@ on chain.
   - the rest in `lib/deployment.ts`
 - The 3 best transactions:
   1. Paid run: https://testnet.monadvision.com/tx/0x0ad7cfea8d51788264edad412d2b7296bdf66f5fbd854f59b9804d426d9a4c86
+     (the run itself: https://app.thenar.io/run/0x2cbb297cc1a7409ad8b6bdf356d3e1bf56799949bf8c613d7af273a24f927ad8)
   2. x402 corpus sale: https://testnet.monadvision.com/tx/0xad0e30826dbdf8b249c5833f218e697ea5257676ddc5c96f925639a775c216b5
   3. Chainlink CRE audit: https://testnet.monadvision.com/tx/0x2ac5873da169f1e6915acb64d116ab1e1fa68a98d57935183e72e07923724a84
 

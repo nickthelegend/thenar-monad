@@ -21,7 +21,9 @@ import { Chip, Details } from "@/components/details";
 type Receipt = { tx: string; action: string; via: string; executedMs: number; finalMs: number | null; at: number };
 
 const ms = (v: number | null) => (v === null ? "…" : v >= 1000 ? `${(v / 1000).toFixed(v >= 10_000 ? 0 : 1)} s` : `${Math.round(v)} ms`);
-const shortAction = (a: string) => a.replace(/([a-z])([A-Z])/g, "$1 $2").toLowerCase();
+/** What each write is, in a word or two: a phone has about seven characters for it. */
+const NAMES: Record<string, string> = { submitTrajectory: "paid run", createTaskUntil: "bounty", createTask: "bounty", mint: "certificate", register: "passkey", subscribe: "subscription" };
+const shortAction = (a: string) => NAMES[a] ?? a.replace(/([a-z])([A-Z])/g, "$1 $2").toLowerCase();
 
 export function ReceiptHistogram({ className }: { className?: string }) {
   const [rows, setRows] = useState<Receipt[] | null>(null);
@@ -68,7 +70,7 @@ export function ReceiptHistogram({ className }: { className?: string }) {
             <span />
             <div className="relative h-4">
               {TICKS.map((t, i) => (
-                <span key={t} className={cn("absolute top-0 whitespace-nowrap font-mono text-[10px] text-scribe-3", i === TICKS.length - 1 ? "-translate-x-full" : "-translate-x-1/2")}
+                <span key={t} className={cn("absolute top-0 whitespace-nowrap font-mono text-[10px] text-scribe-3", i === TICKS.length - 1 ? "-translate-x-full" : "-translate-x-1/2", i === 0 || i === 3 ? "hidden sm:inline" : "")}
                       style={{ left: `${logX(t) * 100}%` }}>{tickLabel(t)}</span>
               ))}
             </div>

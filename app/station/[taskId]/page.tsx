@@ -526,7 +526,7 @@ export default function StationPage() {
         <div className="hidden items-center gap-5 border-l border-rule px-4 md:flex">
           <Stat label="Elapsed" value={fmtSeconds(elapsed)} />
           <Stat label="Par" value={fmtSeconds(task.parSeconds)} tone="dim" />
-          <Stat label="Your runs" value={`${myRuns ?? 0} / 5`} tone={capped ? "warn" : "dim"} />
+          <Stat label="Your paid runs" value={`${myRuns ?? 0} of 5 max`} tone={capped ? "warn" : "dim"} />
         </div>
       </header>
 

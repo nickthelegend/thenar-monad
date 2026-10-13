@@ -1,5 +1,41 @@
 [
   {
+    "hash": "abca816",
+    "date": "2026-10-13T19:07:01+05:30",
+    "subject": "Correct task 0's open slots in the recording runbook",
+    "body": "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+  },
+  {
+    "hash": "ae7b99a",
+    "date": "2026-10-13T19:06:56+05:30",
+    "subject": "Add the portal copy and the recording runbook",
+    "body": "Paste-ready fields for hackathon.monad.xyz, and the click-by-click\nthree-minute path on the live app, with captions, the Monad moments, the\nfallbacks and what each take spends.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+  },
+  {
+    "hash": "b344c3f",
+    "date": "2026-10-13T18:22:25+05:30",
+    "subject": "Add the live screens from app.thenar.io, with real Monad receipts",
+    "body": "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+  },
+  {
+    "hash": "0acab46",
+    "date": "2026-10-13T18:21:36+05:30",
+    "subject": "Run Thenar end to end on Monad testnet, and record the evidence",
+    "body": "scripts/monad-operator-run.mjs takes one operator through the live app on\nMonad testnet: passkey on chain, admission, a verifier-signed paid run\n(executed 702 ms, final 1,310 ms), corpus shares. The demo agent then bought\nthe corpus over x402, and the Chainlink CRE workflow wrote its audit to\nCorpusAudit. README and SUBMISSION list every transaction.\ndocs/SPONSOR-COVERAGE.md has 6 sponsors working and 2 partial, each with\nevidence; docs/JUDGE-REVIEW.md scores the project honestly.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+  },
+  {
+    "hash": "4f8004d",
+    "date": "2026-10-13T18:17:53+05:30",
+    "subject": "Time the lab's bounty on Monad, and put it on the live chart",
+    "body": "The lab bounty is sent with eth_sendRawTransactionSync and timed the way the\nstation times a run. First run on 13 Oct: task #12 on Monad testnet, executed\nin 608 ms and final in 1,229 ms from the send. The timing went to\napp.thenar.io's receipts chart, and Privy's policy refused the forbidden send.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+  },
+  {
+    "hash": "f4b762f",
+    "date": "2026-10-13T17:45:42+05:30",
+    "subject": "Bring the changelog up to date with the history",
+    "body": "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+  },
+  {
     "hash": "93ef474",
     "date": "2026-10-12T22:54:22+05:30",
     "subject": "Deploy CorpusAudit to Monad testnet and verify it",
@@ -322,41 +358,5 @@
     "date": "2026-10-02T19:18:26+05:30",
     "subject": "Bring the changelog up to date with the history",
     "body": "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
-  },
-  {
-    "hash": "99937ed",
-    "date": "2026-10-02T19:18:23+05:30",
-    "subject": "Show the tools Thenar is built on by their real logos",
-    "body": "The 'Built with' strip on the company home was eight names in grey text.\nIt is now each project's own mark, taken from its site, docs or repo:\nMonad's wordmark, Privy's logo, Mera's mark beside its name in its own\nGeorgia italic, Envio's wordmark, Qwen's mark and wordmark, x402's\nwordmark, the Immersive Web's WebXR logo and DeepMind's MuJoCo wordmark.\nDark lettering is turned white for the black page; nothing else changed.\nEach logo links to its project, and the strip pauses under the pointer.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
-  },
-  {
-    "hash": "31ec9d6",
-    "date": "2026-10-02T01:27:27+05:30",
-    "subject": "Bring the changelog up to date with the history",
-    "body": "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
-  },
-  {
-    "hash": "0161291",
-    "date": "2026-10-02T01:27:26+05:30",
-    "subject": "Name the datasheet's reward in the currency it is paid in",
-    "body": "reward_per_trajectory_usdc held a MON amount formatted with 18\ndecimals; it is reward_per_trajectory_mon now.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
-  },
-  {
-    "hash": "d599bae",
-    "date": "2026-10-02T01:07:11+05:30",
-    "subject": "Bring the changelog up to date with the history",
-    "body": "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
-  },
-  {
-    "hash": "c294180",
-    "date": "2026-10-02T01:07:10+05:30",
-    "subject": "Say 'reading' until the chain has answered",
-    "body": "A read whose retries React Query has paused (it waits for focus in a\nbackground tab) is neither loading nor failed, and the task page said\n'not in the registry', the foundry 'no policy has been minted' and the\nlicence 'not minted' while nothing had answered at all. The catalogue now\nsays whether the chain has answered, and those pages, and /space, whose\nloading and failure states could never trigger because its task list is\nnever null, read that.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
-  },
-  {
-    "hash": "8a673bc",
-    "date": "2026-10-02T01:00:23+05:30",
-    "subject": "Re-read after a failed write too, and judge a deadline by block time",
-    "body": "A revert usually means the page's view was stale (somebody else minted,\nfilled or closed it first), so the cached reads are refreshed then as\nwell. The signer compares a task's deadline with the latest block's\ntimestamp, the clock the contract and closeTask use, not its own.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
   }
 ]

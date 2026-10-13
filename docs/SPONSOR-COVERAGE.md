@@ -4,15 +4,15 @@ Every Metropolis sponsor protocol, and what Thenar does with it. **Working** mea
 testnet, used by the product and tested. All evidence below is from 13 Oct 2026, on app.thenar.io and Monad testnet
 (chain 10143).
 
-**Count: 6 working, 2 partial, the rest not used (with the reason).**
+**Count: 5 working, 3 partial, the rest not used (with the reason).** Envio is partial on the live app: the indexer is built and tested, but not hosted yet.
 
 | Protocol | Status | What it does in Thenar | Evidence |
 |---|---|---|---|
 | **Privy** | working | Operators sign in with email and get an embedded wallet. A lab's budget is a Privy server wallet whose policy only lets it fund Thenar tasks | Bounty signed by Privy, task #12: [`0xdfb15157…8d7c5`](https://testnet.monadvision.com/tx/0xdfb15157ca93b73dcd66c23cb0572a7ceffa999c2ccbdb3bd896346f4ec8d7c5). A forbidden send was refused with `policy_violation` |
-| **Chainlink CRE** | working | A DON audits the corpus Thenar sells against its on-chain commitment and writes a verdict per task to `CorpusAudit` | Audit write [`0x2ac5873d…24a84`](https://testnet.monadvision.com/tx/0x2ac5873da169f1e6915acb64d116ab1e1fa68a98d57935183e72e07923724a84). The verdict shows in `/api/task/0/manifest`. CorpusAudit is `0xC913…86Dd`, verified |
+| **Chainlink CRE** | working | A CRE workflow audits the corpus (run with `cre workflow simulate --broadcast`; a hosted DON needs CRE deploy access) Thenar sells against its on-chain commitment and writes a verdict per task to `CorpusAudit` | Audit write [`0x2ac5873d…24a84`](https://testnet.monadvision.com/tx/0x2ac5873da169f1e6915acb64d116ab1e1fa68a98d57935183e72e07923724a84). The verdict shows in `/api/task/0/manifest`. CorpusAudit is `0xC913…86Dd`, verified |
 | **Mera** (Monad Foundation) | working | A passkey is the operator's identity, checked on chain by the P-256 precompile, and its PRF derives the SO-101's command key | Passkey registered [`0x3d763ead…b408fe`](https://testnet.monadvision.com/tx/0x3d763ead3bc5666292aaee48e38dfaa2071a74feb0d0be2d08354a6eb6b408fe). Admission (CorpusShares) [`0x15b27d03…2ceed`](https://testnet.monadvision.com/tx/0x15b27d03781dcfb2f094fa74f77710a762746c014526bdcab6d0d96b5172ceed) |
 | **x402** (Monad's facilitator) | working | Agents pay 0.01 USDC per task corpus over HTTP; every sale is logged with the file's sha256 | Sale [`0xad0e3082…216b5`](https://testnet.monadvision.com/tx/0xad0e30826dbdf8b249c5833f218e697ea5257676ddc5c96f925639a775c216b5), SalesLog #1 matches the bytes received |
-| **Envio** | working | HyperIndex over Thenar's contracts: history and the agents ranking on /leaderboard | `indexer/`. Tests 9/9. HyperSync on Monad testnet read with the shared token (height 70,453,982). The ranking ran from the indexer locally |
+| **Envio** | partial (not hosted) | HyperIndex over Thenar's contracts: history and the agents ranking on /leaderboard | `indexer/`. Tests 9/9. HyperSync on Monad testnet read with the shared token (height 70,453,982). The ranking ran from the indexer locally |
 | **BlockVision** (MonadVision, Sourcify) | working | All 13 contracts verified, and every hash links to MonadVision | Sourcify `exact_match` for every address in `lib/deployment.ts`, plus CorpusAudit |
 | **Qwen** | partial | The buyer agent's model (lists, prices, pays, verifies, signs its reasons) | Runs on a real Qwen 3 through Ollama and on a scripted double in CI. No Model Studio key yet |
 | **Kimi** | partial | The same agent on Kimi | Code and tests only. Thenar does not use the shared Moonshot key (the user's rule) |

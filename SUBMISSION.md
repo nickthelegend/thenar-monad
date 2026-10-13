@@ -24,10 +24,10 @@ way records the same trajectory, scored and paid the same way.
 | Step | Monad testnet transaction |
 |---|---|
 | Passkey on chain (P-256, `0x0100`) | [`0x3d763ead…b408fe`](https://testnet.monadvision.com/tx/0x3d763ead3bc5666292aaee48e38dfaa2071a74feb0d0be2d08354a6eb6b408fe) |
-| Paid run, executed in 702 ms and final in 1,310 ms | [`0x0ad7cfea…24c86`](https://testnet.monadvision.com/tx/0x0ad7cfea8d51788264edad412d2b7296bdf66f5fbd854f59b9804d426d9a4c86) |
+| Paid run ([its page](https://app.thenar.io/run/0x2cbb297cc1a7409ad8b6bdf356d3e1bf56799949bf8c613d7af273a24f927ad8)), executed in 702 ms and final in 1,310 ms as measured by the sender | [`0x0ad7cfea…24c86`](https://testnet.monadvision.com/tx/0x0ad7cfea8d51788264edad412d2b7296bdf66f5fbd854f59b9804d426d9a4c86) |
 | Corpus shares issued | [`0xccd1d8df…06b01`](https://testnet.monadvision.com/tx/0xccd1d8dfa85a938b7e3968c55b982f505691b7add1bfc905b4cd3369b7d06b01) |
 | Agent buys the corpus over x402 (USDC) | [`0xad0e3082…216b5`](https://testnet.monadvision.com/tx/0xad0e30826dbdf8b249c5833f218e697ea5257676ddc5c96f925639a775c216b5) |
-| Chainlink CRE audit written to CorpusAudit | [`0x2ac5873d…24a84`](https://testnet.monadvision.com/tx/0x2ac5873da169f1e6915acb64d116ab1e1fa68a98d57935183e72e07923724a84) |
+| Chainlink CRE audit written to CorpusAudit (`cre workflow simulate --broadcast`) | [`0x2ac5873d…24a84`](https://testnet.monadvision.com/tx/0x2ac5873da169f1e6915acb64d116ab1e1fa68a98d57935183e72e07923724a84) |
 | Privy lab bounty (policy-bound wallet) | [`0xdfb15157…8d7c5`](https://testnet.monadvision.com/tx/0xdfb15157ca93b73dcd66c23cb0572a7ceffa999c2ccbdb3bd896346f4ec8d7c5) |
 
 Contracts: [`lib/deployment.ts`](lib/deployment.ts) (AxonProtocolV2 `0x17731731c6652770CE630e29b62791DC2CED5f38`) and
