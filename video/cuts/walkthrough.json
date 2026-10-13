@@ -1,0 +1,216 @@
+{
+ "name": "walkthrough",
+ "out": "docs/demo/thenar-walkthrough.mp4",
+ "max": 300,
+ "scenes": [
+  {
+   "card": {
+    "kicker": "FULL WALKTHROUGH \u00b7 LIVE ON MONAD TESTNET",
+    "head": "Thenar",
+    "sub": "A market where people teach robots, own the data, and get paid on Monad.",
+    "url": "app.thenar.io"
+   },
+   "id": "w_open",
+   "lines": [
+    "This is a full walkthrough of Thenar, recorded live against Monad testnet. Every transaction you'll see is real."
+   ]
+  },
+  {
+   "id": "home",
+   "title": "Who it is for",
+   "cap": 20,
+   "lines": [
+    "Robots learn from human demonstrations, and the people who record them are rarely paid, and never own the result. Thenar is for them. The front page shows Monad testnet live, every block timed from proposed to final."
+   ]
+  },
+  {
+   "id": "lab",
+   "title": "The lab's side: a bounty from a Privy wallet",
+   "cap": 30,
+   "notes": [
+    "PRIVY SERVER WALLET \u00b7 REAL TX"
+   ],
+   "lines": [
+    "First, the other side of the market: a robotics lab that needs demonstrations. Its budget lives in a Privy server wallet, under a policy that allows exactly one action: funding a task on Thenar's contract.",
+    "Here it posts a bounty for the toothpaste task. Privy signs it, and Monad makes it final. Asked to send money anywhere else, Privy refuses to sign."
+   ],
+   "upto": 9.5
+  },
+  {
+   "id": "start",
+   "title": "Onboarding, read from the chain",
+   "cap": 8,
+   "notes": [
+    "INJECTED TEST WALLET"
+   ],
+   "lines": [
+    "An operator arrives. In production they sign in by email through Privy; here a test wallet is injected. Each step is read from the chain."
+   ]
+  },
+  {
+   "id": "passkey",
+   "title": "A passkey, verified on Monad",
+   "cap": 12,
+   "notes": [
+    "PASSKEY: CHROMIUM VIRTUAL AUTHENTICATOR"
+   ],
+   "lines": [
+    "Next, a passkey. Its public key goes into PasskeyRegistry, and Monad's P-256 precompile checks every signature, so a paid run always comes from a person."
+   ]
+  },
+  {
+   "id": "derive",
+   "title": "Mera: the key that drives the arm",
+   "cap": 8,
+   "lines": [
+    "With Mera, the passkey's PRF derives a second key: the one a physical SO-101 obeys. No seed phrase, and nothing leaves the device."
+   ]
+  },
+  {
+   "id": "station",
+   "title": "The station, in WebXR",
+   "cap": 9,
+   "notes": [
+    "WEBXR \u00b7 EMULATED HEADSET (IWER) \u00b7 NOT A REAL QUEST"
+   ],
+   "lines": [
+    "Now the lab's task at the station. It can be driven by keyboard, by a leader arm over USB, or in a headset. Here it's WebXR, with Meta's emulator standing in for a Quest 3S."
+   ]
+  },
+  {
+   "id": "drive",
+   "title": "Drive it with your hands",
+   "cap": 30,
+   "notes": [
+    "WEBXR \u00b7 EMULATED HEADSET (IWER) \u00b7 LIVE MONAD TESTNET",
+    "CONTROLLER PATH SCRIPTED BY PLAYWRIGHT"
+   ],
+   "lines": [
+    "Press A to begin. Squeeze to take hold of the arm, and the tool follows the controller millimetre for millimetre. The trigger closes the jaws on the payload.",
+    "Lift it, carry it round, and lower it into the ring. Every sample of the arm is recorded, because the verifier scores the motion, not just where it ends."
+   ]
+  },
+  {
+   "id": "verdict",
+   "title": "In tolerance",
+   "cap": 6,
+   "lines": [
+    "In tolerance: placement, smoothness and efficiency, scored in the page from the same samples the verifier will check."
+   ]
+  },
+  {
+   "id": "submit",
+   "title": "Gas, then submit",
+   "cap": 10,
+   "lines": [
+    "Before submitting, the page shows the gas: Monad charges the limit, not the gas used. Submit: the verifier re-scores the samples and signs, and one transaction records the run and pays the operator."
+   ]
+  },
+  {
+   "id": "paid",
+   "title": "Executed, then final",
+   "cap": 16,
+   "lines": [
+    "{TIMERS}",
+    "The details show each step: the node saw it in its pool, the receipt came back, then its block reached Monad's finalized tag, with the hash checked. The page also prices the same run on Ethereum."
+   ]
+  },
+  {
+   "id": "shares",
+   "title": "A share of the corpus",
+   "cap": 6,
+   "lines": [
+    "And the run issues corpus shares to the operator, so they own a part of the dataset they helped build."
+   ],
+   "upto": 3.5
+  },
+  {
+   "id": "corpus",
+   "title": "The dataset",
+   "cap": 14,
+   "lines": [
+    "The run is now data. The corpus page shows each episode drawn from the samples its hash commits to, a Merkle root over the paid set, and two ways to buy: a subscription for every task, or one task over x402."
+   ]
+  },
+  {
+   "id": "agent",
+   "title": "An agent buys over x402",
+   "cap": 16,
+   "notes": [
+    "THE AGENT CLI, RUN LIVE"
+   ],
+   "lines": [
+    "Here's the buyer: an AI agent with a wallet and no account. It asks for the lab's corpus, gets a 402 with the terms, and signs a one-cent USDC authorisation. Monad's facilitator settles it, and the file comes back. The agent hashes the file and checks it against the sale logged on chain."
+   ]
+  },
+  {
+   "id": "agents",
+   "title": "Terms and sales, in public",
+   "cap": 10,
+   "lines": [
+    "The agents page states the terms the 402 gives, where the money goes, and every sale in the log."
+   ]
+  },
+  {
+   "id": "cre",
+   "title": "Chainlink CRE audits the corpus",
+   "cap": 22,
+   "notes": [
+    "CRE WORKFLOW SIMULATE --BROADCAST \u00b7 REAL WRITE"
+   ],
+   "lines": [
+    "Thenar's server is the party being checked, so a Chainlink CRE workflow audits it. It fetches the episode hashes, rebuilds each task's Merkle root itself, reads what the verifier committed on Monad, and writes a verdict per task to the CorpusAudit contract. This run uses the CRE simulator, with a real broadcast to Monad."
+   ],
+   "mask": [
+    56,
+    885,
+    1810,
+    80
+   ]
+  },
+  {
+   "id": "audit",
+   "title": "CRE's verdict: uncommitted",
+   "cap": 8,
+   "lines": [
+    "Its verdict for the lab's task is uncommitted: the episodes are served, but the verifier hasn't committed their root yet. CRE says so on chain, and the corpus page shows it beside the data, for any buyer to read."
+   ]
+  },
+  {
+   "id": "leaderboard",
+   "title": "Operators and agents",
+   "cap": 10,
+   "lines": [
+    "The leaderboard ranks operators by what they've earned, read back from the trajectory ledger, and agents by what they've bought."
+   ]
+  },
+  {
+   "id": "network",
+   "title": "Monad, read live",
+   "cap": 22,
+   "lines": [
+    "Finally, the network page. It reads Monad and Ethereum side by side: block time, time to final, gas price, and how each one charges gas. It checks a P-256 signature through the precompile live, and shows the staking epoch.",
+    "That's Thenar: identity, provenance, payment and ownership, each enforced on Monad."
+   ]
+  },
+  {
+   "id": "quest_slot",
+   "title": "On a real Quest 3S",
+   "cap": 28,
+   "lines": [
+    "And this is a real Quest 3S: the operator's own view, hands on the controllers, driving the same arm."
+   ]
+  },
+  {
+   "card": {
+    "kicker": "LIVE ON MONAD TESTNET",
+    "head": "Thenar",
+    "sub": "Drive a robot. Own the data. Get paid on Monad.",
+    "url": "app.thenar.io"
+   },
+   "id": "outro",
+   "hold": 3.0,
+   "lines": []
+  }
+ ]
+}

@@ -19,6 +19,20 @@ built out on Avalanche Fuji afterwards, and has now come back to Monad for
 says which is which: the Blitz commits, then one squashed commit for the
 Avalanche build, then the move back.
 
+
+## The problem, and who it is for
+
+**The problem.** Robot policies learn from human demonstrations, and physical AI is short of them. The people who
+record those demonstrations, by driving an arm through a task again and again, are rarely paid for it and never own
+the result.
+
+**The users.**
+- **Operators.** Anyone with a browser, a Quest 3S or a leader arm who drives the robot, gets paid on Monad for
+  each accepted run, and owns a share of the corpus.
+- **Robotics labs.** They post funded tasks, from a budget they can keep in a policy-locked Privy wallet.
+- **AI agents and teams.** They buy the corpus, per task over x402 or by subscription, and check it against the
+  chain.
+
 | | |
 | --- | --- |
 | **Chain** | Monad testnet, chain `10143`. Bounties, payouts, dividends and gas are MON. |
@@ -31,7 +45,7 @@ Avalanche build, then the move back.
 | **Driving** | A keyboard, your own SO-101 leader arm over USB (six AS5600 encoders), or a Meta Quest 3S with the arm standing on your real table in mixed reality: open `app.thenar.io/q/<task>` in the headset ([docs/QUEST.md](docs/QUEST.md)) |
 | **Live** | **https://app.thenar.io**, the app (tasks, the station, the data, agents). https://thenar.io is ThenarLabs, the company, and everything it builds |
 | **Repo** | https://github.com/nickthelegend/thenar-monad |
-| **Demo video** | [docs/demo/thenar-metropolis.mp4](docs/demo/thenar-metropolis.mp4) (2:51, captions in [.srt](docs/demo/thenar-metropolis.srt)): the live app on Monad testnet, with the run driven in WebXR on an emulated Quest. [What's on screen](docs/demo/README.md) |
+| **Demo video** | [docs/demo/thenar-demo.mp4](docs/demo/thenar-demo.mp4) (2:58): the whole flow, live on Monad testnet. **Pitch:** [thenar-pitch.mp4](docs/demo/thenar-pitch.mp4) (1:54). **Full walkthrough:** [thenar-walkthrough.mp4](docs/demo/thenar-walkthrough.mp4) (4:52). [What's on screen, and every tx](docs/demo/README.md) |
 | **Submission** | [SUBMISSION.md](SUBMISSION.md) |
 | **Licence** | MIT ([LICENSE](LICENSE)) |
 

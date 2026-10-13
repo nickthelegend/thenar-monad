@@ -1,0 +1,118 @@
+{
+ "name": "pitch",
+ "out": "docs/demo/thenar-pitch.mp4",
+ "max": 92,
+ "scenes": [
+  {
+   "id": "p_hook",
+   "card": {
+    "kicker": "",
+    "head": "Every robot learned it from a human hand.",
+    "sub": "",
+    "img": "../public/labs/hand.webp"
+   },
+   "lines": [
+    "Every robot that can do something learned it from a human hand."
+   ],
+   "hold": 1.4
+  },
+  {
+   "id": "p_team",
+   "card": {
+    "kicker": "WHO WE ARE",
+    "head": "We build robots. We print the arms.",
+    "sub": "ThenarLabs: open robot arms, the rigs that drive them, and the market that pays the people who teach them.",
+    "img": "../public/labs/hero.webp"
+   },
+   "lines": [
+    "We're ThenarLabs. We print robot arms and build the rigs that drive them, so we know how many demonstrations a single skill takes."
+   ],
+   "hold": 0.8
+  },
+  {
+   "id": "p_problem",
+   "card": {
+    "kicker": "THE PROBLEM",
+    "head": "The people who teach robots aren't paid, and don't own the data.",
+    "sub": ""
+   },
+   "lines": [
+    "Robot policies learn from people driving arms through a task, over and over. Those people are rarely paid, never credited, and never own the data they made."
+   ],
+   "hold": 0.8
+  },
+  {
+   "id": "p_now",
+   "card": {
+    "kicker": "WHY NOW",
+    "head": "Physical AI is starved of demonstrations.",
+    "sub": "Arms cheap enough to print \u00b7 headsets that track your hands \u00b7 agents that buy their own data",
+    "img": "../public/labs/crystal.webp"
+   },
+   "lines": [
+    "And physical AI is starved of real demonstrations, just as arms got cheap enough to print, headsets learned to track hands, and AI agents started buying their own data."
+   ],
+   "hold": 0.8
+  },
+  {
+   "id": "p_verbs",
+   "card": {
+    "kicker": "THENAR",
+    "head": "Drive. Get paid. Own it.",
+    "sub": "From a browser, a Quest or a leader arm \u00b7 paid on Monad in the transaction that records the run \u00b7 a share of the corpus agents buy"
+   },
+   "lines": [
+    "Thenar is the market in between. Drive a robot arm from a browser, a headset or a leader arm."
+   ],
+   "hold": 0.8
+  },
+  {
+   "id": "drive",
+   "title": "Thenar, in the headset",
+   "skip": 12,
+   "upto": 4,
+   "cap": 4,
+   "notes": [
+    "WEBXR \u00b7 EMULATED HEADSET (IWER) \u00b7 LIVE MONAD TESTNET"
+   ],
+   "lines": [
+    "Get paid on Monad, and own a share of the data."
+   ]
+  },
+  {
+   "id": "p_proof",
+   "card": {
+    "kicker": "VERIFIABLE ON MONAD TESTNET",
+    "head": "7 paid runs \u00b7 5 agent sales \u00b7 13 verified contracts",
+    "sub": "A paid run: executed ~1 s, final ~1.2 s from the send \u00b7 team-seeded, 13\u201314 Oct"
+   },
+   "lines": [
+    "On Monad testnet, a paid run is final about a second after the send. Seven paid runs, five agent sales over x402, thirteen verified contracts: seeded by our team, and all on chain."
+   ]
+  },
+  {
+   "id": "p_who",
+   "card": {
+    "kicker": "WHO IT'S FOR",
+    "head": "Operators. Labs. Agents.",
+    "sub": "Makers and Quest owners drive \u00b7 labs post bounties from a Privy budget \u00b7 agents buy over x402 \u00b7 reached through our open-source arms and the people who print them"
+   },
+   "lines": [
+    "It's for operators, from makers to Quest owners, for labs that post bounties, and for the agents that buy the data. We reach them through our open-source arms, and the people who print them."
+   ]
+  },
+  {
+   "id": "outro",
+   "card": {
+    "kicker": "",
+    "head": "Thenar",
+    "sub": "Teach a robot. Own the data. Get paid on Monad.",
+    "url": "app.thenar.io"
+   },
+   "hold": 1.5,
+   "lines": [
+    "Thenar. Teach a robot, own the data, get paid on Monad."
+   ]
+  }
+ ]
+}

@@ -1,0 +1,88 @@
+1
+00:00:00,350 --> 00:00:03,396
+Every robot that can do something learned it from a human hand.
+
+2
+00:00:05,476 --> 00:00:09,393
+We're ThenarLabs. We print robot arms and build the rigs
+
+3
+00:00:09,423 --> 00:00:12,331
+that drive them, so we know how many demonstrations a
+
+4
+00:00:12,361 --> 00:00:13,769
+single skill takes.
+
+5
+00:00:15,249 --> 00:00:17,959
+Robot policies learn from people driving arms through a
+
+6
+00:00:17,989 --> 00:00:22,022
+task, over and over. Those people are rarely paid, never
+
+7
+00:00:22,052 --> 00:00:24,936
+credited, and never own the data they made.
+
+8
+00:00:26,416 --> 00:00:29,985
+And physical AI is starved of real demonstrations, just
+
+9
+00:00:30,015 --> 00:00:32,818
+as arms got cheap enough to print, headsets learned to
+
+10
+00:00:32,848 --> 00:00:36,846
+track hands, and AI agents started buying their own data.
+
+11
+00:00:38,326 --> 00:00:40,328
+Thenar is the market in between.
+
+12
+00:00:40,358 --> 00:00:43,833
+Drive a robot arm from a browser, a headset or a leader arm.
+
+13
+00:00:45,313 --> 00:00:48,080
+Get paid on Monad, and own a share of the data.
+
+14
+00:00:49,313 --> 00:00:52,633
+On Monad testnet, a paid run is final about a second
+
+15
+00:00:52,663 --> 00:00:56,929
+after the send. Seven paid runs, five agent sales over
+
+16
+00:00:56,959 --> 00:00:59,345
+x402, thirteen verified contracts:
+
+17
+00:00:59,375 --> 00:01:02,297
+seeded by our team, and all on chain.
+
+18
+00:01:02,977 --> 00:01:06,024
+It's for operators, from makers to Quest owners, for
+
+19
+00:01:06,054 --> 00:01:09,170
+labs that post bounties, and for the agents that buy the
+
+20
+00:01:09,200 --> 00:01:12,653
+data. We reach them through our open-source arms, and
+
+21
+00:01:12,683 --> 00:01:13,964
+the people who print them.
+
+22
+00:01:14,644 --> 00:01:17,829
+Thenar. Teach a robot, own the data, get paid on Monad.
+

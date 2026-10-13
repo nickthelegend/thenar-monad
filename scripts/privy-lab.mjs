@@ -153,7 +153,7 @@ const slots = 2;
 const reward = parseEther("0.004");
 const data = encodeFunctionData({
   abi, functionName: "createTaskUntil",
-  args: [name, slots, reward, 4, 3, BigInt(Math.floor(Date.now() / 1000) + 7 * 86400)],
+  args: [name, slots, reward, Number(process.env.SCENARIO ?? 4), 3, BigInt(Math.floor(Date.now() / 1000) + 7 * 86400)],
 });
 
 const before = await pub.readContract({ address: AXON, abi, functionName: "taskCount" });

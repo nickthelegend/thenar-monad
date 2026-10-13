@@ -5,7 +5,7 @@ Paste-ready. Every claim has a link or a transaction in [SUBMISSION.md](../SUBMI
 
 **Project name:** Thenar
 
-**Demo video:** `docs/demo/thenar-metropolis.mp4` (2:51; upload it with `thenar-metropolis.srt` as English captions). It contains no GitHub URL, because the portal carries the repo link.
+**Demo video (≤ 3:00):** `docs/demo/thenar-demo.mp4` (2:58). **Pitch video (≤ 2:00):** `docs/demo/thenar-pitch.mp4` (1:54). **Full walkthrough:** `docs/demo/thenar-walkthrough.mp4` (4:52). Upload each with its `.srt` as English captions. None contains a GitHub URL, because the portal carries the repo link.
 
 **Tagline (≤ 80 chars):** Teach a robot, get paid on Monad, own the data, sell it to AI agents.
 

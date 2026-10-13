@@ -49,7 +49,7 @@
 <div id="root"></div>
 <script>
 const D = window.__DATA || { mode: "intro", lines: [], total: 36 };
-document.body.className = D.mode === "overlay" ? "clear" : "solid";
+document.body.className = D.mode.startsWith("overlay") ? "clear" : "solid";
 const root = document.getElementById("root");
 const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
 const ease = (u) => { u = clamp(u); return u < .5 ? 4 * u * u * u : 1 - Math.pow(-2 * u + 2, 3) / 2; };
@@ -171,8 +171,66 @@ if (D.mode === "overlay") {
   });
 }
 
+
+if (D.mode === "overlay2") {
+  // Full-frame footage: small tags in the corners, opaque captions, and full-frame title cards.
+  root.innerHTML = `
+    <div class="abs" id="tl" style="z-index:4;left:22px;bottom:118px;display:flex;flex-direction:column;gap:8px;align-items:flex-start">
+      <div class="scene" id="scene" style="display:flex;gap:12px;align-items:baseline;padding:8px 16px;background:rgba(11,11,13,.94)"><span class="n mono" id="sn"></span><span class="t" id="st" style="font-size:22px"></span></div>
+      <span class="tag" id="live" style="background:rgba(0,0,0,.94);font-size:15px;padding:7px 14px 7px 12px"><span class="live" style="width:9px;height:9px"></span><span class="mono">LIVE · MONAD TESTNET · APP.THENAR.IO</span></span>
+    </div>
+    <div class="abs" id="notes" style="z-index:4;right:22px;bottom:118px;display:flex;flex-direction:column;gap:6px;align-items:flex-end"></div>
+    <div class="abs" id="cap" style="z-index:5;left:50%;bottom:26px;transform:translateX(-50%);max-width:1600px;padding:10px 28px 12px;border-radius:12px;background:#000;border:1px solid #26262B;font-size:34px;font-weight:500;line-height:1.3;text-align:center;text-wrap:balance;white-space:nowrap"></div>
+    <div class="abs" id="mask" style="display:none;background:#141418"></div>
+    <div class="layer" id="card" style="background:#000;bottom:1px"><div class="grid"></div><div class="glow" style="left:410px;top:-10px"></div>
+      <img id="ci" class="abs" style="right:-40px;top:90px;width:1100px;height:900px;object-fit:contain">
+      <div class="layer" id="cbox" style="display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:0 200px">
+        <div id="ck" class="mono" style="font-size:24px;color:var(--sig);margin-bottom:30px"></div>
+        <div id="cm" style="display:flex;align-items:center;gap:30px;margin-bottom:26px">${MARK(110)}<span class="wordmark" style="font-size:72px">Thenar</span></div>
+        <h1 id="ch" style="font-size:84px;text-wrap:balance"></h1>
+        <h2 id="cs" style="margin-top:30px;max-width:1300px;text-wrap:balance"></h2>
+        <div id="cu" class="mono" style="margin-top:44px;font-size:36px;color:var(--sighi);padding:16px 34px;border:1px solid rgba(185,162,255,.45);border-radius:999px;background:var(--sigdim)"></div>
+      </div></div>`;
+  const $ = (id) => document.getElementById(id);
+  const card = $("card");
+  seekers.push((t) => {
+    const c = D.cues.find((c) => t >= c.start && t < c.end);
+    $("cap").textContent = c ? c.text : ""; $("cap").style.visibility = c ? "visible" : "hidden";
+    const s = D.scenes.find((s) => t >= s.start && t < s.end);
+    if (s && s.card) {
+      const k = s.card;
+      $("ck").textContent = k.kicker || ""; $("ck").style.display = k.kicker ? "" : "none";
+      const brand = k.head === "Thenar";
+      $("cm").style.display = brand ? "" : "none"; $("ch").style.display = brand ? "none" : "";
+      // kinetic head: each word rises in turn
+      if ($("ch").dataset.k !== k.head) { $("ch").dataset.k = k.head; $("ch").innerHTML = k.head.split(" ").map((w) => `<span style="display:inline-block">${w}&nbsp;</span>`).join(""); }
+      [...$("ch").children].forEach((w, i) => { const v = out3((t - s.start - .15 - i * .11) / .45); w.style.opacity = v; w.style.transform = `translateY(${(1 - v) * 26}px)`; });
+      $("cs").textContent = k.sub || "";
+      const art = !!k.img; $("ci").style.display = art ? "" : "none";
+      if (art) { if ($("ci").getAttribute("src") !== k.img) $("ci").setAttribute("src", k.img); const z = 1 + .06 * ((t - s.start) / Math.max(1, s.end - s.start)); $("ci").style.opacity = out3((t - s.start) / .8); $("ci").style.transform = `scale(${z.toFixed(4)})`; }
+      $("cbox").style.alignItems = art ? "flex-start" : "center"; $("cbox").style.textAlign = art ? "left" : "center"; $("cbox").style.padding = art ? "0 900px 0 140px" : "0 200px";
+      $("ch").style.fontSize = art ? "76px" : "84px"; $("cu").textContent = k.url || ""; $("cu").style.display = k.url ? "" : "none";
+      const u = t - s.start, inn = out3(u / .45);
+      // a card fades in over footage, except the first scene, which starts on it
+      card.style.opacity = s.start === 0 ? 1 : inn; card.style.visibility = "visible";
+      ["ck", "cm", "cs", "cu"].forEach((id, i) => set($(id), out3((u - .1 - i * .18) / .5), (1 - out3((u - .1 - i * .18) / .5)) * 18));
+      $("tl").style.visibility = "hidden"; $("notes").innerHTML = "";
+      return;
+    }
+    card.style.visibility = "hidden"; card.style.opacity = 0;
+    const mk = s && s.mask; $("mask").style.display = mk ? "" : "none";
+    if (mk) Object.assign($("mask").style, { left: mk[0] + "px", top: mk[1] + "px", width: mk[2] + "px", height: mk[3] + "px" });
+    $("tl").style.visibility = s ? "visible" : "hidden";
+    if (s) {
+      $("sn").textContent = s.n || ""; $("st").textContent = s.title || "";
+      set($("scene"), out3((t - s.start) / .3) * (t > s.start + 4 ? 1 - ease((t - s.start - 4) / .35) : 1));
+      $("notes").innerHTML = (s.notes || []).map((n) => `<span class="note mono" style="background:rgba(27,21,48,.96)">${n}</span>`).join("");
+    } else $("notes").innerHTML = "";
+  });
+}
+
 window.seek = async (t) => { for (const f of seekers) await f(t); };
-window.ready = (async () => { await document.fonts.ready; const v = document.querySelector("video"); if (v && v.readyState < 2) await new Promise((r) => v.addEventListener("loadeddata", r, { once: true })); return true; })();
+window.ready = (async () => { await document.fonts.ready; await Promise.all((D.scenes || []).filter((x) => x.card && x.card.img).map((x) => new Promise((r) => { const i = new Image(); i.onload = i.onerror = r; i.src = x.card.img; }))); const v = document.querySelector("video"); if (v && v.readyState < 2) await new Promise((r) => v.addEventListener("loadeddata", r, { once: true })); return true; })();
 </script>
 </body>
 </html>

@@ -1,0 +1,184 @@
+1
+00:00:00,350 --> 00:00:03,640
+Robots learn from human demonstrations, and the people
+
+2
+00:00:03,670 --> 00:00:06,578
+who record them are rarely paid or credited.
+
+3
+00:00:06,608 --> 00:00:10,618
+Thenar is for them: drive a robot arm from a browser, a
+
+4
+00:00:10,648 --> 00:00:15,006
+Quest or a leader arm, and get paid on Monad for every run.
+
+5
+00:00:16,350 --> 00:00:18,561
+The other side is a robotics lab.
+
+6
+00:00:18,591 --> 00:00:22,020
+Its budget is a Privy server wallet whose policy only
+
+7
+00:00:22,050 --> 00:00:26,177
+lets it fund Thenar. It posts a bounty on Monad, and
+
+8
+00:00:26,207 --> 00:00:29,103
+when it's asked to send money anywhere else, Privy
+
+9
+00:00:29,133 --> 00:00:30,588
+refuses to sign.
+
+10
+00:00:31,268 --> 00:00:35,243
+An operator signs in. Each onboarding step is read from the chain.
+
+11
+00:00:35,923 --> 00:00:38,539
+A passkey makes them a person on chain.
+
+12
+00:00:38,569 --> 00:00:41,481
+Monad's P-256 precompile verifies it through
+
+13
+00:00:41,511 --> 00:00:42,963
+PasskeyRegistry.
+
+14
+00:00:43,643 --> 00:00:46,074
+With Mera, the same passkey derives the key that
+
+15
+00:00:46,104 --> 00:00:47,432
+commands their arm.
+
+16
+00:00:49,643 --> 00:00:52,887
+Now the lab's task, in WebXR, with an emulated Quest
+
+17
+00:00:52,917 --> 00:00:54,546
+standing in for the headset.
+
+18
+00:00:55,226 --> 00:00:58,017
+Squeeze to take the arm, and it follows the controller
+
+19
+00:00:58,047 --> 00:00:59,689
+millimetre for millimetre.
+
+20
+00:00:59,719 --> 00:01:03,148
+Grip the payload, carry it over, and set it in the ring.
+
+21
+00:01:15,226 --> 00:01:16,182
+In tolerance.
+
+22
+00:01:18,226 --> 00:01:21,238
+Submit. The verifier scores the samples and signs, and
+
+23
+00:01:21,268 --> 00:01:24,151
+one transaction records the run and pays the operator.
+
+24
+00:01:24,831 --> 00:01:29,111
+Executed 1.09 s after the send, and final at 1.21 s, on
+
+25
+00:01:29,141 --> 00:01:32,626
+Monad testnet, measured in this browser.
+
+26
+00:01:32,656 --> 00:01:34,761
+The receipt shows every step:
+
+27
+00:01:34,791 --> 00:01:39,381
+seen by the node, executed, then final, checked against
+
+28
+00:01:39,411 --> 00:01:40,926
+the finalized tag.
+
+29
+00:01:41,606 --> 00:01:44,327
+And the operator now owns shares of this corpus.
+
+30
+00:01:45,106 --> 00:01:49,081
+The run is now data, built from the samples its hash commits to.
+
+31
+00:01:53,106 --> 00:01:56,002
+An AI agent buys it over x402:
+
+32
+00:01:56,032 --> 00:01:59,321
+one cent of USDC, settled on Monad.
+
+33
+00:01:59,351 --> 00:02:04,093
+Then it checks the file against the sale logged on chain.
+
+34
+00:02:04,773 --> 00:02:06,797
+The terms, and every sale, are public.
+
+35
+00:02:10,773 --> 00:02:13,587
+Chainlink CRE then audits the corpus.
+
+36
+00:02:13,617 --> 00:02:17,546
+It rebuilds each task's Merkle root from the served
+
+37
+00:02:17,576 --> 00:02:20,751
+episodes, reads what's committed on Monad, and writes a
+
+38
+00:02:20,781 --> 00:02:22,642
+verdict per task on chain.
+
+39
+00:02:24,773 --> 00:02:26,791
+Its verdict: uncommitted.
+
+40
+00:02:26,821 --> 00:02:29,674
+The episodes are served, but no root is committed yet,
+
+41
+00:02:29,704 --> 00:02:33,345
+and CRE says so on chain, beside the data.
+
+42
+00:02:34,025 --> 00:02:36,886
+Operators ranked by what they earned, agents by what
+
+43
+00:02:36,916 --> 00:02:37,860
+they bought.
+
+44
+00:02:40,025 --> 00:02:42,781
+And the network page reads Monad and Ethereum side by
+
+45
+00:02:42,811 --> 00:02:47,553
+side, live. Thenar: people teach robots, own the data,
+
+46
+00:02:47,583 --> 00:02:49,154
+and get paid on Monad.
+

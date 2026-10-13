@@ -197,7 +197,7 @@ It leads with what only Monad can show, then the product. Shots on a local build
 | 2:20–2:40 | /agents: a purchase opens into the agent's signed trail | "The agent paid a cent over x402, and signed its own account of why, with the key that paid." |
 | 2:40–3:00 | /network: a P-256 key checked by `0x0100`, Monad beside Ethereum, contracts verified on MonadVision | "Identity, provenance, ownership and agent trust, each enforced by a contract on Monad. Thenar." |
 
-**The demo video as cut:** [docs/demo/thenar-metropolis.mp4](docs/demo/thenar-metropolis.mp4) with [captions](docs/demo/thenar-metropolis.srt). It follows the shot list above, except that the run is driven in WebXR on an emulated Quest. [docs/demo/README.md](docs/demo/README.md) lists its transactions and labels.
+**The videos as cut:** the [demo](docs/demo/thenar-demo.mp4), the [pitch](docs/demo/thenar-pitch.mp4) and the [full walkthrough](docs/demo/thenar-walkthrough.mp4). [docs/demo/README.md](docs/demo/README.md) lists every transaction in them and every label.
 
 **Pitch video (2 minutes):**
 1. 0:00–0:20: the problem. Robots need demonstrations; the people who record them are not paid and do not own them.
@@ -216,5 +216,5 @@ It leads with what only Monad can show, then the product. Shots on a local build
 - [x] Every flow run end to end on a local chain with real transactions ([docs/TEST-PLAN-ZERO-MOCK.md](docs/TEST-PLAN-ZERO-MOCK.md))
 - [ ] Go live with the post-5-Oct work: [docs/DEPLOY-LATER.md](docs/DEPLOY-LATER.md) (waits for the user's "go")
 - [ ] A paid run on the Monad deployment, its shares issued, and a paid agent pull logged in SalesLog (after "go")
-- [x] Demo video, 3 minutes or less: [docs/demo/thenar-metropolis.mp4](docs/demo/thenar-metropolis.mp4) (2:51), live on Monad testnet ([what's on screen](docs/demo/README.md))
+- [x] Demo video (2:58): [docs/demo/thenar-demo.mp4](docs/demo/thenar-demo.mp4); pitch (1:54): [docs/demo/thenar-pitch.mp4](docs/demo/thenar-pitch.mp4); full walkthrough (4:52): [docs/demo/thenar-walkthrough.mp4](docs/demo/thenar-walkthrough.mp4). Transactions and labels in [docs/demo/README.md](docs/demo/README.md)
 - [ ] Portal: project profile with the links above (registration closed 6 Oct 23:59 UTC)

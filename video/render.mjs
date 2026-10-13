@@ -29,7 +29,7 @@ const list = [];
 let last = null, file = null, held = 0;
 for (let i = 0; i < n; i++) {
   await page.evaluate((t) => window.seek(t), i / FPS);
-  if (mode === "overlay") {
+  if (mode.startsWith("overlay")) {
     const key = await page.evaluate(() => document.getElementById("root").innerHTML);
     if (key === last) { held++; continue; }
     if (file) list.push(`file '${file}'\nduration ${(held / FPS).toFixed(5)}`);
@@ -41,7 +41,7 @@ for (let i = 0; i < n; i++) {
   }
   if (i % 300 === 0) console.log(`${mode} ${i}/${n}`);
 }
-if (mode === "overlay") {
+if (mode.startsWith("overlay")) {
   list.push(`file '${file}'\nduration ${(held / FPS).toFixed(5)}`, `file '${file}'`);
   writeFileSync(`${out}/list.txt`, list.join("\n") + "\n");
 }
