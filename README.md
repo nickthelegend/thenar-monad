@@ -45,7 +45,7 @@ the result.
 | **Driving** | A keyboard, your own SO-101 leader arm over USB (six AS5600 encoders), or a Meta Quest 3S with the arm standing on your real table in mixed reality: open `app.thenar.io/q/<task>` in the headset ([docs/QUEST.md](docs/QUEST.md)) |
 | **Live** | **https://app.thenar.io**, the app (tasks, the station, the data, agents). https://thenar.io is ThenarLabs, the company, and everything it builds |
 | **Repo** | https://github.com/nickthelegend/thenar-monad |
-| **Demo video** | [docs/demo/thenar-demo.mp4](docs/demo/thenar-demo.mp4) (2:58): the whole flow, live on Monad testnet. **Pitch:** [thenar-pitch.mp4](docs/demo/thenar-pitch.mp4) (1:54). **Full walkthrough:** [thenar-walkthrough.mp4](docs/demo/thenar-walkthrough.mp4) (4:52). [What's on screen, and every tx](docs/demo/README.md) |
+| **Demo video** | [docs/demo/thenar-demo.mp4](docs/demo/thenar-demo.mp4) (2:56): the whole flow, live on Monad testnet. **Pitch:** [thenar-pitch.mp4](docs/demo/thenar-pitch.mp4) (1:20). **Full walkthrough:** [thenar-walkthrough.mp4](docs/demo/thenar-walkthrough.mp4) (4:50). [What's on screen, and every tx](docs/demo/README.md) |
 | **Submission** | [SUBMISSION.md](SUBMISSION.md) |
 | **Licence** | MIT ([LICENSE](LICENSE)) |
 

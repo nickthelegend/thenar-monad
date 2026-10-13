@@ -64,7 +64,8 @@
    "cap": 8,
    "lines": [
     "With Mera, the passkey's PRF derives a second key: the one a physical SO-101 obeys. No seed phrase, and nothing leaves the device."
-   ]
+   ],
+   "upto": 5.0
   },
   {
    "id": "station",
@@ -141,7 +142,8 @@
    ],
    "lines": [
     "Here's the buyer: an AI agent with a wallet and no account. It asks for the lab's corpus, gets a 402 with the terms, and signs a one-cent USDC authorisation. Monad's facilitator settles it, and the file comes back. The agent hashes the file and checks it against the sale logged on chain."
-   ]
+   ],
+   "upto": 8.5
   },
   {
    "id": "agents",
@@ -166,7 +168,8 @@
     885,
     1810,
     80
-   ]
+   ],
+   "upto": 13.0
   },
   {
    "id": "audit",
@@ -174,7 +177,8 @@
    "cap": 8,
    "lines": [
     "Its verdict for the lab's task is uncommitted: the episodes are served, but the verifier hasn't committed their root yet. CRE says so on chain, and the corpus page shows it beside the data, for any buyer to read."
-   ]
+   ],
+   "upto": 4.5
   },
   {
    "id": "leaderboard",
@@ -182,7 +186,8 @@
    "cap": 10,
    "lines": [
     "The leaderboard ranks operators by what they've earned, read back from the trajectory ledger, and agents by what they've bought."
-   ]
+   ],
+   "upto": 8.5
   },
   {
    "id": "network",

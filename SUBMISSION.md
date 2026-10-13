@@ -216,5 +216,5 @@ It leads with what only Monad can show, then the product. Shots on a local build
 - [x] Every flow run end to end on a local chain with real transactions ([docs/TEST-PLAN-ZERO-MOCK.md](docs/TEST-PLAN-ZERO-MOCK.md))
 - [ ] Go live with the post-5-Oct work: [docs/DEPLOY-LATER.md](docs/DEPLOY-LATER.md) (waits for the user's "go")
 - [ ] A paid run on the Monad deployment, its shares issued, and a paid agent pull logged in SalesLog (after "go")
-- [x] Demo video (2:58): [docs/demo/thenar-demo.mp4](docs/demo/thenar-demo.mp4); pitch (1:54): [docs/demo/thenar-pitch.mp4](docs/demo/thenar-pitch.mp4); full walkthrough (4:52): [docs/demo/thenar-walkthrough.mp4](docs/demo/thenar-walkthrough.mp4). Transactions and labels in [docs/demo/README.md](docs/demo/README.md)
+- [x] Demo video (2:56): [docs/demo/thenar-demo.mp4](docs/demo/thenar-demo.mp4); pitch (1:20): [docs/demo/thenar-pitch.mp4](docs/demo/thenar-pitch.mp4); full walkthrough (4:50): [docs/demo/thenar-walkthrough.mp4](docs/demo/thenar-walkthrough.mp4). Transactions and labels in [docs/demo/README.md](docs/demo/README.md)
 - [ ] Portal: project profile with the links above (registration closed 6 Oct 23:59 UTC)

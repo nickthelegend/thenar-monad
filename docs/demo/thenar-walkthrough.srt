@@ -1,0 +1,328 @@
+1
+00:00:00,350 --> 00:00:02,990
+This is a full walkthrough of Thenar, recorded live
+
+2
+00:00:03,020 --> 00:00:07,064
+against Monad testnet. Every transaction you'll see is real.
+
+3
+00:00:07,744 --> 00:00:10,628
+Robots learn from human demonstrations, and the people
+
+4
+00:00:10,658 --> 00:00:13,298
+who record them are rarely paid, and never own the
+
+5
+00:00:13,328 --> 00:00:16,154
+result. Thenar is for them.
+
+6
+00:00:16,184 --> 00:00:19,835
+The front page shows Monad testnet live, every block
+
+7
+00:00:19,865 --> 00:00:21,842
+timed from proposed to final.
+
+8
+00:00:26,560 --> 00:00:28,573
+First, the other side of the market:
+
+9
+00:00:28,603 --> 00:00:31,557
+a robotics lab that needs demonstrations.
+
+10
+00:00:31,587 --> 00:00:34,460
+Its budget lives in a Privy server wallet, under a
+
+11
+00:00:34,490 --> 00:00:37,153
+policy that allows exactly one action:
+
+12
+00:00:37,183 --> 00:00:40,101
+funding a task on Thenar's contract.
+
+13
+00:00:40,281 --> 00:00:43,072
+Here it posts a bounty for the toothpaste task.
+
+14
+00:00:43,102 --> 00:00:45,975
+Privy signs it, and Monad makes it final.
+
+15
+00:00:46,005 --> 00:00:49,364
+Asked to send money anywhere else, Privy refuses to sign.
+
+16
+00:00:50,044 --> 00:00:53,195
+An operator arrives. In production they sign in by email
+
+17
+00:00:53,225 --> 00:00:55,947
+through Privy; here a test wallet is injected.
+
+18
+00:00:55,977 --> 00:00:57,966
+Each step is read from the chain.
+
+19
+00:00:58,646 --> 00:01:01,452
+Next, a passkey. Its public key goes into
+
+20
+00:01:01,482 --> 00:01:05,472
+PasskeyRegistry, and Monad's P-256 precompile checks
+
+21
+00:01:05,502 --> 00:01:09,447
+every signature, so a paid run always comes from a person.
+
+22
+00:01:10,127 --> 00:01:13,905
+With Mera, the passkey's PRF derives a second key:
+
+23
+00:01:13,935 --> 00:01:16,524
+the one a physical SO-101 obeys.
+
+24
+00:01:16,554 --> 00:01:19,953
+No seed phrase, and nothing leaves the device.
+
+25
+00:01:20,633 --> 00:01:22,658
+Now the lab's task at the station.
+
+26
+00:01:22,688 --> 00:01:26,687
+It can be driven by keyboard, by a leader arm over USB,
+
+27
+00:01:26,717 --> 00:01:30,704
+or in a headset. Here it's WebXR, with Meta's emulator
+
+28
+00:01:30,734 --> 00:01:32,642
+standing in for a Quest 3S.
+
+29
+00:01:33,322 --> 00:01:36,496
+Press A to begin. Squeeze to take hold of the arm, and
+
+30
+00:01:36,526 --> 00:01:38,528
+the tool follows the controller millimetre for
+
+31
+00:01:38,558 --> 00:01:41,941
+millimetre. The trigger closes the jaws on the payload.
+
+32
+00:01:42,121 --> 00:01:45,771
+Lift it, carry it round, and lower it into the ring.
+
+33
+00:01:45,801 --> 00:01:47,989
+Every sample of the arm is recorded, because the
+
+34
+00:01:48,019 --> 00:01:51,250
+verifier scores the motion, not just where it ends.
+
+35
+00:02:03,322 --> 00:02:06,171
+In tolerance: placement, smoothness and efficiency,
+
+36
+00:02:06,201 --> 00:02:09,572
+scored in the page from the same samples the verifier will check.
+
+37
+00:02:10,252 --> 00:02:13,333
+Before submitting, the page shows the gas:
+
+38
+00:02:13,363 --> 00:02:16,886
+Monad charges the limit, not the gas used.
+
+39
+00:02:16,916 --> 00:02:20,601
+Submit: the verifier re-scores the samples and signs,
+
+40
+00:02:20,631 --> 00:02:24,675
+and one transaction records the run and pays the operator.
+
+41
+00:02:25,355 --> 00:02:29,920
+Executed 1.09 s after the send, and final at 1.21 s, on
+
+42
+00:02:29,950 --> 00:02:33,323
+Monad testnet, measured in this browser.
+
+43
+00:02:33,503 --> 00:02:35,296
+The details show each step:
+
+44
+00:02:35,326 --> 00:02:38,628
+the node saw it in its pool, the receipt came back, then
+
+45
+00:02:38,658 --> 00:02:41,774
+its block reached Monad's finalized tag, with the hash
+
+46
+00:02:41,804 --> 00:02:45,651
+checked. The page also prices the same run on Ethereum.
+
+47
+00:02:46,331 --> 00:02:49,389
+And the run issues corpus shares to the operator, so
+
+48
+00:02:49,419 --> 00:02:52,024
+they own a part of the dataset they helped build.
+
+49
+00:02:52,704 --> 00:02:56,728
+The run is now data. The corpus page shows each episode
+
+50
+00:02:56,758 --> 00:03:00,104
+drawn from the samples its hash commits to, a Merkle
+
+51
+00:03:00,134 --> 00:03:03,288
+root over the paid set, and two ways to buy:
+
+52
+00:03:03,318 --> 00:03:08,381
+a subscription for every task, or one task over x402.
+
+53
+00:03:09,061 --> 00:03:11,910
+Here's the buyer: an AI agent with a wallet and no
+
+54
+00:03:11,940 --> 00:03:15,593
+account. It asks for the lab's corpus, gets a 402 with
+
+55
+00:03:15,623 --> 00:03:19,342
+the terms, and signs a one-cent USDC authorisation.
+
+56
+00:03:19,372 --> 00:03:23,869
+Monad's facilitator settles it, and the file comes back.
+
+57
+00:03:23,899 --> 00:03:26,957
+The agent hashes the file and checks it against the sale
+
+58
+00:03:26,987 --> 00:03:28,407
+logged on chain.
+
+59
+00:03:29,087 --> 00:03:32,308
+The agents page states the terms the 402 gives, where
+
+60
+00:03:32,338 --> 00:03:35,291
+the money goes, and every sale in the log.
+
+61
+00:03:39,087 --> 00:03:41,875
+Thenar's server is the party being checked, so a
+
+62
+00:03:41,905 --> 00:03:44,653
+Chainlink CRE workflow audits it.
+
+63
+00:03:44,683 --> 00:03:48,113
+It fetches the episode hashes, rebuilds each task's
+
+64
+00:03:48,143 --> 00:03:51,505
+Merkle root itself, reads what the verifier committed on
+
+65
+00:03:51,535 --> 00:03:54,696
+Monad, and writes a verdict per task to the CorpusAudit
+
+66
+00:03:54,726 --> 00:03:58,469
+contract. This run uses the CRE simulator, with a real
+
+67
+00:03:58,499 --> 00:04:00,059
+broadcast to Monad.
+
+68
+00:04:00,739 --> 00:04:03,360
+Its verdict for the lab's task is uncommitted:
+
+69
+00:04:03,390 --> 00:04:05,778
+the episodes are served, but the verifier hasn't
+
+70
+00:04:05,808 --> 00:04:07,861
+committed their root yet.
+
+71
+00:04:07,891 --> 00:04:11,262
+CRE says so on chain, and the corpus page shows it
+
+72
+00:04:11,292 --> 00:04:14,048
+beside the data, for any buyer to read.
+
+73
+00:04:14,728 --> 00:04:17,647
+The leaderboard ranks operators by what they've earned,
+
+74
+00:04:17,677 --> 00:04:21,246
+read back from the trajectory ledger, and agents by what
+
+75
+00:04:21,276 --> 00:04:22,278
+they've bought.
+
+76
+00:04:23,228 --> 00:04:25,052
+Finally, the network page.
+
+77
+00:04:25,082 --> 00:04:28,246
+It reads Monad and Ethereum side by side:
+
+78
+00:04:28,276 --> 00:04:32,478
+block time, time to final, gas price, and how each one
+
+79
+00:04:32,508 --> 00:04:35,957
+charges gas. It checks a P-256 signature through the
+
+80
+00:04:35,987 --> 00:04:39,230
+precompile live, and shows the staking epoch.
+
+81
+00:04:39,410 --> 00:04:42,213
+That's Thenar: identity, provenance, payment and
+
+82
+00:04:42,243 --> 00:04:44,546
+ownership, each enforced on Monad.
+

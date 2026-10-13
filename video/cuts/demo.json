@@ -51,7 +51,8 @@
    "cap": 6,
    "lines": [
     "With Mera, the same passkey derives the key that commands their arm."
-   ]
+   ],
+   "upto": 5.0
   },
   {
    "id": "station",
@@ -126,7 +127,8 @@
    ],
    "lines": [
     "An AI agent buys it over x402: one cent of USDC, settled on Monad. Then it checks the file against the sale logged on chain."
-   ]
+   ],
+   "upto": 8.5
   },
   {
    "id": "agents",
@@ -151,7 +153,8 @@
     885,
     1810,
     80
-   ]
+   ],
+   "upto": 13.0
   },
   {
    "id": "audit",
@@ -159,7 +162,8 @@
    "cap": 5,
    "lines": [
     "Its verdict: uncommitted. The episodes are served, but no root is committed yet, and CRE says so on chain, beside the data."
-   ]
+   ],
+   "upto": 4.5
   },
   {
    "id": "leaderboard",
@@ -167,7 +171,8 @@
    "cap": 6,
    "lines": [
     "Operators ranked by what they earned, agents by what they bought."
-   ]
+   ],
+   "upto": 8.5
   },
   {
    "id": "network",

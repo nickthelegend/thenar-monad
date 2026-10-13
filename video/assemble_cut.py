@@ -13,7 +13,30 @@ FINAL = os.path.abspath(os.path.join(HERE, "..", T["out"]))
 enc = ["-c:v", "libx264", "-preset", "medium", "-crf", "18", "-pix_fmt", "yuv420p", "-r", "30"]
 run = lambda *a: subprocess.run(["ffmpeg", "-v", "error", "-y", *a], check=True, cwd=W)
 
-run("-f", "concat", "-safe", "0", "-i", "demo.txt", "-vf", "fps=30,scale=1920:1080:flags=lanczos,setsar=1", "-t", f"{T['total']:.3f}", *enc, "base_take.mp4")
+
+
+def sequence(list_file, out_dir, ext):
+    """An ffmpeg concat list as an exact 30 fps image sequence (symlinks), since the concat demuxer
+    rounds each image's duration to 1/25 s and the take's short frames would drift."""
+    import shutil
+    shutil.rmtree(out_dir, ignore_errors=True); os.makedirs(out_dir)
+    base = os.path.dirname(list_file)
+    L = [l.strip() for l in open(list_file) if l.strip()]
+    items, t = [], 0.0
+    for i, l in enumerate(L):
+        if l.startswith("file") and i + 1 < len(L) and L[i + 1].startswith("duration"):
+            f = l.split("'")[1]; f = f if os.path.isabs(f) else os.path.join(base, f)
+            items.append((t, f)); t += float(L[i + 1].split()[1])
+    n = int(round(T["total"] * 30)); k = 0
+    for j in range(n):
+        tt = j / 30
+        while k + 1 < len(items) and items[k + 1][0] <= tt + 1e-6: k += 1
+        os.symlink(items[k][1], os.path.join(out_dir, f"{j:06d}.{ext}"))
+
+
+sequence(os.path.join(W, "demo.txt"), os.path.join(W, "seq_take"), "jpg")
+sequence(os.path.join(W, "overlay", "list.txt"), os.path.join(W, "seq_overlay"), "png")
+run("-framerate", "30", "-i", "seq_take/%06d.jpg", "-vf", "scale=1920:1080:flags=lanczos,setsar=1", *enc, "base_take.mp4")
 q = next((s for s in T["scenes"] if s.get("clip")), None)
 if q:
     a, b = q["start"], q["end"]
@@ -34,7 +57,7 @@ fc = ";".join([
     "[vo][bed]amix=inputs=2:normalize=0:duration=longest,alimiter=limit=0.95,loudnorm=I=-16:TP=-1.5:LRA=11,aresample=48000[a]",
 ])
 os.makedirs(os.path.dirname(FINAL), exist_ok=True)
-subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", "base.mp4", "-f", "concat", "-safe", "0", "-i", "overlay/list.txt",
+subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", "base.mp4", "-framerate", "30", "-i", "seq_overlay/%06d.png",
                 "-i", "narration.wav", "-i", pad, "-filter_complex", fc, "-map", "[v]", "-map", "[a]",
                 "-c:v", "libx264", "-preset", "medium", "-crf", "19", "-pix_fmt", "yuv420p", "-r", "30",
                 "-c:a", "aac", "-b:a", "192k", "-ar", "48000", "-movflags", "+faststart", "-t", f"{T['total']:.3f}", FINAL], check=True, cwd=W)

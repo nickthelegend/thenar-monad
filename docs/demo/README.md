@@ -2,9 +2,9 @@
 
 | File | Length | What it is |
 |---|---|---|
-| `thenar-demo.mp4` | 2:58 | **The demo to submit.** The whole flow, live on Monad testnet |
-| `thenar-pitch.mp4` | 1:54 | **The pitch.** Problem, why now, solution, why Monad, evidence, the ask |
-| `thenar-walkthrough.mp4` | 4:52 | **The full walkthrough.** The same take, every screen explained, the lab's side included |
+| `thenar-demo.mp4` | 2:56 | **The demo to submit.** The whole flow, live on Monad testnet |
+| `thenar-pitch.mp4` | 1:20 | **The pitch.** Kinetic type over the brand art: hook, who we are, problem, why now, the product in three verbs, one proof card, who it is for, close. One 4 s glimpse of the VR run |
+| `thenar-walkthrough.mp4` | 4:50 | **The full walkthrough.** The same take, every screen explained, the lab's side included |
 | `*.srt` | | Captions for each, timed from ElevenLabs' word timestamps |
 | `VIDEO-CRITIQUE.md` | | Why the 13 Oct cut was replaced |
 | `thenar-metropolis.mp4` | 2:51 | The 13 Oct cut, superseded |
