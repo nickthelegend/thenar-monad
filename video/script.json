@@ -1,0 +1,106 @@
+{
+ "voice": "cjVigY5qzO86Huf0OWal",
+ "voiceName": "Eric",
+ "model": "eleven_multilingual_v2",
+ "pron": {
+  "SO-101": "S O one oh one",
+  "x402": "x four oh two",
+  "P-256": "P two fifty-six",
+  "USDC": "U S D C",
+  "CRE": "C R E",
+  "app.thenar.io": "app dot thenar dot io"
+ },
+ "intro": [
+  "Robots learn from people. Someone drives an arm through a task, again and again, and that recording becomes training data.",
+  "The people who make it rarely own it, and rarely get paid for it.",
+  "Thenar pays them on Monad. You drive an SO-101 arm in your browser, a Quest headset, or with a leader arm.",
+  "A verifier scores the run, and one transaction records it and pays you, final in about a second.",
+  "That takes a fast chain: blocks every few hundred milliseconds, and a P-256 precompile that checks a passkey on chain, so every run comes from a person."
+ ],
+ "scenes": [
+  {
+   "id": "home",
+   "title": "Live on Monad testnet",
+   "lines": [
+    "This is app.thenar.io, live on Monad testnet. A block every few hundred milliseconds, each one timed from proposed to final."
+   ]
+  },
+  {
+   "id": "start",
+   "title": "One way in",
+   "lines": [
+    "Getting started is one page. A wallet signs in, and each step is read from the chain."
+   ]
+  },
+  {
+   "id": "passkey",
+   "title": "A passkey, checked on chain",
+   "lines": [
+    "Next, a passkey. Its public key goes into PasskeyRegistry, and Monad's P-256 precompile checks every signature, so a paid run comes from a person."
+   ]
+  },
+  {
+   "id": "station",
+   "title": "Into the headset",
+   "lines": [
+    "At the station, I race the best run on this task, and put on the headset. This is WebXR, with an emulated Quest standing in for one."
+   ]
+  },
+  {
+   "id": "drive",
+   "title": "Drive it with your hands",
+   "lines": [
+    "Squeeze to take hold of the arm, and it follows the controller millimetre for millimetre. Down onto the payload, trigger to grip, up and over, and into the ring. Every sample is kept for the verifier."
+   ]
+  },
+  {
+   "id": "verdict",
+   "title": "In tolerance",
+   "lines": [
+    "In tolerance."
+   ]
+  },
+  {
+   "id": "submit",
+   "title": "Scored, signed, paid",
+   "lines": [
+    "Submit. The verifier scores the samples and signs, and one transaction records the run and pays me."
+   ]
+  },
+  {
+   "id": "paid",
+   "title": "Executed, then final",
+   "lines": [
+    "{TIMERS}"
+   ]
+  },
+  {
+   "id": "corpus",
+   "title": "The data",
+   "lines": [
+    "Every run becomes data, drawn from the samples its hash commits to, with a Chainlink CRE audit of the corpus written on chain."
+   ]
+  },
+  {
+   "id": "agent",
+   "title": "An agent buys it",
+   "lines": [
+    "An agent buys the corpus over x402 for a cent of USDC, then checks the file's hash against the sale logged on chain."
+   ]
+  },
+  {
+   "id": "network",
+   "title": "Monad, read live",
+   "lines": [
+    "And the network page reads Monad and Ethereum live, side by side. Identity, provenance, and payment, enforced on Monad."
+   ]
+  }
+ ],
+ "outro": {
+  "head": "Thenar",
+  "tag": "Drive a robot. Own the data. Get paid on Monad.",
+  "url": "app.thenar.io",
+  "say": "Thenar. Drive a robot, own the data, get paid on Monad."
+ },
+ "questLine": "And this is a real Quest 3S: the operator's own view, hands on the controllers, driving the same arm."
+}

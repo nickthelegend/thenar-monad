@@ -31,6 +31,7 @@ Avalanche build, then the move back.
 | **Driving** | A keyboard, your own SO-101 leader arm over USB (six AS5600 encoders), or a Meta Quest 3S with the arm standing on your real table in mixed reality: open `app.thenar.io/q/<task>` in the headset ([docs/QUEST.md](docs/QUEST.md)) |
 | **Live** | **https://app.thenar.io**, the app (tasks, the station, the data, agents). https://thenar.io is ThenarLabs, the company, and everything it builds |
 | **Repo** | https://github.com/nickthelegend/thenar-monad |
+| **Demo video** | [docs/demo/thenar-metropolis.mp4](docs/demo/thenar-metropolis.mp4) (2:51, captions in [.srt](docs/demo/thenar-metropolis.srt)): the live app on Monad testnet, with the run driven in WebXR on an emulated Quest. [What's on screen](docs/demo/README.md) |
 | **Submission** | [SUBMISSION.md](SUBMISSION.md) |
 | **Licence** | MIT ([LICENSE](LICENSE)) |
 

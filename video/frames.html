@@ -1,0 +1,178 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<!--
+  The video's graphics, rendered one frame at a time: render.mjs sets
+  window.__DATA, then calls window.seek(t) and screenshots. Every state is a
+  pure function of t, so a frame is the same however it is reached.
+  Modes: intro, outro, overlay (transparent: captions, tags, scene titles).
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&family=DM+Mono:wght@400;500&display=block" rel="stylesheet">
+<style>
+  :root { --ink:#000; --ink1:#0B0B0D; --ink2:#131316; --ink3:#1C1C20; --rule:#26262B; --w:#fff; --s2:#B6B6BE; --s3:#83838C;
+          --sig:#B9A2FF; --sighi:#DCCFFF; --sigdim:#1B1530; --go:#4ADE80; --godim:#0B2817; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1920px; height: 1080px; overflow: hidden; font-family: Poppins, sans-serif; color: var(--w); }
+  body.solid { background: var(--ink); }
+  body.clear { background: transparent; }
+  .abs { position: absolute; }
+  .mono { font-family: "DM Mono", monospace; letter-spacing: .06em; }
+  .layer { position: absolute; inset: 0; will-change: opacity, transform; }
+  .grid { position: absolute; inset: 0; background-image: linear-gradient(var(--ink2) 1px, transparent 1px), linear-gradient(90deg, var(--ink2) 1px, transparent 1px); background-size: 80px 80px; opacity: .55; }
+  .glow { position: absolute; width: 1100px; height: 1100px; border-radius: 50%; background: radial-gradient(circle, rgba(185,162,255,.16), transparent 62%); }
+  .wordmark { font-weight: 600; letter-spacing: .32em; text-transform: uppercase; }
+  h1 { font-weight: 600; font-size: 92px; line-height: 1.04; letter-spacing: -.02em; }
+  h2 { font-weight: 500; font-size: 40px; line-height: 1.3; color: var(--s2); }
+  .chip { display: inline-flex; align-items: center; gap: 14px; padding: 16px 26px; border: 1px solid var(--rule); border-radius: 999px; background: var(--ink1); font-size: 30px; font-weight: 500; }
+  .dot { width: 12px; height: 12px; border-radius: 50%; background: var(--sig); }
+  .card { border: 1px solid var(--rule); border-radius: 28px; background: var(--ink1); overflow: hidden; }
+  .node { width: 360px; padding: 30px 30px; border: 1px solid var(--rule); border-radius: 22px; background: var(--ink1); }
+  .node .k { font-size: 18px; color: var(--s3); margin-bottom: 10px; }
+  .node .v { font-size: 34px; font-weight: 600; line-height: 1.15; }
+  .stat { width: 500px; padding: 36px; border: 1px solid var(--rule); border-radius: 24px; background: var(--ink1); }
+  .stat .v { font-size: 52px; font-weight: 600; color: var(--sighi); }
+  .stat .k { margin-top: 12px; font-size: 26px; color: var(--s2); line-height: 1.3; }
+  /* overlay */
+  .tag { display: inline-flex; align-items: center; gap: 12px; padding: 10px 18px 10px 16px; border-radius: 999px; background: rgba(0,0,0,.78); border: 1px solid rgba(255,255,255,.14); font-size: 19px; }
+  .live { width: 11px; height: 11px; border-radius: 50%; background: var(--go); box-shadow: 0 0 12px var(--go); }
+  .cap { position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%); max-width: 1536px; padding: 6px 24px 8px; border-radius: 14px; background: transparent;
+         font-size: 33px; font-weight: 500; line-height: 1.32; text-align: center; text-wrap: balance; }
+  .scene { padding: 12px 22px; border-radius: 14px; background: rgba(11,11,13,.86); border: 1px solid rgba(185,162,255,.35); }
+  .scene .n { font-size: 17px; color: var(--sig); }
+  .scene .t { font-size: 30px; font-weight: 600; margin-top: 2px; }
+  .note { font-size: 14px; padding: 5px 12px; border-radius: 10px; background: rgba(27,21,48,.92); border: 1px solid rgba(185,162,255,.45); color: var(--sighi); }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script>
+const D = window.__DATA || { mode: "intro", lines: [], total: 36 };
+document.body.className = D.mode === "overlay" ? "clear" : "solid";
+const root = document.getElementById("root");
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const ease = (u) => { u = clamp(u); return u < .5 ? 4 * u * u * u : 1 - Math.pow(-2 * u + 2, 3) / 2; };
+const out3 = (u) => 1 - Math.pow(1 - clamp(u), 3);
+// in at a, out at b, with fade lengths
+const win = (t, a, b, fi = .5, fo = .4) => Math.min(out3((t - a) / fi), 1 - ease((t - (b - fo)) / fo));
+const el = (html) => { const d = document.createElement("div"); d.innerHTML = html.trim(); return d.firstElementChild; };
+const MARK = (size, color = "#fff") => `<svg width="${size}" height="${size}" viewBox="0 0 64 64"><g fill="none" stroke="${color}" stroke-width="7" stroke-linejoin="round"><path class="j1" d="M26.5 6.5 L11 19.5 V44.5 L26.5 57.5"/><path class="j2" d="M37.5 6.5 L53 19.5 V44.5 L37.5 57.5"/></g><path class="palm" fill="${color}" d="M18 26 A14 17 0 0 0 46 26 A3.5 3.5 0 0 0 39 26 A7 7 0 0 1 25 26 A3.5 3.5 0 0 0 18 26 Z"/></svg>`;
+const set = (node, o, y = 0, s = 1, x = 0) => { node.style.opacity = o; node.style.transform = `translate(${x}px,${y}px) scale(${s})`; node.style.visibility = o <= 0.001 ? "hidden" : "visible"; };
+let seekers = [];
+
+if (D.mode === "intro") {
+  const L = D.lines; // [{start,end}] for intro_01..05
+  const bg = el(`<div class="layer"><div class="grid"></div><div class="glow" style="left:900px;top:-300px"></div></div>`); root.append(bg);
+  // 0: the mark and name
+  const brand = el(`<div class="layer" style="display:flex;align-items:center;justify-content:center;gap:34px">${MARK(150)}<span class="wordmark" style="font-size:72px">Thenar</span></div>`); root.append(brand);
+  const j1 = brand.querySelector(".j1"), j2 = brand.querySelector(".j2"), palm = brand.querySelector(".palm");
+  // 1: robots learn from people, beside the arm
+  const s1 = el(`<div class="layer"><div class="abs" style="left:150px;top:330px;width:820px">
+      <div class="mono" style="font-size:22px;color:var(--sig);margin-bottom:26px">PHYSICAL AI · TRAINING DATA</div>
+      <h1>Robots learn<br>from people.</h1>
+      <h2 style="margin-top:30px;width:700px">A person drives the arm through a task. The recording is the training data.</h2></div>
+    <div class="abs card" style="left:1030px;top:250px;width:760px;height:500px"><video id="arm" src="${D.armSrc}" muted playsinline preload="auto" style="width:100%;height:100%;object-fit:cover"></video></div>
+    <div class="abs mono" style="left:1030px;top:776px;font-size:18px;color:var(--s3)">SO-101 · THENARLABS</div></div>`); root.append(s1);
+  const arm = s1.querySelector("#arm");
+  // 2: who owns it
+  const s2 = el(`<div class="layer"><div class="abs" style="left:150px;top:350px;width:1600px">
+      <h1>The people who make it<br><span style="color:var(--s3)">rarely own it, or get paid for it.</span></h1></div></div>`); root.append(s2);
+  // 3: Thenar pays them on Monad
+  const s3 = el(`<div class="layer"><div class="abs" style="left:150px;top:270px;width:1600px">
+      <div style="display:flex;align-items:center;gap:26px;margin-bottom:34px">${MARK(84)}<span class="wordmark" style="font-size:40px">Thenar</span></div>
+      <h1>Pays them on <span style="color:var(--sig)">Monad.</span></h1>
+      <div id="chips" style="display:flex;gap:22px;margin-top:56px">
+        <span class="chip"><span class="dot"></span>In the browser</span>
+        <span class="chip"><span class="dot"></span>Quest 3S headset</span>
+        <span class="chip"><span class="dot"></span>Leader arm</span></div></div></div>`); root.append(s3);
+  const chips = [...s3.querySelectorAll(".chip")];
+  // 4: one transaction
+  const s4 = el(`<div class="layer"><div class="abs mono" style="left:150px;top:250px;font-size:22px;color:var(--sig)">ONE RUN, ONE TRANSACTION</div>
+      <div class="abs" style="left:150px;top:330px;display:flex;align-items:center;gap:40px">
+        <div class="node"><div class="k mono">01</div><div class="v">You drive<br>the arm</div></div>
+        <div class="arrow" style="width:40px;height:3px;background:var(--rule)"></div>
+        <div class="node"><div class="k mono">02</div><div class="v">A verifier<br>scores it</div></div>
+        <div class="arrow" style="width:40px;height:3px;background:var(--rule)"></div>
+        <div class="node" style="width:420px"><div class="k mono">03 · MONAD</div><div class="v">One tx records<br>the run and pays</div></div>
+      </div>
+      <div class="abs" id="final" style="left:150px;top:640px;display:flex;align-items:baseline;gap:24px">
+        <span style="font-size:110px;font-weight:600;color:var(--go)">~1 s</span><span style="font-size:36px;color:var(--s2)">from send to final, measured on testnet</span></div></div>`); root.append(s4);
+  const nodes = [...s4.querySelectorAll(".node")], arrows = [...s4.querySelectorAll(".arrow")], fin = s4.querySelector("#final");
+  // 5: why Monad
+  const s5 = el(`<div class="layer"><div class="abs" style="left:150px;top:220px">
+      <div class="mono" style="font-size:22px;color:var(--sig);margin-bottom:22px">WHY MONAD</div>
+      <h1 style="font-size:80px">It takes a fast chain.</h1></div>
+      <div class="abs" style="left:150px;top:520px;display:flex;gap:30px">
+        <div class="stat"><div class="v">Sub-second</div><div class="k">blocks, so a paid run settles while you watch</div></div>
+        <div class="stat"><div class="v mono" style="font-size:46px;padding-top:6px">P-256 · 0x0100</div><div class="k">a precompile checks the passkey on chain</div></div>
+        <div class="stat"><div class="v">A person</div><div class="k">behind every paid run, not a bot farm</div></div></div></div>`); root.append(s5);
+  const stats = [...s5.querySelectorAll(".stat")];
+  const live = el(`<div class="layer" style="display:flex;align-items:center;justify-content:center"><span class="tag" style="font-size:34px;padding:20px 34px;gap:18px"><span class="live" style="width:18px;height:18px"></span><span class="mono">LIVE · MONAD TESTNET · APP.THENAR.IO</span></span></div>`); root.append(live);
+
+  const S = (i) => L[i].start, E = (i) => L[i].end;
+  seekers.push(async (t) => {
+    const T = D.total;
+    // mark: jaws close in, palm rises, then it lifts away as line 1 begins
+    const m = ease(t / 1.1);
+    j1.style.transform = `translateX(${(1 - m) * -14}px)`; j2.style.transform = `translateX(${(1 - m) * 14}px)`;
+    palm.style.opacity = ease((t - .5) / .6);
+    set(brand, win(t, 0, S(0) + .2, .5, .45), 0, 1 + .03 * clamp(t / 2));
+    const a1 = win(t, S(0), S(1) - .1, .6); set(s1, a1, (1 - out3((t - S(0)) / .8)) * 30);
+    if (a1 > 0 && arm.readyState >= 1) {
+      const want = clamp(t - S(0), 0, arm.duration - .05);
+      if (Math.abs(arm.currentTime - want) > .001) { arm.currentTime = want; await new Promise((r) => arm.addEventListener("seeked", r, { once: true })); }
+    }
+    set(s2, win(t, S(1) - .05, S(2) - .05, .5), (1 - out3((t - S(1)) / .7)) * 24);
+    set(s3, win(t, S(2), S(3) - .05, .5), (1 - out3((t - S(2)) / .7)) * 24);
+    chips.forEach((c, i) => set(c, out3((t - S(2) - 2.2 - i * .9) / .5), (1 - out3((t - S(2) - 2.2 - i * .9) / .5)) * 18));
+    set(s4, win(t, S(3), S(4) - .05, .5));
+    const span = E(3) - S(3);
+    nodes.forEach((n, i) => { const u = out3((t - S(3) - .2 - i * span * .22) / .45); set(n, u, (1 - u) * 20); n.style.borderColor = u >= 1 && i === 2 ? "var(--sig)" : ""; });
+    arrows.forEach((a, i) => { a.style.background = t > S(3) + .2 + (i + 1) * span * .22 ? "var(--sig)" : "var(--rule)"; });
+    set(fin, out3((t - S(3) - span * .72) / .5), (1 - out3((t - S(3) - span * .72) / .5)) * 20);
+    set(s5, win(t, S(4), T - 1.6, .5, .5));
+    stats.forEach((c, i) => { const u = out3((t - S(4) - 2.0 - i * 2.1) / .5); set(c, u, (1 - u) * 22); });
+    set(live, win(t, T - 1.5, T + 1, .45, .1), 0, .96 + .04 * out3((t - T + 1.5) / .5));
+  });
+}
+
+if (D.mode === "outro") {
+  const bg = el(`<div class="layer"><div class="grid"></div><div class="glow" style="left:410px;top:-10px"></div></div>`); root.append(bg);
+  const o = el(`<div class="layer" style="display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center">
+      <div style="display:flex;align-items:center;gap:34px">${MARK(130)}<span class="wordmark" style="font-size:84px">Thenar</span></div>
+      <div id="tag" style="margin-top:44px;font-size:46px;font-weight:500;color:var(--s2)">${D.tag}</div>
+      <div id="url" class="mono" style="margin-top:56px;font-size:40px;color:var(--sighi);padding:18px 36px;border:1px solid rgba(185,162,255,.45);border-radius:999px;background:var(--sigdim)">${D.url}</div>
+      <div id="chips" style="display:flex;gap:18px;margin-top:56px">${D.chips.map((c) => `<span class="chip mono" style="font-size:20px;padding:12px 20px">${c}</span>`).join("")}</div></div>`); root.append(o);
+  const parts = [o.firstElementChild, o.querySelector("#tag"), o.querySelector("#url"), o.querySelector("#chips")];
+  seekers.push((t) => { parts.forEach((p, i) => { const u = out3((t - .2 - i * .45) / .6); set(p, u * (1 - ease((t - D.total + .9) / .9)), (1 - u) * 22); }); });
+}
+
+if (D.mode === "overlay") {
+  root.innerHTML = `
+    <div class="abs" style="left:192px;top:30px;display:flex;gap:14px;align-items:center">
+      <span class="tag" id="live"><span class="live"></span><span class="mono">LIVE · MONAD TESTNET · APP.THENAR.IO</span></span>
+      <div class="scene" id="scene" style="display:flex;gap:12px;align-items:baseline;padding:8px 18px"><span class="n mono" id="sn"></span><span class="t" id="st" style="font-size:24px"></span></div>
+    </div>
+    <div class="abs" id="notes" style="right:192px;top:8px;height:92px;display:flex;flex-direction:column;justify-content:center;gap:6px;align-items:flex-end"></div>
+    <div class="cap" id="cap"></div>`;
+  const cap = document.getElementById("cap"), scene = document.getElementById("scene"), notes = document.getElementById("notes"), liveTag = document.getElementById("live");
+  seekers.push((t) => {
+    const c = D.cues.find((c) => t >= c.start && t < c.end);
+    cap.textContent = c ? c.text : ""; cap.style.visibility = c ? "visible" : "hidden";
+    const s = D.scenes.find((s) => t >= s.start && t < s.end);
+    liveTag.style.visibility = s ? "visible" : "hidden";
+    if (s) {
+      document.getElementById("sn").textContent = s.n;
+      document.getElementById("st").textContent = s.title;
+      set(scene, out3((t - s.start) / .35) * (t > s.start + 4.5 ? 1 - ease((t - s.start - 4.5) / .4) : 1));
+      notes.innerHTML = (s.notes || []).map((n) => `<span class="note mono">${n}</span>`).join("");
+    } else { set(scene, 0); notes.innerHTML = ""; }
+  });
+}
+
+window.seek = async (t) => { for (const f of seekers) await f(t); };
+window.ready = (async () => { await document.fonts.ready; const v = document.querySelector("video"); if (v && v.readyState < 2) await new Promise((r) => v.addEventListener("loadeddata", r, { once: true })); return true; })();
+</script>
+</body>
+</html>

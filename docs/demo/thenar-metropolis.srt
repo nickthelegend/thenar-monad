@@ -1,0 +1,180 @@
+1
+00:00:00,900 --> 00:00:02,577
+Robots learn from people.
+
+2
+00:00:02,607 --> 00:00:04,922
+Someone drives an arm through a task, again and
+
+3
+00:00:04,952 --> 00:00:08,016
+again, and that recording becomes training data.
+
+4
+00:00:08,216 --> 00:00:10,345
+The people who make it rarely own it, and rarely
+
+5
+00:00:10,375 --> 00:00:11,570
+get paid for it.
+
+6
+00:00:12,020 --> 00:00:14,035
+Thenar pays them on Monad.
+
+7
+00:00:14,065 --> 00:00:17,223
+You drive an SO-101 arm in your browser, a Quest
+
+8
+00:00:17,253 --> 00:00:19,647
+headset, or with a leader arm.
+
+9
+00:00:19,847 --> 00:00:22,766
+A verifier scores the run, and one transaction
+
+10
+00:00:22,796 --> 00:00:25,895
+records it and pays you, final in about a second.
+
+11
+00:00:26,345 --> 00:00:27,968
+That takes a fast chain:
+
+12
+00:00:27,998 --> 00:00:31,174
+blocks every few hundred milliseconds, and a P-256
+
+13
+00:00:31,204 --> 00:00:34,426
+precompile that checks a passkey on chain, so
+
+14
+00:00:34,456 --> 00:00:36,526
+every run comes from a person.
+
+15
+00:00:38,626 --> 00:00:42,273
+This is app.thenar.io, live on Monad testnet.
+
+16
+00:00:42,303 --> 00:00:45,611
+A block every few hundred milliseconds, each one
+
+17
+00:00:45,641 --> 00:00:47,507
+timed from proposed to final.
+
+18
+00:00:52,626 --> 00:00:54,407
+Getting started is one page.
+
+19
+00:00:54,437 --> 00:00:57,745
+A wallet signs in, and each step is read from the chain.
+
+20
+00:01:00,236 --> 00:01:03,148
+Next, a passkey. Its public key goes into
+
+21
+00:01:03,178 --> 00:01:06,398
+PasskeyRegistry, and Monad's P-256 precompile
+
+22
+00:01:06,428 --> 00:01:09,999
+checks every signature, so a paid run comes from a person.
+
+23
+00:01:14,236 --> 00:01:16,586
+At the station, I race the best run on this task,
+
+24
+00:01:16,616 --> 00:01:18,142
+and put on the headset.
+
+25
+00:01:18,172 --> 00:01:21,631
+This is WebXR, with an emulated Quest standing in for one.
+
+26
+00:01:23,759 --> 00:01:26,144
+Squeeze to take hold of the arm, and it follows
+
+27
+00:01:26,174 --> 00:01:28,396
+the controller millimetre for millimetre.
+
+28
+00:01:28,426 --> 00:01:31,055
+Down onto the payload, trigger to grip, up and
+
+29
+00:01:31,085 --> 00:01:32,947
+over, and into the ring.
+
+30
+00:01:32,977 --> 00:01:35,844
+Every sample is kept for the verifier.
+
+31
+00:01:47,759 --> 00:01:48,931
+In tolerance.
+
+32
+00:01:51,259 --> 00:01:54,480
+Submit. The verifier scores the samples and signs,
+
+33
+00:01:54,510 --> 00:01:57,446
+and one transaction records the run and pays me.
+
+34
+00:01:58,396 --> 00:02:03,109
+Executed 666 ms after the send, and final at 791
+
+35
+00:02:03,139 --> 00:02:08,531
+ms. That is Monad testnet, measured in this browser.
+
+36
+00:02:09,481 --> 00:02:12,233
+Every run becomes data, drawn from the samples its
+
+37
+00:02:12,263 --> 00:02:15,732
+hash commits to, with a Chainlink CRE audit of the
+
+38
+00:02:15,762 --> 00:02:17,386
+corpus written on chain.
+
+39
+00:02:21,481 --> 00:02:24,806
+An agent buys the corpus over x402 for a cent of
+
+40
+00:02:24,836 --> 00:02:27,939
+USDC, then checks the file's hash against the sale
+
+41
+00:02:27,969 --> 00:02:29,340
+logged on chain.
+
+42
+00:02:33,481 --> 00:02:35,936
+And the network page reads Monad and Ethereum
+
+43
+00:02:35,966 --> 00:02:37,712
+live, side by side.
+
+44
+00:02:37,742 --> 00:02:41,201
+Identity, provenance, and payment, enforced on Monad.
+
+45
+00:02:46,781 --> 00:02:50,135
+Thenar. Drive a robot, own the data, get paid on Monad.
+
